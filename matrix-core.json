@@ -1,0 +1,8 @@
+{
+  "system": "AROHA",
+  "version": "1.0.0",
+  "nodes": [
+    { "id": 1, "domain": "Geometry", "resonance_hz": 272, "color": "spectrum_alpha" },
+    { "id": 2, "domain": "Frequency", "resonance_hz": 432, "color": "spectrum_beta" }
+  ]
+}
