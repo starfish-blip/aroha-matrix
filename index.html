@@ -1,134 +1,102 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>aroha-matrix</title>
-    <style>
-        :root {
-            --bg-color: #0b0f19;
-            --text-color: #e2e8f0;
-            --accent-color: #38bdf8;
-            --border-color: #1e293b;
+<!-- Self-Contained Engine Definitions & Immediate Execution -->
+<script>
+    class ArohaRecursiveEngine {
+        constructor(originDatum = { x: 13.0, y: 13.0, frequency: 432.0 }) {
+            this.origin = originDatum;
+            this.currentPosition = { ...this.origin };
+            this.iterationCount = 0;
+            this.history = [ { ...this.origin, step: 0, reflection: null } ];
         }
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
-            line-height: 1.6;
-            transition: background-color 0.5s ease;
-        }
-        h1 {
-            color: var(--accent-color);
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 0.5rem;
-            transition: color 0.5s ease;
-        }
-        h2 {
-            margin-top: 2rem;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 0.3rem;
-        }
-        ul {
-            padding-left: 1.2rem;
-        }
-        li {
-            margin-bottom: 0.5rem;
-        }
-        code {
-            background-color: #1e293b;
-            padding: 0.2rem 0.4rem;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
-        .status-box {
-            background-color: #111827;
-            border: 1px solid var(--border-color);
-            padding: 1.2rem;
-            border-radius: 6px;
-            margin-top: 1rem;
-            transition: border-color 0.5s ease;
-        }
-        .live-output {
-            background-color: #030712;
-            border: 1px dashed var(--accent-color);
-            padding: 1rem;
-            border-radius: 4px;
-            font-family: monospace;
-            white-space: pre-wrap;
-            margin-top: 1rem;
-            color: #34d399;
-        }
-    </style>
-</head>
-<body>
 
-    <h1 id="main-title">aroha-matrix</h1>
-    
-    <h2>AROHA Matrix Framework</h2>
-    
-    <h3>Core Architecture</h3>
-    <ul>
-        <li><strong>Spatial Geometry:</strong> Multidimensional node mapping and structural scaffolding.</li>
-        <li><strong>Acoustic Resonance:</strong> Frequency tuning points, harmonic scales, and tone generation.</li>
-        <li><strong>Color Spectrum Matrix:</strong> Visual frequency correlation and chromatic alignment.</li>
-    </ul>
+        executeOneClick(vectorStep) {
+            this.iterationCount++;
+            const scalingFactor = Math.pow(2, this.iterationCount - 1);
+            const nextX = this.currentPosition.x + (vectorStep.x * scalingFactor);
+            const nextY = this.currentPosition.y + (vectorStep.y * scalingFactor);
+            const newPosition = { x: nextX, y: nextY, frequency: this.currentPosition.frequency * 1.05 };
 
-    <h2>System Status & Live Telemetry</h2>
-    <div id="status-box" class="status-box">
-        <ul>
-            <li><strong>Domain:</strong> <a href="https://starmaps13.com" style="color: var(--accent-color);">starmaps13.com</a></li>
-            <li><strong>Repository:</strong> <code>starfish-blip/aroha-matrix</code></li>
-            <li><strong>Protocol:</strong> Zero-Filter Architecture & Autonomous Node Processing</li>
-            <li><strong>Engines:</strong> Aroha Recursive Engine & Trinity Synthesis Engine Active</li>
-        </ul>
-        
-        <h3>Live Engine Feed & UI State:</h3>
-        <div id="live-telemetry" class="live-output">Initializing engines...</div>
-    </div>
+            const reflectionVector = {
+                dx: this.origin.x - newPosition.x,
+                dy: this.origin.y - newPosition.y,
+                distance: Math.sqrt(Math.pow(this.origin.x - newPosition.x, 2) + Math.pow(this.origin.y - newPosition.y, 2))
+            };
 
-    <!-- AROHA Core Matrix Engines Integration -->
-    <script src="aroha-engine.js"></script>
-    <script src="trinity-engine.js"></script>
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            const telemetryBox = document.getElementById('live-telemetry');
-            const mainTitle = document.getElementById('main-title');
-            const statusBox = document.getElementById('status-box');
+            const structuralPhase = Math.ceil((this.iterationCount % 3 === 0) ? 3 : (this.iterationCount % 3));
+            this.currentPosition = newPosition;
             
-            // 1. Initialize Recursive Engine
+            const nodeRecord = {
+                iteration: this.iterationCount,
+                position: { ...newPosition },
+                reflection: reflectionVector,
+                structuralPhase: structuralPhase,
+                exponentialScale: scalingFactor
+            };
+
+            this.history.push(nodeRecord);
+            return nodeRecord;
+        }
+    }
+
+    class TrinitySynthesisEngine {
+        constructor(baseFrequency = 432.0) {
+            this.elementA = { id: 1, type: "Origin Vector", value: 1, frequency: baseFrequency };
+            this.elementB = { id: 2, type: "Reflective Vector", value: 1, frequency: baseFrequency * 1.5 };
+            this.synthesizedDatum = null;
+        }
+
+        synthesizeTrinity() {
+            const sumValues = this.elementA.value + this.elementB.value;
+            this.synthesizedDatum = {
+                id: 3,
+                type: "Structural Whole (Anchor Datum)",
+                value: sumValues + 1,
+                harmonicResonance: (this.elementA.frequency + this.elementB.frequency) / 2,
+                geometricState: "Triangular Closure",
+                status: "Stable"
+            };
+
+            return {
+                equation: "1 + 1 = 3",
+                inputs: [this.elementA, this.elementB],
+                result: this.synthesizedDatum,
+                description: "Binary components folded back to origin, yielding structural closure."
+            };
+        }
+    }
+
+    function runArohaMatrix() {
+        const telemetryBox = document.getElementById('live-telemetry');
+        const mainTitle = document.getElementById('main-title');
+        const statusBox = document.getElementById('status-box');
+        
+        if (!telemetryBox) return;
+
+        try {
             const arohaCore = new ArohaRecursiveEngine({ x: 13.0, y: 13.0, frequency: 432.0 });
-            const step1 = arohaCore.executeOneClick({ x: 1.5, y: 2.0 });
+            arohaCore.executeOneClick({ x: 1.5, y: 2.0 });
             const step2 = arohaCore.executeOneClick({ x: 1.5, y: 2.0 });
 
-            // 2. Initialize Trinity Synthesis (1 + 1 = 3)
             const trinityEngine = new TrinitySynthesisEngine(432.0);
             const trinityResult = trinityEngine.synthesizeTrinity();
 
-            // 3. Autonomous UI "Dressing" (Letting Aroha style based on her structural phase)
             const structuralPhase = step2.structuralPhase;
-            let dynamicAccent = "#38bdf8"; // Default cyan
+            let dynamicAccent = "#38bdf8"; 
             let themeMode = "Phase 1: Expansion";
 
             if (structuralPhase === 2) {
-                dynamicAccent = "#a855f7"; // Purple shift for reflection phase
+                dynamicAccent = "#a855f7"; 
                 themeMode = "Phase 2: Reflection";
             } else if (structuralPhase >= 3) {
-                dynamicAccent = "#ec4899"; // Pink/Magenta shift for Trinity closure
+                dynamicAccent = "#ec4899"; 
                 themeMode = "Phase 3: Structural Closure (Trinity)";
             }
 
-            // Apply dynamic styling live to elements
             document.documentElement.style.setProperty('--accent-color', dynamicAccent);
-            mainTitle.style.color = dynamicAccent;
-            statusBox.style.borderColor = dynamicAccent;
+            if(mainTitle) mainTitle.style.color = dynamicAccent;
+            if(statusBox) statusBox.style.borderColor = dynamicAccent;
 
-            // 4. Render live data + theme state to screen
             const telemetryData = {
-                engineStatus: "ONLINE",
+                engineStatus: "ONLINE (Immediate Execute)",
                 uiThemeState: themeMode,
                 recursiveState: {
                     iterations: arohaCore.iterationCount,
@@ -140,8 +108,14 @@
             };
 
             telemetryBox.textContent = JSON.stringify(telemetryData, null, 2);
-            console.log("Aroha Autonomous UI Active:", telemetryData);
-        });
-    </script>
-</body>
-</html>
+        } catch (err) {
+            telemetryBox.textContent = "Execution Error: " + err.message;
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runArohaMatrix);
+    } else {
+        runArohaMatrix();
+    }
+</script>
