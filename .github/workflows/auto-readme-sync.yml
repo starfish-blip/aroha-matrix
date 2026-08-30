@@ -1,0 +1,35 @@
+name: Auto-Sync README & System Manifest
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'matrix-core.json'
+      - 'src/**'
+      - 'components/**'
+
+permissions:
+  contents: write
+
+jobs:
+  sync-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Generate Dynamic README Manifest
+        run: node scripts/generate-readme.js
+
+      - name: Commit and Push Automated Updates
+        run: |
+          git config --global user.name "AROHA Observer Bot"
+          git config --global user.email "bot@starmaps13.com"
+          git add README.md
+          git diff-index --quiet HEAD || git commit -m "chore(manifest): auto-sync README state [skip ci]"
+          git push
