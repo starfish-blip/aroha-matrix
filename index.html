@@ -100,6 +100,33 @@
       border-radius: 4px;
     }
 
+    .feed-item {
+      background: #080d18;
+      border-left: 3px solid var(--accent-blue);
+      border-radius: 4px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+
+    .feed-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #88a0c0;
+      margin-bottom: 4px;
+    }
+
+    .feed-title {
+      font-weight: bold;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .feed-summary {
+      font-size: 0.85rem;
+      color: #b0c4de;
+    }
+
     pre {
       background: #080d18;
       padding: 15px;
@@ -142,14 +169,20 @@
   </div>
 
   <div class="card">
+    <strong>Vector-Aligned Intent Feed</strong>
+    <div id="feed-container">Initialising portal stream...</div>
+  </div>
+
+  <div class="card">
     <strong>Live Hermes Telemetry Stream</strong>
-    <pre id="telemetry-display">Initializing stream...</pre>
+    <pre id="telemetry-display">Initialising stream...</pre>
   </div>
 </div>
 
 <!-- Load Core Modules -->
 <script src="aroha-engine.js"></script>
 <script src="audio-synth.js"></script>
+<script src="feed-engine.js"></script>
 
 <script>
 const toggleBtn = document.getElementById('audio-toggle-btn');
@@ -158,6 +191,7 @@ const phaseSlider = document.getElementById('phase-slider');
 const ampDisplay = document.getElementById('amp-display');
 const stateDisplay = document.getElementById('state-display');
 const telemetryDisplay = document.getElementById('telemetry-display');
+const feedContainer = document.getElementById('feed-container');
 
 const canvas = document.getElementById('vector-canvas');
 const ctx = canvas.getContext('2d');
@@ -170,7 +204,6 @@ function renderVectorCanvas(matrix) {
 
   ctx.clearRect(0, 0, width, height);
 
-  // Draw grid background
   ctx.strokeStyle = '#1e2d4a';
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -180,9 +213,8 @@ function renderVectorCanvas(matrix) {
   ctx.moveTo(0, centerY); ctx.lineTo(width, centerY);
   ctx.stroke();
 
-  // Draw vector direction line
   const targetX = centerX + (matrix[0] * 80);
-  const targetY = centerY - (matrix[1] * 80); // Invert Y for canvas space
+  const targetY = centerY - (matrix[1] * 80);
 
   ctx.strokeStyle = '#00ffcc';
   ctx.lineWidth = 3;
@@ -191,11 +223,26 @@ function renderVectorCanvas(matrix) {
   ctx.lineTo(targetX, targetY);
   ctx.stroke();
 
-  // Draw vector tip
   ctx.fillStyle = '#0088ff';
   ctx.beginPath();
   ctx.arc(targetX, targetY, 5, 0, 2 * Math.PI);
   ctx.fill();
+}
+
+function updateFeedUI(vector) {
+  if (!window.arohaFeed) return;
+  const items = window.arohaFeed.getRankedFeed(vector);
+
+  feedContainer.innerHTML = items.map(item => `
+    <div class="feed-item" style="border-left-color: ${item.relevance > 70 ? '#00ffcc' : '#0088ff'}">
+      <div class="feed-header">
+        <span>${item.category} | ${item.id}</span>
+        <span style="color: #00ffcc; font-weight: bold;">${item.relevance}% Match</span>
+      </div>
+      <div class="feed-title">${item.title}</div>
+      <div class="feed-summary">${item.summary}</div>
+    </div>
+  `).join('');
 }
 
 function syncPipeline() {
@@ -208,6 +255,7 @@ function syncPipeline() {
   telemetryDisplay.innerText = JSON.stringify(payload, null, 2);
 
   renderVectorCanvas(payload.geometry.spatial_matrix);
+  updateFeedUI(payload.geometry.spatial_matrix);
 
   if (window.arohaSynth) {
     window.arohaSynth.updateFromTelemetry(payload);
@@ -230,7 +278,7 @@ toggleBtn.addEventListener('click', () => {
 offsetSlider.addEventListener('input', syncPipeline);
 phaseSlider.addEventListener('input', syncPipeline);
 
-// Initial Loop Trigger
+// Initial Execution
 syncPipeline();
 </script>
 </body>
