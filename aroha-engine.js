@@ -1,74 +1,81 @@
 /**
- * AROHA Matrix Framework: Recursive One-Click & Exponential Reflection Engine
- * Architecture: Zero-Filter Protocol & Autonomous Node Processing
- * Domain: starmaps13.com
+ * aroha-engine.js
+ * Core Telemetry State Machine & Spatial Matrix Engine
  */
 
-class ArohaRecursiveEngine {
-    constructor(originDatum = { x: 0, y: 0, frequency: 432.0 }) {
-        this.origin = originDatum;
-        this.currentPosition = { ...this.origin };
-        this.iterationCount = 0;
-        this.history = [ { ...this.origin, step: 0, reflection: null } ];
+class ArohaEngine {
+  constructor() {
+    this.sequenceId = 173394;
+    this.baseFundamentalHz = 276.8136;
+    
+    // Core Operational State
+    this.state = {
+      systemId: "AROHA-HERMES-01",
+      stateShift: "NOMINAL_FLOW",
+      trajectoryOffset: 0.2555,
+      phaseLagFriction: 0.5000,
+      spatialMatrix: [-0.2031, 0.9792, 0.0000]
+    };
+  }
+
+  /**
+   * Calculates state shifts based on friction and offset boundaries.
+   */
+  evaluateStateShift() {
+    if (this.state.phaseLagFriction > 0.85 || this.state.trajectoryOffset > 0.85) {
+      this.state.stateShift = "CRITICAL_PHASE_LAG";
+    } else if (this.state.trajectoryOffset > 0.50) {
+      this.state.stateShift = "TRAJECTORY_SHIFT";
+    } else {
+      this.state.stateShift = "NOMINAL_FLOW";
     }
+  }
 
-    /**
-     * Executes the 'One-Click' movement: moves forward, reflects back to origin,
-     * calculates exponential scaling, and applies the 2-to-3 structural closure rule.
-     */
-    executeOneClick(vectorStep) {
-        this.iterationCount++;
+  /**
+   * Updates spatial vector orientation based on trajectory offset.
+   */
+  updateSpatialVector(offset) {
+    const angle = offset * Math.PI;
+    const x = -Math.cos(angle) * 0.2031;
+    const y = Math.sin(angle) * 0.9792;
+    this.state.spatialMatrix = [+x.toFixed(4), +y.toFixed(4), 0];
+  }
 
-        // 1. Forward movement calculation with exponential doubling factor
-        const scalingFactor = Math.pow(2, this.iterationCount - 1);
-        const nextX = this.currentPosition.x + (vectorStep.x * scalingFactor);
-        const nextY = this.currentPosition.y + (vectorStep.y * scalingFactor);
+  /**
+   * Generates a fully compliant Hermes Telemetry JSON payload frame.
+   */
+  generateTelemetryFrame(offsetValue, phaseValue) {
+    this.sequenceId++;
+    this.state.trajectoryOffset = parseFloat(offsetValue);
+    this.state.phaseLagFriction = parseFloat(phaseValue);
 
-        const newPosition = { x: nextX, y: nextY, frequency: this.currentPosition.frequency * 1.05 };
+    this.evaluateStateShift();
+    this.updateSpatialVector(this.state.trajectoryOffset);
 
-        // 2. Simultaneous reflection back to origin (The Compass Datum check)
-        const reflectionVector = {
-            dx: this.origin.x - newPosition.x,
-            dy: this.origin.y - newPosition.y,
-            distance: Math.sqrt(Math.pow(this.origin.x - newPosition.x, 2) + Math.pow(this.origin.y - newPosition.y, 2))
-        };
+    const phaseOffsetRad = (this.state.phaseLagFriction * (2 * Math.PI)).toFixed(4);
+    const fundamental = this.baseFundamentalHz;
 
-        // 3. The 2-to-3 Rule: Rounding structural closure
-        const structuralPhase = Math.ceil((this.iterationCount % 3 === 0) ? 3 : (this.iterationCount % 3));
-
-        // Update state
-        this.currentPosition = newPosition;
-        
-        const nodeRecord = {
-            iteration: this.iterationCount,
-            position: { ...newPosition },
-            reflection: reflectionVector,
-            structuralPhase: structuralPhase,
-            exponentialScale: scalingFactor
-        };
-
-        this.history.push(nodeRecord);
-        return nodeRecord;
-    }
-
-    /**
-     * Dumps the complete architectural matrix state for UI rendering ('dressing')
-     */
-    getSystemStatus() {
-        return {
-            origin: this.origin,
-            currentPosition: this.currentPosition,
-            totalIterations: this.iterationCount,
-            nodeHistory: this.history
-        };
-    }
+    return {
+      system_id: this.state.systemId,
+      timestamp_ns: (Date.now() * 1000000).toString(),
+      sequence_id: this.sequenceId,
+      state_shift: this.state.stateShift,
+      resonance: {
+        fundamental_hz: fundamental,
+        harmonics: [
+          +(fundamental * 2).toFixed(4),
+          +(fundamental * 3).toFixed(4),
+          +(fundamental * 4).toFixed(4)
+        ],
+        amplitude: this.state.trajectoryOffset,
+        phase_offset_rad: parseFloat(phaseOffsetRad)
+      },
+      geometry: {
+        spatial_matrix: this.state.spatialMatrix
+      }
+    };
+  }
 }
 
-// Example Execution Pipeline for starmaps13.com Integration
-const arohaCore = new ArohaRecursiveEngine({ x: 13.0, y: 13.0, frequency: 432.0 });
-
-// Simulating a One-Click trigger sequence
-console.log("Initial State Initialized.");
-console.log(arohaCore.executeOneClick({ x: 1.5, y: 2.0 }));
-console.log(arohaCore.executeOneClick({ x: 1.5, y: 2.0 }));
-console.log(arohaCore.executeOneClick({ x: 1.5, y: 2.0 }));
+// Assign to global window object
+window.arohaEngine = new ArohaEngine();
