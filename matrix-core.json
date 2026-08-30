@@ -1,8 +1,53 @@
 {
-  "system": "AROHA",
-  "version": "1.0.0",
-  "nodes": [
-    { "id": 1, "domain": "Geometry", "resonance_hz": 272, "color": "spectrum_alpha" },
-    { "id": 2, "domain": "Frequency", "resonance_hz": 432, "color": "spectrum_beta" }
+  "system_info": {
+    "name": "AROHA Matrix Core",
+    "version": "1.0.0",
+    "harmonic_target": 36.6,
+    "synergy_mechanic": "1+1=3",
+    "overage_threshold": 0.6
+  },
+  "cycle_architecture": {
+    "phase_1": {
+      "name": "Origin & Baseline (Displacement)",
+      "range": [1, 12],
+      "focus": "Tension and initial state logging (t_-1)"
+    },
+    "phase_2": {
+      "name": "Integration & Equilibrium",
+      "range": [13, 24],
+      "focus": "Channel alignment and friction discovery"
+    },
+    "phase_3": {
+      "name": "Emergent Overshoot (Synthesis)",
+      "range": [25, 36],
+      "focus": "Negative space filtering and harmonic completion"
+    },
+    "overage_zone": {
+      "value": 0.6,
+      "focus": "Inertia lock and automated momentum commitment"
+    }
+  },
+  "resonance_thresholds": {
+    "clear_signal": {
+      "min_score": 0.80,
+      "action": "Maintain trajectory, log baseline"
+    },
+    "harmonic_friction": {
+      "min_score": 0.45,
+      "action": "Recalibrate predictive offset"
+    },
+    "knot_detected": {
+      "min_score": 0.00,
+      "action": "Trigger negative-space elimination and diagnostic isolate"
+    }
+  },
+  "state_log": [
+    {
+      "node_id": "init_001",
+      "timestamp_registered": 1788090000,
+      "payload": "Baseline System Initialization",
+      "resonance_index": 1.0000,
+      "status": "CLEAR_SIGNAL"
+    }
   ]
 }
