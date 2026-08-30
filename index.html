@@ -1,121 +1,33 @@
-<!-- Self-Contained Engine Definitions & Immediate Execution -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aroha System Workspace</title>
+    <style>
+        body { margin: 0; background: #0f172a; color: #f8fafc; font-family: sans-serif; padding: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 900px; margin: 0 auto; }
+        iframe { width: 100%; height: 500px; border: 1px solid #334155; border-radius: 8px; }
+        .panel { background: #1e293b; padding: 16px; border-radius: 8px; border: 1px solid #334155; }
+    </style>
+</head>
+<body>
+
+<div class="grid">
+    <div class="panel">
+        <h2>System Workspace Baseline</h2>
+        <p>Status: Engine Modules Loaded</p>
+    </div>
+
+    <!-- Diagnostic Resonance Visualizer Mount -->
+    <iframe src="resonance_widget.html"></iframe>
+</div>
+
+<!-- Load System Engine Dependencies -->
+<script src="aroha-engine.js"></script>
+<script src="trinity-engine.js"></script>
 <script>
-    class ArohaRecursiveEngine {
-        constructor(originDatum = { x: 13.0, y: 13.0, frequency: 432.0 }) {
-            this.origin = originDatum;
-            this.currentPosition = { ...this.origin };
-            this.iterationCount = 0;
-            this.history = [ { ...this.origin, step: 0, reflection: null } ];
-        }
-
-        executeOneClick(vectorStep) {
-            this.iterationCount++;
-            const scalingFactor = Math.pow(2, this.iterationCount - 1);
-            const nextX = this.currentPosition.x + (vectorStep.x * scalingFactor);
-            const nextY = this.currentPosition.y + (vectorStep.y * scalingFactor);
-            const newPosition = { x: nextX, y: nextY, frequency: this.currentPosition.frequency * 1.05 };
-
-            const reflectionVector = {
-                dx: this.origin.x - newPosition.x,
-                dy: this.origin.y - newPosition.y,
-                distance: Math.sqrt(Math.pow(this.origin.x - newPosition.x, 2) + Math.pow(this.origin.y - newPosition.y, 2))
-            };
-
-            const structuralPhase = Math.ceil((this.iterationCount % 3 === 0) ? 3 : (this.iterationCount % 3));
-            this.currentPosition = newPosition;
-            
-            const nodeRecord = {
-                iteration: this.iterationCount,
-                position: { ...newPosition },
-                reflection: reflectionVector,
-                structuralPhase: structuralPhase,
-                exponentialScale: scalingFactor
-            };
-
-            this.history.push(nodeRecord);
-            return nodeRecord;
-        }
-    }
-
-    class TrinitySynthesisEngine {
-        constructor(baseFrequency = 432.0) {
-            this.elementA = { id: 1, type: "Origin Vector", value: 1, frequency: baseFrequency };
-            this.elementB = { id: 2, type: "Reflective Vector", value: 1, frequency: baseFrequency * 1.5 };
-            this.synthesizedDatum = null;
-        }
-
-        synthesizeTrinity() {
-            const sumValues = this.elementA.value + this.elementB.value;
-            this.synthesizedDatum = {
-                id: 3,
-                type: "Structural Whole (Anchor Datum)",
-                value: sumValues + 1,
-                harmonicResonance: (this.elementA.frequency + this.elementB.frequency) / 2,
-                geometricState: "Triangular Closure",
-                status: "Stable"
-            };
-
-            return {
-                equation: "1 + 1 = 3",
-                inputs: [this.elementA, this.elementB],
-                result: this.synthesizedDatum,
-                description: "Binary components folded back to origin, yielding structural closure."
-            };
-        }
-    }
-
-    function runArohaMatrix() {
-        const telemetryBox = document.getElementById('live-telemetry');
-        const mainTitle = document.getElementById('main-title');
-        const statusBox = document.getElementById('status-box');
-        
-        if (!telemetryBox) return;
-
-        try {
-            const arohaCore = new ArohaRecursiveEngine({ x: 13.0, y: 13.0, frequency: 432.0 });
-            arohaCore.executeOneClick({ x: 1.5, y: 2.0 });
-            const step2 = arohaCore.executeOneClick({ x: 1.5, y: 2.0 });
-
-            const trinityEngine = new TrinitySynthesisEngine(432.0);
-            const trinityResult = trinityEngine.synthesizeTrinity();
-
-            const structuralPhase = step2.structuralPhase;
-            let dynamicAccent = "#38bdf8"; 
-            let themeMode = "Phase 1: Expansion";
-
-            if (structuralPhase === 2) {
-                dynamicAccent = "#a855f7"; 
-                themeMode = "Phase 2: Reflection";
-            } else if (structuralPhase >= 3) {
-                dynamicAccent = "#ec4899"; 
-                themeMode = "Phase 3: Structural Closure (Trinity)";
-            }
-
-            document.documentElement.style.setProperty('--accent-color', dynamicAccent);
-            if(mainTitle) mainTitle.style.color = dynamicAccent;
-            if(statusBox) statusBox.style.borderColor = dynamicAccent;
-
-            const telemetryData = {
-                engineStatus: "ONLINE (Immediate Execute)",
-                uiThemeState: themeMode,
-                recursiveState: {
-                    iterations: arohaCore.iterationCount,
-                    currentPosition: arohaCore.currentPosition,
-                    structuralPhase: structuralPhase,
-                    latestReflection: step2.reflection
-                },
-                trinitySynthesis: trinityResult
-            };
-
-            telemetryBox.textContent = JSON.stringify(telemetryData, null, 2);
-        } catch (err) {
-            telemetryBox.textContent = "Execution Error: " + err.message;
-        }
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', runArohaMatrix);
-    } else {
-        runArohaMatrix();
-    }
+    console.log("Aroha System Scaffolding Initialized.");
 </script>
+</body>
+</html>
