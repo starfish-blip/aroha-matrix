@@ -124,7 +124,6 @@
     let lastOffset = null;
     let lastLag = null;
 
-    // Load static core parameters from matrix-core.json
     fetch('matrix-core.json')
         .then(response => response.json())
         .then(data => {
@@ -139,20 +138,28 @@
         })
         .catch(err => console.error("Could not load matrix-core.json:", err));
 
-    // Handle Module Selection Click
     function selectModule(moduleName, offset, lag) {
         if (!pipeline) return;
 
+        // 1. Pass data into Trinity/Aroha engines
         const output = pipeline.executeCycle(
             `Selected Module: [${moduleName}]`,
             `Trajectory Offset: ${offset}, Phase Lag: ${lag}`
         );
 
+        // 2. Update text telemetry box
         const streamBox = document.getElementById('liveStream');
         streamBox.textContent = `Active Module: ${moduleName} | Emergent Payload: ${output.emergentResult.synthesisPayload} | Synergy: ${output.emergentResult.synergyFactor}`;
+
+        // 3. Send event to iframe widget to animate wave offset visually
+        const iframeWindow = document.getElementById('widgetIframe').contentWindow;
+        iframeWindow.postMessage({
+            type: "SET_MODULE_PARAMS",
+            offset: offset,
+            lag: lag
+        }, "*");
     }
 
-    // Throttled event listener for widget updates
     window.addEventListener("message", (event) => {
         if (event.data && event.data.type === "RESONANCE_UPDATE" && pipeline) {
             if (event.data.offset !== lastOffset || event.data.lag !== lastLag) {
