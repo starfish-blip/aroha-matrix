@@ -87,6 +87,23 @@
             font-weight: bold;
         }
 
+        /* Analytics Metric Styles */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .metric-card {
+            background: #090d16;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+        }
+        .metric-card span { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; }
+        .metric-card div { font-size: 1.2rem; font-weight: bold; color: #38bdf8; font-family: monospace; margin-top: 4px; }
+
         .ledger-box {
             background: #090d16;
             border: 1px solid #1e293b;
@@ -136,6 +153,7 @@
 <body>
 
 <div class="grid">
+    <!-- Workspace Overview Panel -->
     <div class="panel">
         <h2 id="sysName">Loading AROHA Matrix...</h2>
         <p id="sysDetails" style="margin-top: 6px;">Status: Initializing Core State Schema...</p>
@@ -143,11 +161,29 @@
         <div class="data-stream" id="liveStream">Select a learning module to test resonance trajectory...</div>
         <div class="hint-box" id="hintBox"></div>
 
-        <div class="card-grid" id="cardContainer">
-            <!-- Dynamic Module Cards Rendered via matrix-core.json -->
+        <div class="card-grid" id="cardContainer"></div>
+    </div>
+
+    <!-- Analytics Summary Panel -->
+    <div class="panel">
+        <h2>Session Telemetry Analytics</h2>
+        <div class="analytics-grid">
+            <div class="metric-card">
+                <span>Avg Offset</span>
+                <div id="metricAvgOffset">0.0</div>
+            </div>
+            <div class="metric-card">
+                <span>Stability Index</span>
+                <div id="metricStability">100%</div>
+            </div>
+            <div class="metric-card">
+                <span>Total Cycles</span>
+                <div id="metricCycles">0</div>
+            </div>
         </div>
     </div>
 
+    <!-- Live Execution Ledger Panel -->
     <div class="panel">
         <div class="panel-header">
             <h2>Execution History Ledger</h2>
@@ -172,7 +208,6 @@
     let lastLag = null;
     let sessionHistory = JSON.parse(localStorage.getItem('aroha_history')) || [];
 
-    // Initialize Schema & Render Dynamic Content Cards
     fetch('matrix-core.json')
         .then(response => response.json())
         .then(data => {
@@ -187,6 +222,7 @@
 
             renderModuleCards(data.learning_modules);
             renderStoredLedger();
+            updateAnalytics();
         })
         .catch(err => console.error("Could not load matrix-core.json:", err));
 
@@ -217,7 +253,34 @@
         if (logObj) {
             sessionHistory.push({ time, ...logObj });
             localStorage.setItem('aroha_history', JSON.stringify(sessionHistory));
+            updateAnalytics();
         }
+    }
+
+    function updateAnalytics() {
+        if (sessionHistory.length === 0) {
+            document.getElementById('metricAvgOffset').textContent = '0.0';
+            document.getElementById('metricStability').textContent = '100%';
+            document.getElementById('metricCycles').textContent = '0';
+            return;
+        }
+
+        let totalOffset = 0;
+        let highFrictionCount = 0;
+
+        sessionHistory.forEach(item => {
+            totalOffset += Math.abs(item.offset || 0);
+            if (item.offset > 3.0 || item.lag > 0.8) {
+                highFrictionCount++;
+            }
+        });
+
+        const avgOffset = (totalOffset / sessionHistory.length).toFixed(1);
+        const stabilityRate = Math.max(0, Math.round(((sessionHistory.length - highFrictionCount) / sessionHistory.length) * 100));
+
+        document.getElementById('metricAvgOffset').textContent = avgOffset;
+        document.getElementById('metricStability').textContent = `${stabilityRate}%`;
+        document.getElementById('metricCycles').textContent = sessionHistory.length;
     }
 
     function renderStoredLedger() {
@@ -273,6 +336,7 @@
         sessionHistory = [];
         localStorage.removeItem('aroha_history');
         renderStoredLedger();
+        updateAnalytics();
     }
 
     function exportLedgerData() {
