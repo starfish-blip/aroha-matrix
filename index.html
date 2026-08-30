@@ -25,7 +25,12 @@
             border-radius: 8px; 
             border: 1px solid #334155; 
         }
-        .panel h2 { margin-top: 0; font-size: 1.2rem; }
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .panel h2 { margin: 0; font-size: 1.2rem; }
         .panel p { margin-bottom: 6px; color: #94a3b8; font-size: 0.9rem; }
         .data-stream {
             font-family: monospace;
@@ -39,7 +44,6 @@
             word-break: break-all;
         }
 
-        /* Module Card Grid Styles */
         .card-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -72,6 +76,41 @@
             font-weight: bold;
         }
 
+        /* Ledger & Button Styles */
+        .ledger-box {
+            background: #090d16;
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            padding: 10px;
+            max-height: 140px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: 10px;
+        }
+        .ledger-entry {
+            padding: 4px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+        .ledger-entry:last-child { border-bottom: none; }
+        .highlight { color: #22c55e; font-weight: bold; }
+
+        .btn-export {
+            background: #38bdf8;
+            color: #0f172a;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .btn-export:hover {
+            background: #7dd3fc;
+        }
+
         iframe { 
             width: 100%; 
             height: 560px; 
@@ -86,12 +125,10 @@
 <div class="grid">
     <div class="panel">
         <h2 id="sysName">Loading AROHA Matrix...</h2>
-        <p id="sysDetails">Status: Initializing Core State Schema...</p>
+        <p id="sysDetails" style="margin-top: 6px;">Status: Initializing Core State Schema...</p>
         
-        <!-- Live Data Stream Box -->
         <div class="data-stream" id="liveStream">Select a learning module to test resonance trajectory...</div>
 
-        <!-- Interactive Module Cards -->
         <div class="card-grid">
             <div class="module-card" onclick="selectModule('Phase 1: Baseline Pull', 0.0, 0.0)">
                 <span class="tag">CYCLE 1-12</span>
@@ -111,6 +148,17 @@
         </div>
     </div>
 
+    <!-- Live Execution Ledger Panel -->
+    <div class="panel">
+        <div class="panel-header">
+            <h2>Execution History Ledger</h2>
+            <button class="btn-export" onclick="exportLedgerData()">Export Log</button>
+        </div>
+        <div class="ledger-box" id="ledgerHistory">
+            <div class="ledger-entry">System ready. Awaiting initial module selection...</div>
+        </div>
+    </div>
+
     <!-- Diagnostic Visualizer Mount -->
     <iframe id="widgetIframe" src="resonance_widget.html"></iframe>
 </div>
@@ -123,6 +171,7 @@
     let coreSchema = null;
     let lastOffset = null;
     let lastLag = null;
+    const sessionHistory = [];
 
     fetch('matrix-core.json')
         .then(response => response.json())
@@ -138,26 +187,58 @@
         })
         .catch(err => console.error("Could not load matrix-core.json:", err));
 
+    function appendToLedger(text, logObj) {
+        const ledger = document.getElementById('ledgerHistory');
+        const time = new Date().toLocaleTimeString();
+        const entry = document.createElement('div');
+        entry.className = 'ledger-entry';
+        entry.innerHTML = `<span class="highlight">[${time}]</span> ${text}`;
+        ledger.prepend(entry);
+
+        if (logObj) {
+            sessionHistory.push({ time, ...logObj });
+        }
+    }
+
     function selectModule(moduleName, offset, lag) {
         if (!pipeline) return;
 
-        // 1. Pass data into Trinity/Aroha engines
         const output = pipeline.executeCycle(
             `Selected Module: [${moduleName}]`,
             `Trajectory Offset: ${offset}, Phase Lag: ${lag}`
         );
 
-        // 2. Update text telemetry box
         const streamBox = document.getElementById('liveStream');
         streamBox.textContent = `Active Module: ${moduleName} | Emergent Payload: ${output.emergentResult.synthesisPayload} | Synergy: ${output.emergentResult.synergyFactor}`;
 
-        // 3. Send event to iframe widget to animate wave offset visually
         const iframeWindow = document.getElementById('widgetIframe').contentWindow;
         iframeWindow.postMessage({
             type: "SET_MODULE_PARAMS",
             offset: offset,
             lag: lag
         }, "*");
+
+        // Log to on-screen history ledger and array
+        appendToLedger(`Executed ${moduleName} -> Offset: ${offset}, Lag: ${lag} | Synergy: ${output.emergentResult.synergyFactor}`, {
+            module: moduleName,
+            offset: offset,
+            lag: lag,
+            synergy: output.emergentResult.synergyFactor
+        });
+    }
+
+    function exportLedgerData() {
+        if (sessionHistory.length === 0) {
+            alert("No session history recorded yet. Click a module card first!");
+            return;
+        }
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sessionHistory, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `aroha_execution_log_${Date.now()}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
     }
 
     window.addEventListener("message", (event) => {
