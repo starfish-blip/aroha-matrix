@@ -1,172 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AROHA System Workspace</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AROHA Telemetry & Audio Control</title>
   <style>
     :root {
-      --resonance-freq: 272Hz;
-      --mesh-opacity: 0.5;
-      --accent-color: #00ffcc;
+      --bg-color: #0d1424;
+      --card-bg: #162238;
+      --accent-blue: #0088ff;
+      --text-color: #e0e6ed;
+      --mono-font: 'Courier New', Courier, monospace;
     }
 
     body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       margin: 0;
-      background: #0f172a;
-      color: #f8fafc;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding: 28px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 20px;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    .panel {
-      background: #1e293b;
-      padding: 16px 24px;
-      border-radius: 8px;
-      border: 1px solid #334155;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .status-bar {
+      padding: 20px;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .header-status {
+      font-size: 0.9rem;
+      font-weight: bold;
       margin-bottom: 12px;
     }
 
-    .status-indicator {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #ef4444;
+    .status-value {
+      color: #00ffcc;
     }
 
-    .status-indicator.connected {
-      background: #22c55e;
-    }
-
-    .telemetry-display {
-      font-family: monospace;
-      background: #090d16;
-      padding: 16px;
+    .btn-engage {
+      width: 100%;
+      background: var(--accent-blue);
+      color: #fff;
+      border: none;
+      padding: 12px;
       border-radius: 6px;
-      white-space: pre-wrap;
-      word-break: break-all;
-      color: #38bdf8;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-
-    .metric-value {
-      color: var(--accent-color);
       font-weight: bold;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.2s ease;
     }
 
-    .slider-container {
-      margin: 15px 0;
+    .btn-engage:hover {
+      background: #0066cc;
+    }
+
+    .btn-engage.active {
+      background: #e63946;
+    }
+
+    .control-group {
+      margin-top: 15px;
+    }
+
+    .control-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-bottom: 6px;
     }
 
     input[type="range"] {
       width: 100%;
+      accent-color: var(--accent-blue);
+    }
+
+    pre {
+      background: #090e1a;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: var(--mono-font);
+      font-size: 0.82rem;
+      color: #33bbff;
+      overflow-x: auto;
+      margin: 0;
     }
   </style>
 </head>
 <body>
 
-  <div class="grid">
-    <div class="panel">
-      <div class="status-bar">
-        <h2>AROHA Dynamic Adaptation Layer</h2>
-        <div>
-          <span id="connection-status-text">Disconnected</span>
-          <span id="status-dot" class="status-indicator"></span>
-        </div>
-      </div>
-      <p>Fundamental Frequency: <span id="freq-val" class="metric-value">--</span></p>
-      <p>Amplitude Scalar: <span id="amp-val" class="metric-value">--</span></p>
-      <p>State Shift: <span id="state-val" class="metric-value">--</span></p>
-
-      <div class="slider-container">
-        <label>Trajectory Offset Deviation (Live):</label>
-        <input type="range" id="offset-slider" min="0" max="1" step="0.01" value="0">
-      </div>
-
-      <div class="slider-container">
-        <label>Phase Lag (Temporal Friction):</label>
-        <input type="range" id="lag-slider" min="0" max="1" step="0.01" value="0">
-      </div>
+<div class="container">
+  <div class="card">
+    <div class="header-status">
+      Amplitude Scalar: <span id="amp-display">0.2555</span><br />
+      State Shift: <span class="status-value">NOMINAL_FLOW</span>
     </div>
 
-    <div class="panel">
-      <h3>Live Hermes Telemetry Stream</h3>
-      <div id="telemetry-out" class="telemetry-display">Waiting for wss://stream from Hermes...</div>
+    <button id="audio-toggle-btn" class="btn-engage">Engage Audio Resonance</button>
+
+    <div class="control-group">
+      <label for="offset-slider">Trajectory Offset Deviation (Live):</label>
+      <input type="range" id="offset-slider" min="0" max="1" step="0.01" value="0.25" />
+    </div>
+
+    <div class="control-group">
+      <label for="phase-slider">Phase Lag (Temporal Friction):</label>
+      <input type="range" id="phase-slider" min="0" max="1" step="0.01" value="0.50" />
     </div>
   </div>
 
-  <script>
-    (function () {
-      const statusDot = document.getElementById('status-dot');
-      const statusText = document.getElementById('connection-status-text');
-      const telemetryOut = document.getElementById('telemetry-out');
-      const freqVal = document.getElementById('freq-val');
-      const ampVal = document.getElementById('amp-val');
-      const stateVal = document.getElementById('state-val');
-      const offsetSlider = document.getElementById('offset-slider');
-      const lagSlider = document.getElementById('lag-slider');
+  <div class="card">
+    <strong>Live Hermes Telemetry Stream</strong>
+    <pre id="telemetry-display">Loading telemetry stream...</pre>
+  </div>
+</div>
 
-      const socket = new WebSocket('ws://localhost:8080');
+<!-- Loads external audio engine file directly -->
+<script src="audio-synth.js"></script>
 
-      socket.onopen = () => {
-        console.log('[AROHA UI] Connected to Hermes Telemetry Daemon');
-        statusDot.classList.add('connected');
-        statusText.innerText = 'Hermes Live';
-      };
+<script>
+const toggleBtn = document.getElementById('audio-toggle-btn');
+const offsetSlider = document.getElementById('offset-slider');
+const phaseSlider = document.getElementById('phase-slider');
+const ampDisplay = document.getElementById('amp-display');
+const telemetryDisplay = document.getElementById('telemetry-display');
 
-      socket.onmessage = (event) => {
-        const telemetry = JSON.parse(event.data);
+let sequenceId = 173394;
 
-        telemetryOut.innerText = JSON.stringify(telemetry, null, 2);
+function generateTelemetryFrame() {
+  const baseFreq = 276.8136;
+  const currentAmp = parseFloat(offsetSlider.value);
+  const phaseOffset = (parseFloat(phaseSlider.value) * (2 * Math.PI)).toFixed(4);
+  
+  ampDisplay.innerText = currentAmp.toFixed(4);
+  sequenceId++;
 
-        if (telemetry.resonance) {
-          freqVal.innerText = `${telemetry.resonance.fundamental_hz} Hz`;
-          ampVal.innerText = telemetry.resonance.amplitude;
-          
-          document.documentElement.style.setProperty('--resonance-freq', `${telemetry.resonance.fundamental_hz}Hz`);
-          document.documentElement.style.setProperty('--mesh-opacity', telemetry.resonance.amplitude);
+  const payload = {
+    system_id: "AROHA-HERMES-01",
+    timestamp_ns: (Date.now() * 1000000).toString(),
+    sequence_id: sequenceId,
+    resonance: {
+      fundamental_hz: baseFreq,
+      harmonics: [
+        +(baseFreq * 2).toFixed(4),
+        +(baseFreq * 3).toFixed(4),
+        +(baseFreq * 4).toFixed(4)
+      ],
+      amplitude: currentAmp,
+      phase_offset_rad: parseFloat(phaseOffset)
+    },
+    geometry: {
+      spatial_matrix: [-0.2031, 0.9792, 0]
+    }
+  };
 
-          if (lagSlider) {
-            lagSlider.value = (telemetry.resonance.phase_offset_rad / (2 * Math.PI)).toFixed(2);
-          }
-        }
+  telemetryDisplay.innerText = JSON.stringify(payload, null, 2);
+  
+  if (window.arohaSynth) {
+    window.arohaSynth.updateFromTelemetry(payload);
+  }
+}
 
-        if (telemetry.adaptation_trigger) {
-          stateVal.innerText = telemetry.adaptation_trigger.state_shift;
-          
-          if (offsetSlider) {
-            offsetSlider.value = telemetry.adaptation_trigger.intensity_scalar;
-          }
-        }
-      };
+// Event Listeners
+toggleBtn.addEventListener('click', () => {
+  if (window.arohaSynth && window.arohaSynth.isPlaying) {
+    window.arohaSynth.stop();
+    toggleBtn.innerText = 'Engage Audio Resonance';
+    toggleBtn.classList.remove('active');
+  } else if (window.arohaSynth) {
+    window.arohaSynth.start();
+    toggleBtn.innerText = 'Mute Audio Resonance';
+    toggleBtn.classList.add('active');
+  }
+});
 
-      socket.onclose = () => {
-        console.log('[AROHA UI] Disconnected from Hermes Telemetry Daemon');
-        statusDot.classList.remove('connected');
-        statusText.innerText = 'Disconnected';
-      };
+offsetSlider.addEventListener('input', generateTelemetryFrame);
+phaseSlider.addEventListener('input', generateTelemetryFrame);
 
-      socket.onerror = (err) => {
-        console.error('[AROHA UI] Socket Error:', err);
-      };
-    })();
-  </script>
+// Run initial telemetry initialization
+generateTelemetryFrame();
+</script>
 </body>
 </html>
