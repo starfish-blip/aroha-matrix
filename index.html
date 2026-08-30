@@ -32,6 +32,7 @@
         }
         .panel h2 { margin: 0; font-size: 1.2rem; }
         .panel p { margin-bottom: 6px; color: #94a3b8; font-size: 0.9rem; }
+        
         .data-stream {
             font-family: monospace;
             font-size: 0.85rem;
@@ -53,6 +54,18 @@
             border: 1px solid rgba(234, 179, 8, 0.3);
             margin-top: 10px;
             display: none;
+        }
+
+        .alert-banner {
+            font-size: 0.8rem;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.15);
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            margin-top: 10px;
+            display: none;
+            font-weight: bold;
         }
 
         .card-grid {
@@ -87,7 +100,6 @@
             font-weight: bold;
         }
 
-        /* Analytics Metric Styles */
         .analytics-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -153,18 +165,17 @@
 <body>
 
 <div class="grid">
-    <!-- Workspace Overview Panel -->
     <div class="panel">
         <h2 id="sysName">Loading AROHA Matrix...</h2>
         <p id="sysDetails" style="margin-top: 6px;">Status: Initializing Core State Schema...</p>
         
         <div class="data-stream" id="liveStream">Select a learning module to test resonance trajectory...</div>
         <div class="hint-box" id="hintBox"></div>
+        <div class="alert-banner" id="alertBanner">SYSTEM WARNING: Stability index below 70%. Recalibration recommended!</div>
 
         <div class="card-grid" id="cardContainer"></div>
     </div>
 
-    <!-- Analytics Summary Panel -->
     <div class="panel">
         <h2>Session Telemetry Analytics</h2>
         <div class="analytics-grid">
@@ -183,7 +194,6 @@
         </div>
     </div>
 
-    <!-- Live Execution Ledger Panel -->
     <div class="panel">
         <div class="panel-header">
             <h2>Execution History Ledger</h2>
@@ -258,10 +268,12 @@
     }
 
     function updateAnalytics() {
+        const alertBanner = document.getElementById('alertBanner');
         if (sessionHistory.length === 0) {
             document.getElementById('metricAvgOffset').textContent = '0.0';
             document.getElementById('metricStability').textContent = '100%';
             document.getElementById('metricCycles').textContent = '0';
+            alertBanner.style.display = 'none';
             return;
         }
 
@@ -281,6 +293,12 @@
         document.getElementById('metricAvgOffset').textContent = avgOffset;
         document.getElementById('metricStability').textContent = `${stabilityRate}%`;
         document.getElementById('metricCycles').textContent = sessionHistory.length;
+
+        if (stabilityRate < 70) {
+            alertBanner.style.display = 'block';
+        } else {
+            alertBanner.style.display = 'none';
+        }
     }
 
     function renderStoredLedger() {
