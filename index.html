@@ -87,6 +87,13 @@
       color: #000;
     }
 
+    .btn-clear {
+      background: #334155;
+      font-size: 0.8rem;
+      padding: 6px 12px;
+      margin-top: 8px;
+    }
+
     .control-group {
       margin-top: 12px;
     }
@@ -216,6 +223,7 @@
       </div>
       <input type="text" id="node-summary" placeholder="Summary of intent or factual mechanics..." />
       <button id="submit-node-btn" class="btn" style="width: 100%; margin-top: 4px;">Submit Node to Matrix</button>
+      <button id="clear-nodes-btn" class="btn btn-clear">Clear Custom Nodes</button>
     </div>
   </div>
 
@@ -254,6 +262,30 @@ const ctx = canvas.getContext('2d');
 let pulseInterval = null;
 let currentPulseStep = 0;
 const totalSteps = 13;
+
+// Load saved custom nodes from LocalStorage on startup
+function loadSavedNodes() {
+  if (!window.arohaFeed) return;
+  const saved = localStorage.getItem('aroha_custom_nodes');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      parsed.forEach(node => {
+        if (!window.arohaFeed.signalNodes.some(n => n.id === node.id)) {
+          window.arohaFeed.signalNodes.push(node);
+        }
+      });
+    } catch(e) {
+      console.error('Error loading stored nodes', e);
+    }
+  }
+}
+
+function saveCustomNodes() {
+  if (!window.arohaFeed) return;
+  const customOnly = window.arohaFeed.signalNodes.filter(n => n.id.startsWith('NODE-'));
+  localStorage.setItem('aroha_custom_nodes', JSON.stringify(customOnly));
+}
 
 function renderVectorCanvas(matrix) {
   const width = canvas.width;
@@ -380,13 +412,15 @@ document.getElementById('submit-node-btn').addEventListener('click', () => {
 
   if (window.arohaFeed) {
     const newId = `NODE-0${window.arohaFeed.signalNodes.length + 1}`;
-    window.arohaFeed.signalNodes.push({
+    const newNode = {
       id: newId,
       title: title,
       category: category,
       vector: coords,
       summary: summary
-    });
+    };
+    window.arohaFeed.signalNodes.push(newNode);
+    saveCustomNodes();
 
     document.getElementById('node-title').value = '';
     document.getElementById('node-category').value = '';
@@ -395,6 +429,15 @@ document.getElementById('submit-node-btn').addEventListener('click', () => {
 
     syncPipeline();
   }
+});
+
+// Clear stored custom nodes
+document.getElementById('clear-nodes-btn').addEventListener('click', () => {
+  localStorage.removeItem('aroha_custom_nodes');
+  if (window.arohaFeed) {
+    window.arohaFeed.signalNodes = window.arohaFeed.signalNodes.filter(n => !n.id.startsWith('NODE-'));
+  }
+  syncPipeline();
 });
 
 // Audio Toggle Event
@@ -414,6 +457,7 @@ offsetSlider.addEventListener('input', syncPipeline);
 phaseSlider.addEventListener('input', syncPipeline);
 
 // Initial Execution
+loadSavedNodes();
 syncPipeline();
 </script>
 </body>
