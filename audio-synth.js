@@ -1,6 +1,6 @@
 /**
  * audio-synth.js
- * Complete Web Audio API Engine for AROHA Telemetry
+ * Multi-Harmonic Web Audio API Acoustic Engine
  */
 
 class ArohaAudioSynth {
@@ -45,13 +45,13 @@ class ArohaAudioSynth {
     this.fundamentalGain = this.audioCtx.createGain();
     this.fundamentalOsc.type = 'sine';
     this.fundamentalOsc.frequency.setValueAtTime(this.state.fundamentalHz, now);
-    this.fundamentalGain.gain.setValueAtTime(this.state.amplitude * 0.5, now);
+    this.fundamentalGain.gain.setValueAtTime(this.state.amplitude * 0.4, now);
 
     this.fundamentalOsc.connect(this.fundamentalGain);
     this.fundamentalGain.connect(this.masterGain);
     this.fundamentalOsc.start(now);
 
-    // Harmonics Array
+    // Harmonic Overtones Array
     this.harmonicOscs = [];
     this.harmonicGains = [];
 
@@ -61,7 +61,7 @@ class ArohaAudioSynth {
 
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, now);
-      const weight = (1 / (index + 2)) * this.state.amplitude * 0.3;
+      const weight = (1 / (index + 2)) * this.state.amplitude * 0.25;
       gain.gain.setValueAtTime(weight, now);
 
       osc.connect(gain);
@@ -107,26 +107,30 @@ class ArohaAudioSynth {
     this.state.fundamentalHz = res.fundamental_hz || this.state.fundamentalHz;
     this.state.harmonics = res.harmonics || this.state.harmonics;
     this.state.amplitude = res.amplitude !== undefined ? res.amplitude : this.state.amplitude;
+    this.state.phaseOffsetRad = res.phase_offset_rad || this.state.phaseOffsetRad;
 
     if (!this.isPlaying || !this.audioCtx) return;
 
     const now = this.audioCtx.currentTime;
     const rampTarget = now + 0.05;
 
+    // Apply slight micro-detuning based on phase lag rad
+    const phaseDetuning = (this.state.phaseOffsetRad / (2 * Math.PI)) * 2;
+
     if (this.fundamentalOsc) {
-      this.fundamentalOsc.frequency.linearRampToValueAtTime(this.state.fundamentalHz, rampTarget);
-      this.fundamentalGain.gain.linearRampToValueAtTime(this.state.amplitude * 0.5, rampTarget);
+      this.fundamentalOsc.frequency.linearRampToValueAtTime(this.state.fundamentalHz + phaseDetuning, rampTarget);
+      this.fundamentalGain.gain.linearRampToValueAtTime(this.state.amplitude * 0.4, rampTarget);
     }
 
     this.harmonicOscs.forEach((osc, idx) => {
       if (this.state.harmonics[idx]) {
-        osc.frequency.linearRampToValueAtTime(this.state.harmonics[idx], rampTarget);
-        const weight = (1 / (idx + 2)) * this.state.amplitude * 0.3;
+        osc.frequency.linearRampToValueAtTime(this.state.harmonics[idx] + (phaseDetuning * (idx + 2)), rampTarget);
+        const weight = (1 / (idx + 2)) * this.state.amplitude * 0.25;
         this.harmonicGains[idx].gain.linearRampToValueAtTime(weight, rampTarget);
       }
     });
   }
 }
 
-// Assign to global window object for modular access
+// Assign to global window object
 window.arohaSynth = new ArohaAudioSynth();
