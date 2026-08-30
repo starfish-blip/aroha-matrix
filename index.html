@@ -1,464 +1,211 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AROHA Matrix Framework</title>
-  <style>
-    :root {
-      --bg-color: #0b111e;
-      --card-bg: #141e33;
-      --accent-blue: #0088ff;
-      --text-color: #e0e6ed;
-      --status-green: #00ffcc;
-      --status-gold: #ffcc00;
-      --mono-font: 'Courier New', Courier, monospace;
-    }
-
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      margin: 0;
-      padding: 16px;
-      display: flex;
-      justify-content: center;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 640px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .card {
-      background: var(--card-bg);
-      border-radius: 8px;
-      padding: 18px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    }
-
-    .header-status {
-      font-size: 0.9rem;
-      font-weight: bold;
-      margin-bottom: 12px;
-      line-height: 1.5;
-    }
-
-    .status-value {
-      color: var(--status-green);
-    }
-
-    .button-group {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .btn {
-      flex: 1;
-      background: var(--accent-blue);
-      color: #fff;
-      border: none;
-      padding: 12px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 0.95rem;
-      transition: background 0.2s ease;
-    }
-
-    .btn:hover {
-      background: #0066cc;
-    }
-
-    .btn.active {
-      background: #e63946;
-    }
-
-    .btn-pulse {
-      background: #2a9d8f;
-    }
-
-    .btn-pulse.active {
-      background: var(--status-gold);
-      color: #000;
-    }
-
-    .btn-clear {
-      background: #334155;
-      font-size: 0.8rem;
-      padding: 6px 12px;
-      margin-top: 8px;
-    }
-
-    .control-group {
-      margin-top: 12px;
-    }
-
-    .control-group label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: bold;
-      margin-bottom: 6px;
-    }
-
-    input[type="range"], input[type="text"] {
-      width: 100%;
-      box-sizing: border-box;
-      accent-color: var(--accent-blue);
-    }
-
-    input[type="text"] {
-      background: #080d18;
-      border: 1px solid #1e2d4a;
-      color: #fff;
-      padding: 8px 10px;
-      border-radius: 4px;
-      font-size: 0.85rem;
-      margin-bottom: 8px;
-    }
-
-    .form-row {
-      display: flex;
-      gap: 8px;
-    }
-
-    .canvas-container {
-      display: flex;
-      justify-content: center;
-      margin-top: 10px;
-      background: #080d18;
-      border-radius: 6px;
-      padding: 10px;
-    }
-
-    canvas {
-      border-radius: 4px;
-    }
-
-    .feed-item {
-      background: #080d18;
-      border-left: 3px solid var(--accent-blue);
-      border-radius: 4px;
-      padding: 12px;
-      margin-top: 10px;
-    }
-
-    .feed-header {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.8rem;
-      color: #88a0c0;
-      margin-bottom: 4px;
-    }
-
-    .feed-title {
-      font-weight: bold;
-      color: #fff;
-      margin-bottom: 6px;
-    }
-
-    .feed-summary {
-      font-size: 0.85rem;
-      color: #b0c4de;
-    }
-
-    pre {
-      background: #080d18;
-      padding: 12px;
-      border-radius: 6px;
-      font-family: var(--mono-font);
-      font-size: 0.82rem;
-      color: #33bbff;
-      overflow-x: auto;
-      margin: 10px 0 0 0;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AROHA 3-Zone Portal | starmaps13.com</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
-<body>
+<body class="bg-stone-900 text-stone-100 min-h-screen flex flex-col font-sans">
 
-<div class="container">
-  <!-- Telemetry & Controls Card -->
-  <div class="card">
-    <div class="header-status">
-      Amplitude Scalar: <span id="amp-display">0.2555</span> | Step: <span id="step-display" class="status-value">Manual</span><br />
-      State Shift: <span id="state-display" class="status-value">NOMINAL_FLOW</span>
-    </div>
+  <!-- Header Navigation -->
+  <header class="border-b border-amber-600/30 p-4 flex flex-wrap justify-between items-center bg-stone-950 gap-2">
+    <h1 class="text-xl font-bold tracking-wider text-amber-500">AROHA Portal <span class="text-xs text-stone-400">| 36.6°C Anchor</span></h1>
+    <nav class="flex gap-2">
+      <button onclick="switchTab('tab-tasks')" class="tab-btn bg-amber-600/20 px-3 py-1.5 rounded text-xs hover:bg-amber-600/40 border border-amber-600/40">Tasks & Maramataka</button>
+      <button onclick="switchTab('tab-audio')" class="tab-btn bg-stone-800 px-3 py-1.5 rounded text-xs hover:bg-amber-600/40 border border-stone-700">Acoustic Resonator</button>
+      <button onclick="switchTab('tab-spatial')" class="tab-btn bg-stone-800 px-3 py-1.5 rounded text-xs hover:bg-amber-600/40 border border-stone-700">Spatial EXIF</button>
+    </nav>
+  </header>
 
-    <div class="button-group">
-      <button id="audio-toggle-btn" class="btn">Engage Audio</button>
-      <button id="pulse-toggle-btn" class="btn btn-pulse">Start 13-Step Pulse</button>
-    </div>
-
-    <div class="control-group">
-      <label for="offset-slider">Trajectory Offset Deviation (Live):</label>
-      <input type="range" id="offset-slider" min="0" max="1" step="0.01" value="0.2555" />
-    </div>
-
-    <div class="control-group">
-      <label for="phase-slider">Phase Lag (Temporal Friction):</label>
-      <input type="range" id="phase-slider" min="0" max="1" step="0.01" value="0.5000" />
-    </div>
-  </div>
-
-  <!-- Spatial Matrix Vector Visualizer -->
-  <div class="card">
-    <strong>Spatial Matrix Vector Visualizer (13-Step Target Grid)</strong>
-    <div class="canvas-container">
-      <canvas id="vector-canvas" width="220" height="220"></canvas>
-    </div>
-  </div>
-
-  <!-- Mobile Node Submitter Card -->
-  <div class="card">
-    <strong>Inject Custom Signal Node</strong>
-    <div class="control-group" style="margin-top: 8px;">
-      <input type="text" id="node-title" placeholder="Node Title (e.g. Resonant Frequency Harmonics)" />
-      <div class="form-row">
-        <input type="text" id="node-category" placeholder="Category" style="flex: 1;" />
-        <input type="text" id="node-vector" placeholder="Vector X,Y (e.g. -0.2, 0.9)" style="flex: 1;" />
+  <!-- Main Viewports -->
+  <main class="flex-grow p-4 md:p-6 max-w-5xl mx-auto w-full">
+    
+    <!-- Tab 1: Tasks & Maramataka -->
+    <section id="tab-tasks" class="tab-content block space-y-4">
+      <h2 class="text-lg font-semibold text-amber-400">Task Manager & Maramataka Lunar Sync</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-stone-800/60 p-4 rounded border border-stone-700 space-y-3">
+          <h3 class="font-bold text-sm text-amber-200">Current Phase: Te Huna / Tangaroa</h3>
+          <p class="text-xs text-stone-300">Optimal phase for root planting, local cultivation, and timber preparation.</p>
+          <input type="text" id="task-input" placeholder="Add planting event or workshop task..." class="w-full bg-stone-900 border border-stone-700 p-2 text-xs rounded text-stone-100">
+          <button onclick="addTask()" class="bg-amber-600 text-white text-xs px-4 py-2 rounded font-semibold w-full">Add Local Task</button>
+        </div>
+        <div class="bg-stone-800/60 p-4 rounded border border-stone-700">
+          <h3 class="font-bold text-sm mb-2 text-stone-200">Scheduled Items</h3>
+          <ul id="task-list" class="space-y-2 text-xs text-stone-300"></ul>
+        </div>
       </div>
-      <input type="text" id="node-summary" placeholder="Summary of intent or factual mechanics..." />
-      <button id="submit-node-btn" class="btn" style="width: 100%; margin-top: 4px;">Submit Node to Matrix</button>
-      <button id="clear-nodes-btn" class="btn btn-clear">Clear Custom Nodes</button>
-    </div>
-  </div>
+    </section>
 
-  <!-- Intent Feed Card -->
-  <div class="card">
-    <strong>Vector-Aligned Intent Feed</strong>
-    <div id="feed-container">Initialising portal stream...</div>
-  </div>
-
-  <!-- Telemetry Output Card -->
-  <div class="card">
-    <strong>Live Hermes Telemetry Stream</strong>
-    <pre id="telemetry-display">Initialising stream...</pre>
-  </div>
-</div>
-
-<!-- Load Core Modules -->
-<script src="aroha-engine.js"></script>
-<script src="audio-synth.js"></script>
-<script src="feed-engine.js"></script>
-
-<script>
-const toggleBtn = document.getElementById('audio-toggle-btn');
-const pulseBtn = document.getElementById('pulse-toggle-btn');
-const offsetSlider = document.getElementById('offset-slider');
-const phaseSlider = document.getElementById('phase-slider');
-const ampDisplay = document.getElementById('amp-display');
-const stepDisplay = document.getElementById('step-display');
-const stateDisplay = document.getElementById('state-display');
-const telemetryDisplay = document.getElementById('telemetry-display');
-const feedContainer = document.getElementById('feed-container');
-
-const canvas = document.getElementById('vector-canvas');
-const ctx = canvas.getContext('2d');
-
-let pulseInterval = null;
-let currentPulseStep = 0;
-const totalSteps = 13;
-
-// Load saved custom nodes from LocalStorage on startup
-function loadSavedNodes() {
-  if (!window.arohaFeed) return;
-  const saved = localStorage.getItem('aroha_custom_nodes');
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      parsed.forEach(node => {
-        if (!window.arohaFeed.signalNodes.some(n => n.id === node.id)) {
-          window.arohaFeed.signalNodes.push(node);
-        }
-      });
-    } catch(e) {
-      console.error('Error loading stored nodes', e);
-    }
-  }
-}
-
-function saveCustomNodes() {
-  if (!window.arohaFeed) return;
-  const customOnly = window.arohaFeed.signalNodes.filter(n => n.id.startsWith('NODE-'));
-  localStorage.setItem('aroha_custom_nodes', JSON.stringify(customOnly));
-}
-
-function renderVectorCanvas(matrix) {
-  const width = canvas.width;
-  const height = canvas.height;
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const radius = 85;
-
-  ctx.clearRect(0, 0, width, height);
-
-  // Background Grid & Rings
-  ctx.strokeStyle = '#1e2d4a';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-  ctx.arc(centerX, centerY, radius * 0.5, 0, 2 * Math.PI);
-  ctx.moveTo(centerX, 0); ctx.lineTo(centerX, height);
-  ctx.moveTo(0, centerY); ctx.lineTo(width, centerY);
-  ctx.stroke();
-
-  // Draw 13 Discrete Perimeter Target Nodes
-  for (let i = 0; i < totalSteps; i++) {
-    const angle = (i / totalSteps) * 2 * Math.PI - Math.PI / 2;
-    const nx = centerX + radius * Math.cos(angle);
-    const ny = centerY + radius * Math.sin(angle);
-
-    ctx.fillStyle = (i === currentPulseStep && pulseInterval) ? '#ffcc00' : '#1e3d6e';
-    ctx.beginPath();
-    ctx.arc(nx, ny, 4, 0, 2 * Math.PI);
-    ctx.fill();
-  }
-
-  // Active Trajectory Vector Line
-  const targetX = centerX + (matrix[0] * radius);
-  const targetY = centerY - (matrix[1] * radius);
-
-  ctx.strokeStyle = '#00ffcc';
-  ctx.lineWidth = 2.5;
-  ctx.beginPath();
-  ctx.moveTo(centerX, centerY);
-  ctx.lineTo(targetX, targetY);
-  ctx.stroke();
-
-  // Vector Endpoint
-  ctx.fillStyle = '#0088ff';
-  ctx.beginPath();
-  ctx.arc(targetX, targetY, 6, 0, 2 * Math.PI);
-  ctx.fill();
-}
-
-function updateFeedUI(vector) {
-  if (!window.arohaFeed) return;
-  const items = window.arohaFeed.getRankedFeed(vector);
-
-  feedContainer.innerHTML = items.map(item => `
-    <div class="feed-item" style="border-left-color: ${item.relevance > 70 ? '#00ffcc' : '#0088ff'}">
-      <div class="feed-header">
-        <span>${item.category} | ${item.id}</span>
-        <span style="color: #00ffcc; font-weight: bold;">${item.relevance}% Match</span>
+    <!-- Tab 2: Acoustic Resonator & Song Engine -->
+    <section id="tab-audio" class="tab-content hidden space-y-4">
+      <h2 class="text-lg font-semibold text-amber-400">Acoustic Resonator & Song Engine</h2>
+      
+      <!-- Tone.js Oscillator Controller -->
+      <div class="bg-stone-800/60 p-4 rounded border border-stone-700 space-y-3">
+        <div class="flex flex-wrap items-center gap-4">
+          <button onclick="toggleAudio()" class="bg-amber-600 px-4 py-2 rounded text-xs font-semibold">Toggle Synth Engine</button>
+          <label class="text-xs text-stone-300">Base Tuning:
+            <select id="freq-select" onchange="updatePitch(this.value)" class="bg-stone-900 border border-stone-700 rounded px-2 py-1 text-xs text-amber-300 ml-1">
+              <option value="272">272 Hz (Acoustic Resonance)</option>
+              <option value="432">432 Hz (Natural Tuning)</option>
+              <option value="440">440 Hz (Standard Concert)</option>
+            </select>
+          </label>
+        </div>
       </div>
-      <div class="feed-title">${item.title}</div>
-      <div class="feed-summary">${item.summary}</div>
-    </div>
-  `).join('');
-}
 
-function syncPipeline() {
-  if (!window.arohaEngine) return;
+      <!-- Quick Song & Chord Lookup Engine -->
+      <div class="bg-stone-800/60 p-4 rounded border border-stone-700 space-y-3">
+        <h3 class="text-sm font-bold text-amber-300">Quick Song & Chord Fetcher</h3>
+        
+        <div class="flex gap-2">
+          <input type="text" id="song-query" placeholder="Enter song title or artist..." 
+                 class="w-full bg-stone-900 border border-stone-700 p-2 text-xs text-stone-100 rounded">
+          <button onclick="fetchSongChords()" class="bg-amber-600 px-4 py-2 rounded text-xs font-bold text-white">
+            Fetch
+          </button>
+        </div>
 
-  const payload = window.arohaEngine.generateTelemetryFrame(offsetSlider.value, phaseSlider.value);
+        <div id="quick-links" class="flex gap-2 text-xs">
+          <button onclick="openGuitarTuna()" class="bg-stone-900 border border-stone-700 px-3 py-1.5 rounded text-amber-400 hover:border-amber-500">
+            🎸 Open in GuitarTuna
+          </button>
+          <button onclick="exportSongPDF()" class="bg-stone-900 border border-stone-700 px-3 py-1.5 rounded text-stone-300 hover:border-amber-500">
+            📄 Download PDF Chart
+          </button>
+        </div>
 
-  ampDisplay.innerText = parseFloat(offsetSlider.value).toFixed(4);
-  stateDisplay.innerText = payload.state_shift;
-  telemetryDisplay.innerText = JSON.stringify(payload, null, 2);
+        <div id="chord-display" class="bg-stone-950 p-4 rounded font-mono text-xs text-stone-300 min-h-[120px] border border-stone-800 leading-relaxed">
+          Song chords and chart layout will render here for 272 Hz / 432 Hz play-along...
+        </div>
+      </div>
+    </section>
 
-  renderVectorCanvas(payload.geometry.spatial_matrix);
-  updateFeedUI(payload.geometry.spatial_matrix);
+    <!-- Tab 3: Spatial AR & EXIF Reader -->
+    <section id="tab-spatial" class="tab-content hidden space-y-4">
+      <h2 class="text-lg font-semibold text-amber-400">Spatial AR & Photo GPS Reader</h2>
+      <div class="bg-stone-800/60 p-4 rounded border border-stone-700 space-y-3">
+        <p class="text-xs text-stone-300">Upload an image taken at a local marker post to reveal GPS coordinates and historical node links.</p>
+        <input type="file" id="photo-input" accept="image/*" onchange="parseExif(this)" class="text-xs text-stone-400 block w-full">
+        <div id="exif-output" class="text-xs font-mono bg-stone-950 p-4 rounded border border-stone-800 text-amber-300 min-h-[80px]">
+          Select an image with GPS metadata to inspect location coordinates.
+        </div>
+      </div>
+    </section>
 
-  if (window.arohaSynth) {
-    window.arohaSynth.updateFromTelemetry(payload);
-  }
-}
+  </main>
 
-// 13-Step Automated Pulse Control
-pulseBtn.addEventListener('click', () => {
-  if (pulseInterval) {
-    clearInterval(pulseInterval);
-    pulseInterval = null;
-    pulseBtn.innerText = 'Start 13-Step Pulse';
-    pulseBtn.classList.remove('active');
-    stepDisplay.innerText = 'Manual';
-  } else {
-    pulseBtn.innerText = 'Stop 13-Step Pulse';
-    pulseBtn.classList.add('active');
-    pulseInterval = setInterval(() => {
-      currentPulseStep = (currentPulseStep + 1) % totalSteps;
-      const stepOffset = (currentPulseStep / (totalSteps - 1)).toFixed(4);
-      offsetSlider.value = stepOffset;
-      stepDisplay.innerText = `S_${currentPulseStep} (${stepOffset})`;
-      syncPipeline();
-    }, 1000);
-  }
-});
-
-// Custom Node Submission
-document.getElementById('submit-node-btn').addEventListener('click', () => {
-  const title = document.getElementById('node-title').value.trim();
-  const category = document.getElementById('node-category').value.trim() || 'Custom';
-  const summary = document.getElementById('node-summary').value.trim() || 'User submitted intent node.';
-  const vecStr = document.getElementById('node-vector').value.trim();
-
-  if (!title) {
-    alert('Please provide a Node Title.');
-    return;
-  }
-
-  let coords = [-0.2000, 0.9500, 0.0000];
-  if (vecStr) {
-    const parts = vecStr.split(',').map(n => parseFloat(n.trim()));
-    if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-      coords = [parts[0], parts[1], 0.0000];
+  <script>
+    // Tab Controller
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
     }
-  }
 
-  if (window.arohaFeed) {
-    const newId = `NODE-0${window.arohaFeed.signalNodes.length + 1}`;
-    const newNode = {
-      id: newId,
-      title: title,
-      category: category,
-      vector: coords,
-      summary: summary
-    };
-    window.arohaFeed.signalNodes.push(newNode);
-    saveCustomNodes();
+    // Task Manager (Local Storage)
+    document.addEventListener('DOMContentLoaded', loadTasks);
 
-    document.getElementById('node-title').value = '';
-    document.getElementById('node-category').value = '';
-    document.getElementById('node-summary').value = '';
-    document.getElementById('node-vector').value = '';
+    function addTask() {
+      const input = document.getElementById('task-input');
+      const val = input.value.trim();
+      if (!val) return;
+      
+      const tasks = JSON.parse(localStorage.getItem('aroha_tasks') || '[]');
+      tasks.push(val);
+      localStorage.setItem('aroha_tasks', JSON.stringify(tasks));
+      input.value = '';
+      renderTasks();
+    }
 
-    syncPipeline();
-  }
-});
+    function loadTasks() {
+      renderTasks();
+    }
 
-// Clear stored custom nodes
-document.getElementById('clear-nodes-btn').addEventListener('click', () => {
-  localStorage.removeItem('aroha_custom_nodes');
-  if (window.arohaFeed) {
-    window.arohaFeed.signalNodes = window.arohaFeed.signalNodes.filter(n => !n.id.startsWith('NODE-'));
-  }
-  syncPipeline();
-});
+    function renderTasks() {
+      const list = document.getElementById('task-list');
+      const tasks = JSON.parse(localStorage.getItem('aroha_tasks') || '[]');
+      list.innerHTML = tasks.map((t, i) => `
+        <li class="bg-stone-900 p-2 rounded border border-stone-800 flex justify-between items-center">
+          <span>${t}</span>
+          <button onclick="removeTask(${i})" class="text-red-400 hover:text-red-300 font-bold ml-2">×</button>
+        </li>
+      `).join('');
+    }
 
-// Audio Toggle Event
-toggleBtn.addEventListener('click', () => {
-  if (window.arohaSynth && window.arohaSynth.isPlaying) {
-    window.arohaSynth.stop();
-    toggleBtn.innerText = 'Engage Audio';
-    toggleBtn.classList.remove('active');
-  } else if (window.arohaSynth) {
-    window.arohaSynth.start();
-    toggleBtn.innerText = 'Mute Audio';
-    toggleBtn.classList.add('active');
-  }
-});
+    function removeTask(index) {
+      const tasks = JSON.parse(localStorage.getItem('aroha_tasks') || '[]');
+      tasks.splice(index, 1);
+      localStorage.setItem('aroha_tasks', JSON.stringify(tasks));
+      renderTasks();
+    }
 
-offsetSlider.addEventListener('input', syncPipeline);
-phaseSlider.addEventListener('input', syncPipeline);
+    // Audio Engine (Tone.js)
+    let synth;
+    function toggleAudio() {
+      if (!synth) {
+        synth = new Tone.Synth().toDestination();
+        const freq = document.getElementById('freq-select').value;
+        synth.triggerAttack(freq);
+      } else {
+        synth.triggerRelease();
+        synth = null;
+      }
+    }
 
-// Initial Execution
-loadSavedNodes();
-syncPipeline();
-</script>
+    function updatePitch(val) {
+      if (synth) {
+        synth.frequency.setValueAtTime(parseFloat(val), Tone.now());
+      }
+    }
+
+    // Chord & PDF Engine
+    function fetchSongChords() {
+      const song = document.getElementById('song-query').value;
+      const display = document.getElementById('chord-display');
+      if (!song) return;
+      
+      display.innerHTML = `<strong>${song.toUpperCase()}</strong><br><br>[Intro]<br>G  -  D  -  Em  -  C<br><br>[Verse 1]<br>G &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; D<br>Ready for the resonance anchor...<br>Em &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; C<br>Tuned to 272 Hz baseline.`;
+    }
+
+    function openGuitarTuna() {
+      const song = encodeURIComponent(document.getElementById('song-query').value);
+      if (song) {
+        window.open(`https://open.guitartuna.com/search?q=${song}`, '_blank');
+      }
+    }
+
+    function exportSongPDF() {
+      const element = document.getElementById('chord-display');
+      const opt = {
+        margin:       0.5,
+        filename:     'aroha-chord-chart.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(element).save();
+    }
+
+    // EXIF Metadata Reader
+    function parseExif(input) {
+      if (input.files && input.files[0]) {
+        EXIF.getData(input.files[0], function() {
+          const lat = EXIF.getTag(this, "GPSLatitude");
+          const lon = EXIF.getTag(this, "GPSLongitude");
+          const out = document.getElementById('exif-output');
+          if (lat && lon) {
+            out.innerText = `GPS Coordinates Found:\nLat: ${lat}\nLon: ${lon}\nStatus: Node verified. Ready for AR map mapping.`;
+          } else {
+            out.innerText = "No EXIF GPS metadata found in target image.";
+          }
+        });
+      }
+    }
+  </script>
 </body>
 </html>
