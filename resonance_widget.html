@@ -18,7 +18,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
             display: flex;
@@ -46,17 +46,8 @@
             padding-bottom: 12px;
         }
 
-        .header h2 {
-            margin: 0 0 4px 0;
-            font-size: 1.25rem;
-            letter-spacing: -0.02em;
-        }
-
-        .header p {
-            margin: 0;
-            color: var(--text-sub);
-            font-size: 0.875rem;
-        }
+        .header h2 { margin: 0 0 4px 0; font-size: 1.25rem; }
+        .header p { margin: 0; color: var(--text-sub); font-size: 0.875rem; }
 
         .canvas-container {
             position: relative;
@@ -69,11 +60,7 @@
             margin-bottom: 20px;
         }
 
-        canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
+        canvas { width: 100%; height: 100%; display: block; }
 
         .metrics-grid {
             display: grid;
@@ -98,11 +85,7 @@
             margin-bottom: 4px;
         }
 
-        .metric-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            font-mono: monospace;
-        }
+        .metric-value { font-size: 1.5rem; font-weight: 700; font-family: monospace; }
 
         .status-badge {
             display: inline-block;
@@ -114,24 +97,9 @@
             margin-top: 4px;
         }
 
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .control-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            color: var(--text-sub);
-        }
+        .controls { display: flex; flex-direction: column; gap: 12px; }
+        .control-group { display: flex; flex-direction: column; gap: 6px; }
+        .control-label { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-sub); }
 
         input[type="range"] {
             width: 100%;
@@ -150,18 +118,8 @@
             font-size: 0.8rem;
             color: var(--text-sub);
         }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .legend-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
     </style>
 </head>
 <body>
@@ -178,7 +136,7 @@
 
     <div class="metrics-grid">
         <div class="metric-box">
-            <div class="metric-label">Resonance Index (&mathcal;R;)</div>
+            <div class="metric-label">Resonance Index (R)</div>
             <div class="metric-value" id="resonanceValue">0.0000</div>
         </div>
         <div class="metric-box">
@@ -226,7 +184,6 @@
     const resonanceValue = document.getElementById('resonanceValue');
     const statusBadge = document.getElementById('statusBadge');
 
-    let animationFrame;
     let time = 0;
 
     function resizeCanvas() {
@@ -249,13 +206,11 @@
         offsetVal.textContent = offset.toFixed(1);
         lagVal.textContent = lag.toFixed(2);
 
-        // Calculate Resonance Metric: R = exp(- (abs(offset)*0.2 + abs(lag)*0.5))
         const delta = Math.abs(offset) * 0.15 + Math.abs(lag) * 0.4;
         const resonance = Math.exp(-delta);
 
         resonanceValue.textContent = resonance.toFixed(4);
 
-        // Status Badge Logic
         if (resonance >= 0.8) {
             statusBadge.textContent = "CLEAR SIGNAL";
             statusBadge.style.backgroundColor = "rgba(34, 197, 94, 0.2)";
@@ -273,6 +228,14 @@
             statusBadge.style.border = "1px solid var(--knot-color)";
         }
 
+        // Send updates out to index.html parent frame
+        window.parent.postMessage({
+            type: "RESONANCE_UPDATE",
+            offset: offset,
+            lag: lag,
+            resonance: resonance
+        }, "*");
+
         // Draw Reference Grid Line
         ctx.beginPath();
         ctx.setLineDash([4, 4]);
@@ -282,7 +245,7 @@
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Draw Predicted Wave (Blue) - Base 36.6 Cycle Simulation
+        // Draw Predicted Wave
         ctx.beginPath();
         ctx.lineWidth = 2;
         ctx.strokeStyle = '#38bdf8';
@@ -294,7 +257,7 @@
         }
         ctx.stroke();
 
-        // Draw User Choice Wave (Red)
+        // Draw User Choice Wave
         ctx.beginPath();
         ctx.lineWidth = 2;
         ctx.strokeStyle = '#f43f5e';
@@ -307,11 +270,8 @@
         ctx.stroke();
 
         time += 0.03;
-        animationFrame = requestAnimationFrame(draw);
+        requestAnimationFrame(draw);
     }
-
-    offsetInput.addEventListener('input', () => {});
-    lagInput.addEventListener('input', () => {});
 
     draw();
 </script>
