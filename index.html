@@ -1,31 +1,42 @@
-// Initialize Hermes WebSocket Connection
-const hermes = new WebSocket('ws://localhost:8080');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AROHA Matrix</title>
+</head>
+<body>
 
-hermes.onopen = () => {
-  console.log('[AROHA MATRIX] Connected to Hermes Stream');
-};
+  <!-- Your existing AROHA Matrix HTML elements here -->
 
-hermes.onmessage = (event) => {
-  const data = JSON.parse(event.data);
+  <!-- Live Hermes Bridge -->
+  <script>
+    const hermes = new WebSocket('ws://localhost:8080');
 
-  if (data.adaptation_trigger) {
-    // 1. Map intensity directly to Trajectory Offset Deviation
-    const rawIntensity = data.adaptation_trigger.intensity_scalar; // Value between 0.05 and 0.95
-    
-    // 2. Locate slider elements on the DOM
-    const offsetSlider = document.querySelector('input[type="range"]:nth-of-type(1)');
-    const lagSlider = document.querySelector('input[type="range"]:nth-of-type(2)');
+    hermes.onopen = () => {
+      console.log('[AROHA MATRIX] Connected to Hermes Stream');
+    };
 
-    if (offsetSlider) {
-      offsetSlider.value = rawIntensity;
-      // Trigger native input event so the page updates UI state
-      offsetSlider.dispatchEvent(new Event('input'));
-    }
+    hermes.onmessage = (event) => {
+      const data = JSON.parse(event.data);
 
-    // 3. Map phase offset to Phase Lag slider
-    if (lagSlider && data.resonance) {
-      lagSlider.value = (data.resonance.phase_offset_rad / (2 * Math.PI)).toFixed(2);
-      lagSlider.dispatchEvent(new Event('input'));
-    }
-  }
-};
+      if (data.adaptation_trigger) {
+        const rawIntensity = data.adaptation_trigger.intensity_scalar;
+        
+        const offsetSlider = document.querySelector('input[type="range"]:nth-of-type(1)');
+        const lagSlider = document.querySelector('input[type="range"]:nth-of-type(2)');
+
+        if (offsetSlider) {
+          offsetSlider.value = rawIntensity;
+          offsetSlider.dispatchEvent(new Event('input'));
+        }
+
+        if (lagSlider && data.resonance) {
+          lagSlider.value = (data.resonance.phase_offset_rad / (2 * Math.PI)).toFixed(2);
+          lagSlider.dispatchEvent(new Event('input'));
+        }
+      }
+    };
+  </script>
+</body>
+</html>
