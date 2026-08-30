@@ -66,6 +66,9 @@
             margin-top: 10px;
             display: none;
             font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .card-grid {
@@ -137,7 +140,7 @@
         .alert-knot { color: #ef4444; font-weight: bold; }
 
         .button-group { display: flex; gap: 8px; }
-        .btn-export, .btn-recalibrate, .btn-clear {
+        .btn-export, .btn-recalibrate, .btn-clear, .btn-fix {
             border: none;
             padding: 6px 12px;
             border-radius: 4px;
@@ -152,6 +155,8 @@
         .btn-recalibrate:hover { background: #4ade80; }
         .btn-clear { background: #334155; color: #94a3b8; }
         .btn-clear:hover { background: #475569; color: #f8fafc; }
+        .btn-fix { background: #ef4444; color: #ffffff; }
+        .btn-fix:hover { background: #f87171; }
 
         iframe { 
             width: 100%; 
@@ -171,7 +176,10 @@
         
         <div class="data-stream" id="liveStream">Select a learning module to test resonance trajectory...</div>
         <div class="hint-box" id="hintBox"></div>
-        <div class="alert-banner" id="alertBanner">SYSTEM WARNING: Stability index below 70%. Recalibration recommended!</div>
+        <div class="alert-banner" id="alertBanner">
+            <span>SYSTEM WARNING: Stability below 70%!</span>
+            <button class="btn-fix" onclick="executeAutoRemediation()">Execute Auto-Remediation</button>
+        </div>
 
         <div class="card-grid" id="cardContainer"></div>
     </div>
@@ -295,10 +303,15 @@
         document.getElementById('metricCycles').textContent = sessionHistory.length;
 
         if (stabilityRate < 70) {
-            alertBanner.style.display = 'block';
+            alertBanner.style.display = 'flex';
         } else {
             alertBanner.style.display = 'none';
         }
+    }
+
+    function executeAutoRemediation() {
+        selectModule('Auto-Remediation Sequence', 0.0, 0.0, 'Remediation executed. Channel zeroed to baseline trajectory.');
+        appendToLedger(`<span class="highlight">[REMEDIATION COMPLETE]</span> Automated vector correction applied.`);
     }
 
     function renderStoredLedger() {
