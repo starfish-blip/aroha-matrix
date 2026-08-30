@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AROHA Telemetry & Audio Control</title>
+  <title>AROHA Matrix Framework</title>
   <style>
     :root {
-      --bg-color: #0d1424;
-      --card-bg: #162238;
+      --bg-color: #0b111e;
+      --card-bg: #141e33;
       --accent-blue: #0088ff;
       --text-color: #e0e6ed;
+      --status-green: #00ffcc;
       --mono-font: 'Courier New', Courier, monospace;
     }
 
@@ -25,7 +26,7 @@
 
     .container {
       width: 100%;
-      max-width: 600px;
+      max-width: 640px;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -35,17 +36,18 @@
       background: var(--card-bg);
       border-radius: 8px;
       padding: 20px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
 
     .header-status {
       font-size: 0.9rem;
       font-weight: bold;
       margin-bottom: 12px;
+      line-height: 1.5;
     }
 
     .status-value {
-      color: #00ffcc;
+      color: var(--status-green);
     }
 
     .btn-engage {
@@ -85,15 +87,28 @@
       accent-color: var(--accent-blue);
     }
 
+    .canvas-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+      background: #080d18;
+      border-radius: 6px;
+      padding: 10px;
+    }
+
+    canvas {
+      border-radius: 4px;
+    }
+
     pre {
-      background: #090e1a;
+      background: #080d18;
       padding: 15px;
       border-radius: 6px;
       font-family: var(--mono-font);
       font-size: 0.82rem;
       color: #33bbff;
       overflow-x: auto;
-      margin: 0;
+      margin: 10px 0 0 0;
     }
   </style>
 </head>
@@ -103,29 +118,37 @@
   <div class="card">
     <div class="header-status">
       Amplitude Scalar: <span id="amp-display">0.2555</span><br />
-      State Shift: <span class="status-value">NOMINAL_FLOW</span>
+      State Shift: <span id="state-display" class="status-value">NOMINAL_FLOW</span>
     </div>
 
     <button id="audio-toggle-btn" class="btn-engage">Engage Audio Resonance</button>
 
     <div class="control-group">
       <label for="offset-slider">Trajectory Offset Deviation (Live):</label>
-      <input type="range" id="offset-slider" min="0" max="1" step="0.01" value="0.25" />
+      <input type="range" id="offset-slider" min="0" max="1" step="0.01" value="0.2555" />
     </div>
 
     <div class="control-group">
       <label for="phase-slider">Phase Lag (Temporal Friction):</label>
-      <input type="range" id="phase-slider" min="0" max="1" step="0.01" value="0.50" />
+      <input type="range" id="phase-slider" min="0" max="1" step="0.01" value="0.5000" />
+    </div>
+  </div>
+
+  <div class="card">
+    <strong>Spatial Matrix Vector Visualizer</strong>
+    <div class="canvas-container">
+      <canvas id="vector-canvas" width="200" height="200"></canvas>
     </div>
   </div>
 
   <div class="card">
     <strong>Live Hermes Telemetry Stream</strong>
-    <pre id="telemetry-display">Loading telemetry stream...</pre>
+    <pre id="telemetry-display">Initializing stream...</pre>
   </div>
 </div>
 
-<!-- Loads external audio engine file directly -->
+<!-- Load Core Modules -->
+<script src="aroha-engine.js"></script>
 <script src="audio-synth.js"></script>
 
 <script>
@@ -133,39 +156,59 @@ const toggleBtn = document.getElementById('audio-toggle-btn');
 const offsetSlider = document.getElementById('offset-slider');
 const phaseSlider = document.getElementById('phase-slider');
 const ampDisplay = document.getElementById('amp-display');
+const stateDisplay = document.getElementById('state-display');
 const telemetryDisplay = document.getElementById('telemetry-display');
 
-let sequenceId = 173394;
+const canvas = document.getElementById('vector-canvas');
+const ctx = canvas.getContext('2d');
 
-function generateTelemetryFrame() {
-  const baseFreq = 276.8136;
-  const currentAmp = parseFloat(offsetSlider.value);
-  const phaseOffset = (parseFloat(phaseSlider.value) * (2 * Math.PI)).toFixed(4);
-  
-  ampDisplay.innerText = currentAmp.toFixed(4);
-  sequenceId++;
+function renderVectorCanvas(matrix) {
+  const width = canvas.width;
+  const height = canvas.height;
+  const centerX = width / 2;
+  const centerY = height / 2;
 
-  const payload = {
-    system_id: "AROHA-HERMES-01",
-    timestamp_ns: (Date.now() * 1000000).toString(),
-    sequence_id: sequenceId,
-    resonance: {
-      fundamental_hz: baseFreq,
-      harmonics: [
-        +(baseFreq * 2).toFixed(4),
-        +(baseFreq * 3).toFixed(4),
-        +(baseFreq * 4).toFixed(4)
-      ],
-      amplitude: currentAmp,
-      phase_offset_rad: parseFloat(phaseOffset)
-    },
-    geometry: {
-      spatial_matrix: [-0.2031, 0.9792, 0]
-    }
-  };
+  ctx.clearRect(0, 0, width, height);
 
+  // Draw grid background
+  ctx.strokeStyle = '#1e2d4a';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, 80, 0, 2 * Math.PI);
+  ctx.arc(centerX, centerY, 40, 0, 2 * Math.PI);
+  ctx.moveTo(centerX, 0); ctx.lineTo(centerX, height);
+  ctx.moveTo(0, centerY); ctx.lineTo(width, centerY);
+  ctx.stroke();
+
+  // Draw vector direction line
+  const targetX = centerX + (matrix[0] * 80);
+  const targetY = centerY - (matrix[1] * 80); // Invert Y for canvas space
+
+  ctx.strokeStyle = '#00ffcc';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(centerX, centerY);
+  ctx.lineTo(targetX, targetY);
+  ctx.stroke();
+
+  // Draw vector tip
+  ctx.fillStyle = '#0088ff';
+  ctx.beginPath();
+  ctx.arc(targetX, targetY, 5, 0, 2 * Math.PI);
+  ctx.fill();
+}
+
+function syncPipeline() {
+  if (!window.arohaEngine) return;
+
+  const payload = window.arohaEngine.generateTelemetryFrame(offsetSlider.value, phaseSlider.value);
+
+  ampDisplay.innerText = parseFloat(offsetSlider.value).toFixed(4);
+  stateDisplay.innerText = payload.state_shift;
   telemetryDisplay.innerText = JSON.stringify(payload, null, 2);
-  
+
+  renderVectorCanvas(payload.geometry.spatial_matrix);
+
   if (window.arohaSynth) {
     window.arohaSynth.updateFromTelemetry(payload);
   }
@@ -184,11 +227,11 @@ toggleBtn.addEventListener('click', () => {
   }
 });
 
-offsetSlider.addEventListener('input', generateTelemetryFrame);
-phaseSlider.addEventListener('input', generateTelemetryFrame);
+offsetSlider.addEventListener('input', syncPipeline);
+phaseSlider.addEventListener('input', syncPipeline);
 
-// Run initial telemetry initialization
-generateTelemetryFrame();
+// Initial Loop Trigger
+syncPipeline();
 </script>
 </body>
 </html>
