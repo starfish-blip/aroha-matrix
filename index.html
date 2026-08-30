@@ -1,478 +1,158 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aroha System Workspace</title>
-    <style>
-        body { 
-            margin: 0; 
-            background: #0f172a; 
-            color: #f8fafc; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            padding: 20px; 
-        }
-        .grid { 
-            display: grid; 
-            grid-template-columns: 1fr; 
-            gap: 20px; 
-            max-width: 750px; 
-            margin: 0 auto; 
-        }
-        .panel { 
-            background: #1e293b; 
-            padding: 16px 24px; 
-            border-radius: 8px; 
-            border: 1px solid #334155; 
-        }
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .panel h2 { margin: 0; font-size: 1.2rem; }
-        .panel p { margin-bottom: 6px; color: #94a3b8; font-size: 0.9rem; }
-        
-        .data-stream {
-            font-family: monospace;
-            font-size: 0.85rem;
-            color: #38bdf8;
-            background: #090d16;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #1e293b;
-            margin-top: 10px;
-            word-break: break-all;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aroha System Workspace</title>
+  <style>
+    :root {
+      --resonance-freq: 272Hz;
+      --mesh-opacity: 0.5;
+      --accent-color: #00ffcc;
+    }
 
-        .hint-box {
-            font-size: 0.8rem;
-            color: #eab308;
-            background: rgba(234, 179, 8, 0.1);
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid rgba(234, 179, 8, 0.3);
-            margin-top: 10px;
-            display: none;
-        }
+    body {
+      margin: 0;
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 28px;
+    }
 
-        .alert-banner {
-            font-size: 0.8rem;
-            color: #ef4444;
-            background: rgba(239, 68, 68, 0.15);
-            padding: 10px 12px;
-            border-radius: 6px;
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            margin-top: 10px;
-            display: none;
-            font-weight: bold;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
 
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-top: 16px;
-        }
-        .module-card {
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            padding: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: center;
-        }
-        .module-card:hover {
-            border-color: #38bdf8;
-            transform: translateY(-2px);
-        }
-        .module-card h4 { margin: 0 0 6px 0; font-size: 0.9rem; color: #f8fafc; }
-        .module-card p { margin: 0; font-size: 0.75rem; color: #94a3b8; }
-        .tag {
-            display: inline-block;
-            font-size: 0.65rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: #334155;
-            color: #38bdf8;
-            margin-bottom: 6px;
-            font-weight: bold;
-        }
+    .panel {
+      background: #1e293b;
+      padding: 16px 24px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
 
-        /* Control Sliders Panel */
-        .controls-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 12px;
-        }
-        .control-row {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .control-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
-            color: #94a3b8;
-        }
-        input[type="range"] {
-            width: 100%;
-            accent-color: #38bdf8;
-            background: #090d16;
-            border-radius: 4px;
-            height: 6px;
-            outline: none;
-        }
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
 
-        .analytics-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 12px;
-        }
-        .metric-card {
-            background: #090d16;
-            border: 1px solid #1e293b;
-            border-radius: 6px;
-            padding: 10px;
-            text-align: center;
-        }
-        .metric-card span { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; }
-        .metric-card div { font-size: 1.2rem; font-weight: bold; color: #38bdf8; font-family: monospace; margin-top: 4px; }
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ef4444; /* Default Red (Disconnected) */
+    }
 
-        .ledger-box {
-            background: #090d16;
-            border: 1px solid #1e293b;
-            border-radius: 6px;
-            padding: 10px;
-            max-height: 140px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 0.8rem;
-            color: #94a3b8;
-            margin-top: 10px;
-        }
-        .ledger-entry {
-            padding: 4px 0;
-            border-bottom: 1px solid #1e293b;
-        }
-        .ledger-entry:last-child { border-bottom: none; }
-        .highlight { color: #22c55e; font-weight: bold; }
-        .alert-knot { color: #ef4444; font-weight: bold; }
+    .status-indicator.connected {
+      background: #22c55e; /* Connected Green */
+    }
 
-        .button-group { display: flex; gap: 8px; }
-        .btn-export, .btn-recalibrate, .btn-clear, .btn-fix {
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-        .btn-export { background: #38bdf8; color: #0f172a; }
-        .btn-export:hover { background: #7dd3fc; }
-        .btn-recalibrate { background: #22c55e; color: #0f172a; }
-        .btn-recalibrate:hover { background: #4ade80; }
-        .btn-clear { background: #334155; color: #94a3b8; }
-        .btn-clear:hover { background: #475569; color: #f8fafc; }
-        .btn-fix { background: #ef4444; color: #ffffff; }
-        .btn-fix:hover { background: #f87171; }
+    .telemetry-display {
+      font-family: monospace;
+      background: #090d16;
+      padding: 16px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #38bdf8;
+      max-height: 400px;
+      overflow-y: auto;
+    }
 
-        iframe { 
-            width: 100%; 
-            height: 560px; 
-            border: 1px solid #334155; 
-            border-radius: 12px; 
-            background: #0f172a;
-        }
-    </style>
+    .metric-value {
+      color: var(--accent-color);
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
 
-<div class="grid">
+  <div class="grid">
     <div class="panel">
-        <h2 id="sysName">Loading AROHA Matrix...</h2>
-        <p id="sysDetails" style="margin-top: 6px;">Status: Initializing Core State Schema...</p>
-        
-        <div class="data-stream" id="liveStream">Select a learning module to test resonance trajectory...</div>
-        <div class="hint-box" id="hintBox"></div>
-        <div class="alert-banner" id="alertBanner">
-            <span>SYSTEM WARNING: Stability below 70%!</span>
-            <button class="btn-fix" onclick="executeAutoRemediation()">Execute Auto-Remediation</button>
+      <div class="status-bar">
+        <h2>AROHA Dynamic Adaptation Layer</h2>
+        <div>
+          <span id="connection-status-text">Disconnected</span>
+          <span id="status-dot" class="status-indicator"></span>
         </div>
-
-        <div class="card-grid" id="cardContainer"></div>
-    </div>
-
-    <!-- Dynamic Manual Override Panel -->
-    <div class="panel">
-        <h2>Manual Vector Override</h2>
-        <div class="controls-grid">
-            <div class="control-row">
-                <div class="control-label">
-                    <span>Trajectory Offset Deviation</span>
-                    <span id="sliderOffsetVal" style="font-family: monospace; color: #38bdf8;">0.0</span>
-                </div>
-                <input type="range" id="manualOffset" min="-10" max="10" step="0.1" value="0" oninput="handleSliderChange()">
-            </div>
-            <div class="control-row">
-                <div class="control-label">
-                    <span>Phase Lag (Temporal Friction)</span>
-                    <span id="sliderLagVal" style="font-family: monospace; color: #38bdf8;">0.00</span>
-                </div>
-                <input type="range" id="manualLag" min="-3.14" max="3.14" step="0.05" value="0" oninput="handleSliderChange()">
-            </div>
-        </div>
+      </div>
+      <p>Fundamental Frequency: <span id="freq-val" class="metric-value">--</span></p>
+      <p>Amplitude Scalar: <span id="amp-val" class="metric-value">--</span></p>
+      <p>State Shift: <span id="state-val" class="metric-value">--</span></p>
     </div>
 
     <div class="panel">
-        <h2>Session Telemetry Analytics</h2>
-        <div class="analytics-grid">
-            <div class="metric-card">
-                <span>Avg Offset</span>
-                <div id="metricAvgOffset">0.0</div>
-            </div>
-            <div class="metric-card">
-                <span>Stability Index</span>
-                <div id="metricStability">100%</div>
-            </div>
-            <div class="metric-card">
-                <span>Total Cycles</span>
-                <div id="metricCycles">0</div>
-            </div>
-        </div>
+      <h3>Raw Hermes Telemetry Stream</h3>
+      <div id="telemetry-out" class="telemetry-display">Waiting for wss://stream from Hermes...</div>
     </div>
+  </div>
 
-    <div class="panel">
-        <div class="panel-header">
-            <h2>Execution History Ledger</h2>
-            <div class="button-group">
-                <button class="btn-recalibrate" onclick="recalibrateSystem()">Auto Align</button>
-                <button class="btn-export" onclick="exportLedgerData()">Export Log</button>
-                <button class="btn-clear" onclick="clearHistory()">Clear</button>
-            </div>
-        </div>
-        <div class="ledger-box" id="ledgerHistory"></div>
-    </div>
+  <!-- Internal Scripts & Modules -->
+  <script src="trinity-engine.js"></script>
+  <script src="aroha-engine.js"></script>
 
-    <iframe id="widgetIframe" src="resonance_widget.html"></iframe>
-</div>
+  <!-- Live Hermes Telemetry Client -->
+  <script>
+    (function () {
+      const statusDot = document.getElementById('status-dot');
+      const statusText = document.getElementById('connection-status-text');
+      const telemetryOut = document.getElementById('telemetry-out');
+      const freqVal = document.getElementById('freq-val');
+      const ampVal = document.getElementById('amp-val');
+      const stateVal = document.getElementById('state-val');
 
-<script src="aroha-engine.js"></script>
-<script src="trinity-engine.js"></script>
-<script>
-    let pipeline;
-    let coreSchema = null;
-    let lastOffset = null;
-    let lastLag = null;
-    let sessionHistory = JSON.parse(localStorage.getItem('aroha_history')) || [];
+      // Connect to local Hermes WebSocket Server
+      const socket = new WebSocket('ws://localhost:8080');
 
-    fetch('matrix-core.json')
-        .then(response => response.json())
-        .then(data => {
-            coreSchema = data;
-            document.getElementById('sysName').textContent = data.system_info.name;
-            document.getElementById('sysDetails').textContent = 
-                `Harmonic Target: ${data.system_info.harmonic_target} | Synergy: ${data.system_info.synergy_mechanic} | Overage Threshold: ${data.system_info.overage_threshold}`;
-            
-            if (typeof SystemBridge !== 'undefined') {
-                pipeline = new SystemBridge();
-            }
+      socket.onopen = () => {
+        console.log('[AROHA UI] Connected to Hermes Telemetry Daemon');
+        statusDot.classList.add('connected');
+        statusText.innerText = 'Hermes Live';
+      };
 
-            renderModuleCards(data.learning_modules);
-            renderStoredLedger();
-            updateAnalytics();
-        })
-        .catch(err => console.error("Could not load matrix-core.json:", err));
+      socket.onmessage = (event) => {
+        const telemetry = JSON.parse(event.data);
 
-    function renderModuleCards(modules) {
-        const container = document.getElementById('cardContainer');
-        container.innerHTML = '';
-        modules.forEach(mod => {
-            const card = document.createElement('div');
-            card.className = 'module-card';
-            card.onclick = () => selectModule(mod.title, mod.offset, mod.lag, mod.hint);
-            card.innerHTML = `
-                <span class="tag">CYCLE ${mod.cycle_range}</span>
-                <h4>${mod.title}</h4>
-                <p>${mod.description}</p>
-            `;
-            container.appendChild(card);
-        });
-    }
+        // Update raw telemetry dump
+        telemetryOut.innerText = JSON.stringify(telemetry, null, 2);
 
-    function appendToLedger(text, logObj) {
-        const ledger = document.getElementById('ledgerHistory');
-        const time = new Date().toLocaleTimeString();
-        const entry = document.createElement('div');
-        entry.className = 'ledger-entry';
-        entry.innerHTML = `<span class="highlight">[${time}]</span> ${text}`;
-        ledger.prepend(entry);
-
-        if (logObj) {
-            sessionHistory.push({ time, ...logObj });
-            localStorage.setItem('aroha_history', JSON.stringify(sessionHistory));
-            updateAnalytics();
-        }
-    }
-
-    function updateAnalytics() {
-        const alertBanner = document.getElementById('alertBanner');
-        if (sessionHistory.length === 0) {
-            document.getElementById('metricAvgOffset').textContent = '0.0';
-            document.getElementById('metricStability').textContent = '100%';
-            document.getElementById('metricCycles').textContent = '0';
-            alertBanner.style.display = 'none';
-            return;
+        // Extract metrics directly to UI elements
+        if (telemetry.resonance) {
+          freqVal.innerText = `${telemetry.resonance.fundamental_hz} Hz`;
+          ampVal.innerText = telemetry.resonance.amplitude;
+          
+          // Dynamically adjust CSS root variables
+          document.documentElement.style.setProperty('--resonance-freq', `${telemetry.resonance.fundamental_hz}Hz`);
+          document.documentElement.style.setProperty('--mesh-opacity', telemetry.resonance.amplitude);
         }
 
-        let totalOffset = 0;
-        let highFrictionCount = 0;
-
-        sessionHistory.forEach(item => {
-            totalOffset += Math.abs(item.offset || 0);
-            if (item.offset > 3.0 || item.lag > 0.8) {
-                highFrictionCount++;
-            }
-        });
-
-        const avgOffset = (totalOffset / sessionHistory.length).toFixed(1);
-        const stabilityRate = Math.max(0, Math.round(((sessionHistory.length - highFrictionCount) / sessionHistory.length) * 100));
-
-        document.getElementById('metricAvgOffset').textContent = avgOffset;
-        document.getElementById('metricStability').textContent = `${stabilityRate}%`;
-        document.getElementById('metricCycles').textContent = sessionHistory.length;
-
-        if (stabilityRate < 70) {
-            alertBanner.style.display = 'flex';
-        } else {
-            alertBanner.style.display = 'none';
-        }
-    }
-
-    function handleSliderChange() {
-        const offset = parseFloat(document.getElementById('manualOffset').value);
-        const lag = parseFloat(document.getElementById('manualLag').value);
-        
-        document.getElementById('sliderOffsetVal').textContent = offset.toFixed(1);
-        document.getElementById('sliderLagVal').textContent = lag.toFixed(2);
-
-        selectModule('Manual Override Tuning', offset, lag, 'Manual input vector applied to active stream.');
-    }
-
-    function executeAutoRemediation() {
-        document.getElementById('manualOffset').value = 0;
-        document.getElementById('manualLag').value = 0;
-        document.getElementById('sliderOffsetVal').textContent = '0.0';
-        document.getElementById('sliderLagVal').textContent = '0.00';
-
-        selectModule('Auto-Remediation Sequence', 0.0, 0.0, 'Remediation executed. Channel zeroed to baseline trajectory.');
-        appendToLedger(`<span class="highlight">[REMEDIATION COMPLETE]</span> Automated vector correction applied.`);
-    }
-
-    function renderStoredLedger() {
-        const ledger = document.getElementById('ledgerHistory');
-        ledger.innerHTML = '';
-        if (sessionHistory.length === 0) {
-            ledger.innerHTML = '<div class="ledger-entry">System ready. Awaiting initial module selection...</div>';
-            return;
-        }
-        sessionHistory.slice().reverse().forEach(item => {
-            const entry = document.createElement('div');
-            entry.className = 'ledger-entry';
-            entry.innerHTML = `<span class="highlight">[${item.time}]</span> Executed ${item.module} -> Offset: ${item.offset}, Lag: ${item.lag} | Synergy: ${item.synergy}`;
-            ledger.appendChild(entry);
-        });
-    }
-
-    function selectModule(moduleName, offset, lag, hintText) {
-        if (!pipeline) return;
-
-        // Update slider positions to reflect module parameters
-        document.getElementById('manualOffset').value = offset;
-        document.getElementById('manualLag').value = lag;
-        document.getElementById('sliderOffsetVal').textContent = parseFloat(offset).toFixed(1);
-        document.getElementById('sliderLagVal').textContent = parseFloat(lag).toFixed(2);
-
-        const output = pipeline.executeCycle(
-            `Selected Module: [${moduleName}]`,
-            `Trajectory Offset: ${offset}, Phase Lag: ${lag}`
-        );
-
-        const streamBox = document.getElementById('liveStream');
-        streamBox.textContent = `Active Module: ${moduleName} | Emergent Payload: ${output.emergentResult.synthesisPayload} | Synergy: ${output.emergentResult.synergyFactor}`;
-
-        const hintBox = document.getElementById('hintBox');
-        if (hintText) {
-            hintBox.textContent = `Diagnostic Prompt: ${hintText}`;
-            hintBox.style.display = 'block';
+        if (telemetry.adaptation_trigger) {
+          stateVal.innerText = telemetry.adaptation_trigger.state_shift;
         }
 
-        const iframeWindow = document.getElementById('widgetIframe').contentWindow;
-        iframeWindow.postMessage({
-            type: "SET_MODULE_PARAMS",
-            offset: offset,
-            lag: lag
-        }, "*");
-
-        appendToLedger(`Executed ${moduleName} -> Offset: ${offset}, Lag: ${lag} | Synergy: ${output.emergentResult.synergyFactor}`, {
-            module: moduleName, offset, lag, synergy: output.emergentResult.synergyFactor
-        });
-    }
-
-    function recalibrateSystem() {
-        document.getElementById('manualOffset').value = 0;
-        document.getElementById('manualLag').value = 0;
-        document.getElementById('sliderOffsetVal').textContent = '0.0';
-        document.getElementById('sliderLagVal').textContent = '0.00';
-
-        selectModule('Recalibration Vector (Zero-Point)', 0.0, 0.0, 'System realigned to baseline equilibrium.');
-        appendToLedger(`<span class="alert-knot">[RECALIBRATION]</span> Channel realigned to target baseline (36.6 Cycle).`);
-    }
-
-    function clearHistory() {
-        sessionHistory = [];
-        localStorage.removeItem('aroha_history');
-        renderStoredLedger();
-        updateAnalytics();
-    }
-
-    function exportLedgerData() {
-        if (sessionHistory.length === 0) {
-            alert("No session history recorded yet. Click a module card first!");
-            return;
+        // Pass frame to AROHA engine if defined
+        if (typeof updateArohaMesh === 'function') {
+          updateArohaMesh(telemetry);
         }
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sessionHistory, null, 2));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `aroha_execution_log_${Date.now()}.json`);
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-    }
+      };
 
-    window.addEventListener("message", (event) => {
-        if (event.data && event.data.type === "RESONANCE_UPDATE" && pipeline) {
-            if (event.data.offset !== lastOffset || event.data.lag !== lastLag) {
-                lastOffset = event.data.offset;
-                lastLag = event.data.lag;
+      socket.onclose = () => {
+        console.log('[AROHA UI] Disconnected from Hermes Telemetry Daemon');
+        statusDot.classList.remove('connected');
+        statusText.innerText = 'Disconnected';
+      };
 
-                const output = pipeline.executeCycle(
-                    `Phase Vector: ${coreSchema ? coreSchema.system_info.harmonic_target : 36.6}`,
-                    `Offset: ${event.data.offset}, Lag: ${event.data.lag}`
-                );
-                
-                const streamBox = document.getElementById('liveStream');
-                streamBox.textContent = `Emergent State Output: ${output.emergentResult.synthesisPayload} | Synergy: ${output.emergentResult.synergyFactor}`;
-            }
-        }
-    });
-</script>
+      socket.onerror = (err) => {
+        console.error('[AROHA UI] Socket Error:', err);
+      };
+    })();
+  </script>
 </body>
 </html>
