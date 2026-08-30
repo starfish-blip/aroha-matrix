@@ -66,7 +66,6 @@
             margin-top: 10px;
             display: none;
             font-weight: bold;
-            display: flex;
             justify-content: space-between;
             align-items: center;
         }
@@ -101,6 +100,33 @@
             color: #38bdf8;
             margin-bottom: 6px;
             font-weight: bold;
+        }
+
+        /* Control Sliders Panel */
+        .controls-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .control-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+        input[type="range"] {
+            width: 100%;
+            accent-color: #38bdf8;
+            background: #090d16;
+            border-radius: 4px;
+            height: 6px;
+            outline: none;
         }
 
         .analytics-grid {
@@ -182,6 +208,27 @@
         </div>
 
         <div class="card-grid" id="cardContainer"></div>
+    </div>
+
+    <!-- Dynamic Manual Override Panel -->
+    <div class="panel">
+        <h2>Manual Vector Override</h2>
+        <div class="controls-grid">
+            <div class="control-row">
+                <div class="control-label">
+                    <span>Trajectory Offset Deviation</span>
+                    <span id="sliderOffsetVal" style="font-family: monospace; color: #38bdf8;">0.0</span>
+                </div>
+                <input type="range" id="manualOffset" min="-10" max="10" step="0.1" value="0" oninput="handleSliderChange()">
+            </div>
+            <div class="control-row">
+                <div class="control-label">
+                    <span>Phase Lag (Temporal Friction)</span>
+                    <span id="sliderLagVal" style="font-family: monospace; color: #38bdf8;">0.00</span>
+                </div>
+                <input type="range" id="manualLag" min="-3.14" max="3.14" step="0.05" value="0" oninput="handleSliderChange()">
+            </div>
+        </div>
     </div>
 
     <div class="panel">
@@ -309,7 +356,22 @@
         }
     }
 
+    function handleSliderChange() {
+        const offset = parseFloat(document.getElementById('manualOffset').value);
+        const lag = parseFloat(document.getElementById('manualLag').value);
+        
+        document.getElementById('sliderOffsetVal').textContent = offset.toFixed(1);
+        document.getElementById('sliderLagVal').textContent = lag.toFixed(2);
+
+        selectModule('Manual Override Tuning', offset, lag, 'Manual input vector applied to active stream.');
+    }
+
     function executeAutoRemediation() {
+        document.getElementById('manualOffset').value = 0;
+        document.getElementById('manualLag').value = 0;
+        document.getElementById('sliderOffsetVal').textContent = '0.0';
+        document.getElementById('sliderLagVal').textContent = '0.00';
+
         selectModule('Auto-Remediation Sequence', 0.0, 0.0, 'Remediation executed. Channel zeroed to baseline trajectory.');
         appendToLedger(`<span class="highlight">[REMEDIATION COMPLETE]</span> Automated vector correction applied.`);
     }
@@ -331,6 +393,12 @@
 
     function selectModule(moduleName, offset, lag, hintText) {
         if (!pipeline) return;
+
+        // Update slider positions to reflect module parameters
+        document.getElementById('manualOffset').value = offset;
+        document.getElementById('manualLag').value = lag;
+        document.getElementById('sliderOffsetVal').textContent = parseFloat(offset).toFixed(1);
+        document.getElementById('sliderLagVal').textContent = parseFloat(lag).toFixed(2);
 
         const output = pipeline.executeCycle(
             `Selected Module: [${moduleName}]`,
@@ -359,6 +427,11 @@
     }
 
     function recalibrateSystem() {
+        document.getElementById('manualOffset').value = 0;
+        document.getElementById('manualLag').value = 0;
+        document.getElementById('sliderOffsetVal').textContent = '0.0';
+        document.getElementById('sliderLagVal').textContent = '0.00';
+
         selectModule('Recalibration Vector (Zero-Point)', 0.0, 0.0, 'System realigned to baseline equilibrium.');
         appendToLedger(`<span class="alert-knot">[RECALIBRATION]</span> Channel realigned to target baseline (36.6 Cycle).`);
     }
