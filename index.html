@@ -76,7 +76,7 @@
             font-weight: bold;
         }
 
-        /* Ledger & Button Styles */
+        /* Ledger & Control Button Styles */
         .ledger-box {
             background: #090d16;
             border: 1px solid #1e293b;
@@ -95,6 +95,12 @@
         }
         .ledger-entry:last-child { border-bottom: none; }
         .highlight { color: #22c55e; font-weight: bold; }
+        .alert-knot { color: #ef4444; font-weight: bold; }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+        }
 
         .btn-export {
             background: #38bdf8;
@@ -107,9 +113,20 @@
             cursor: pointer;
             transition: background 0.2s ease;
         }
-        .btn-export:hover {
-            background: #7dd3fc;
+        .btn-export:hover { background: #7dd3fc; }
+
+        .btn-recalibrate {
+            background: #22c55e;
+            color: #0f172a;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s ease;
         }
+        .btn-recalibrate:hover { background: #4ade80; }
 
         iframe { 
             width: 100%; 
@@ -152,7 +169,10 @@
     <div class="panel">
         <div class="panel-header">
             <h2>Execution History Ledger</h2>
-            <button class="btn-export" onclick="exportLedgerData()">Export Log</button>
+            <div class="button-group">
+                <button class="btn-recalibrate" onclick="recalibrateSystem()">Auto Align</button>
+                <button class="btn-export" onclick="exportLedgerData()">Export Log</button>
+            </div>
         </div>
         <div class="ledger-box" id="ledgerHistory">
             <div class="ledger-entry">System ready. Awaiting initial module selection...</div>
@@ -218,13 +238,18 @@
             lag: lag
         }, "*");
 
-        // Log to on-screen history ledger and array
         appendToLedger(`Executed ${moduleName} -> Offset: ${offset}, Lag: ${lag} | Synergy: ${output.emergentResult.synergyFactor}`, {
             module: moduleName,
             offset: offset,
             lag: lag,
             synergy: output.emergentResult.synergyFactor
         });
+    }
+
+    // Force recalibration back to zero offset / zero lag trajectory
+    function recalibrateSystem() {
+        selectModule('Recalibration Vector (Zero-Point)', 0.0, 0.0);
+        appendToLedger(`<span class="alert-knot">[RECALIBRATION]</span> Channel realigned to target baseline (36.6 Cycle).`);
     }
 
     function exportLedgerData() {
