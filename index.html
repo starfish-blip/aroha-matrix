@@ -1,1 +1,420 @@
-github.com/starfish-blip/aroha-matrix/blob/main/index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AROHA Matrix Framework</title>
+  <style>
+    :root {
+      --bg-color: #0b111e;
+      --card-bg: #141e33;
+      --accent-blue: #0088ff;
+      --text-color: #e0e6ed;
+      --status-green: #00ffcc;
+      --status-gold: #ffcc00;
+      --mono-font: 'Courier New', Courier, monospace;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 640px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .header-status {
+      font-size: 0.9rem;
+      font-weight: bold;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .status-value {
+      color: var(--status-green);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .btn {
+      flex: 1;
+      background: var(--accent-blue);
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: background 0.2s ease;
+    }
+
+    .btn:hover {
+      background: #0066cc;
+    }
+
+    .btn.active {
+      background: #e63946;
+    }
+
+    .btn-pulse {
+      background: #2a9d8f;
+    }
+
+    .btn-pulse.active {
+      background: var(--status-gold);
+      color: #000;
+    }
+
+    .control-group {
+      margin-top: 12px;
+    }
+
+    .control-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input[type="range"], input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      accent-color: var(--accent-blue);
+    }
+
+    input[type="text"] {
+      background: #080d18;
+      border: 1px solid #1e2d4a;
+      color: #fff;
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .canvas-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+      background: #080d18;
+      border-radius: 6px;
+      padding: 10px;
+    }
+
+    canvas {
+      border-radius: 4px;
+    }
+
+    .feed-item {
+      background: #080d18;
+      border-left: 3px solid var(--accent-blue);
+      border-radius: 4px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+
+    .feed-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #88a0c0;
+      margin-bottom: 4px;
+    }
+
+    .feed-title {
+      font-weight: bold;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .feed-summary {
+      font-size: 0.85rem;
+      color: #b0c4de;
+    }
+
+    pre {
+      background: #080d18;
+      padding: 12px;
+      border-radius: 6px;
+      font-family: var(--mono-font);
+      font-size: 0.82rem;
+      color: #33bbff;
+      overflow-x: auto;
+      margin: 10px 0 0 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Telemetry & Controls Card -->
+  <div class="card">
+    <div class="header-status">
+      Amplitude Scalar: <span id="amp-display">0.2555</span> | Step: <span id="step-display" class="status-value">Manual</span><br />
+      State Shift: <span id="state-display" class="status-value">NOMINAL_FLOW</span>
+    </div>
+
+    <div class="button-group">
+      <button id="audio-toggle-btn" class="btn">Engage Audio</button>
+      <button id="pulse-toggle-btn" class="btn btn-pulse">Start 13-Step Pulse</button>
+    </div>
+
+    <div class="control-group">
+      <label for="offset-slider">Trajectory Offset Deviation (Live):</label>
+      <input type="range" id="offset-slider" min="0" max="1" step="0.01" value="0.2555" />
+    </div>
+
+    <div class="control-group">
+      <label for="phase-slider">Phase Lag (Temporal Friction):</label>
+      <input type="range" id="phase-slider" min="0" max="1" step="0.01" value="0.5000" />
+    </div>
+  </div>
+
+  <!-- Spatial Matrix Vector Visualizer -->
+  <div class="card">
+    <strong>Spatial Matrix Vector Visualizer (13-Step Target Grid)</strong>
+    <div class="canvas-container">
+      <canvas id="vector-canvas" width="220" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- Mobile Node Submitter Card -->
+  <div class="card">
+    <strong>Inject Custom Signal Node</strong>
+    <div class="control-group" style="margin-top: 8px;">
+      <input type="text" id="node-title" placeholder="Node Title (e.g. Resonant Frequency Harmonics)" />
+      <div class="form-row">
+        <input type="text" id="node-category" placeholder="Category" style="flex: 1;" />
+        <input type="text" id="node-vector" placeholder="Vector X,Y (e.g. -0.2, 0.9)" style="flex: 1;" />
+      </div>
+      <input type="text" id="node-summary" placeholder="Summary of intent or factual mechanics..." />
+      <button id="submit-node-btn" class="btn" style="width: 100%; margin-top: 4px;">Submit Node to Matrix</button>
+    </div>
+  </div>
+
+  <!-- Intent Feed Card -->
+  <div class="card">
+    <strong>Vector-Aligned Intent Feed</strong>
+    <div id="feed-container">Initialising portal stream...</div>
+  </div>
+
+  <!-- Telemetry Output Card -->
+  <div class="card">
+    <strong>Live Hermes Telemetry Stream</strong>
+    <pre id="telemetry-display">Initialising stream...</pre>
+  </div>
+</div>
+
+<!-- Load Core Modules -->
+<script src="aroha-engine.js"></script>
+<script src="audio-synth.js"></script>
+<script src="feed-engine.js"></script>
+
+<script>
+const toggleBtn = document.getElementById('audio-toggle-btn');
+const pulseBtn = document.getElementById('pulse-toggle-btn');
+const offsetSlider = document.getElementById('offset-slider');
+const phaseSlider = document.getElementById('phase-slider');
+const ampDisplay = document.getElementById('amp-display');
+const stepDisplay = document.getElementById('step-display');
+const stateDisplay = document.getElementById('state-display');
+const telemetryDisplay = document.getElementById('telemetry-display');
+const feedContainer = document.getElementById('feed-container');
+
+const canvas = document.getElementById('vector-canvas');
+const ctx = canvas.getContext('2d');
+
+let pulseInterval = null;
+let currentPulseStep = 0;
+const totalSteps = 13;
+
+function renderVectorCanvas(matrix) {
+  const width = canvas.width;
+  const height = canvas.height;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const radius = 85;
+
+  ctx.clearRect(0, 0, width, height);
+
+  // Background Grid & Rings
+  ctx.strokeStyle = '#1e2d4a';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+  ctx.arc(centerX, centerY, radius * 0.5, 0, 2 * Math.PI);
+  ctx.moveTo(centerX, 0); ctx.lineTo(centerX, height);
+  ctx.moveTo(0, centerY); ctx.lineTo(width, centerY);
+  ctx.stroke();
+
+  // Draw 13 Discrete Perimeter Target Nodes
+  for (let i = 0; i < totalSteps; i++) {
+    const angle = (i / totalSteps) * 2 * Math.PI - Math.PI / 2;
+    const nx = centerX + radius * Math.cos(angle);
+    const ny = centerY + radius * Math.sin(angle);
+
+    ctx.fillStyle = (i === currentPulseStep && pulseInterval) ? '#ffcc00' : '#1e3d6e';
+    ctx.beginPath();
+    ctx.arc(nx, ny, 4, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+
+  // Active Trajectory Vector Line
+  const targetX = centerX + (matrix[0] * radius);
+  const targetY = centerY - (matrix[1] * radius);
+
+  ctx.strokeStyle = '#00ffcc';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(centerX, centerY);
+  ctx.lineTo(targetX, targetY);
+  ctx.stroke();
+
+  // Vector Endpoint
+  ctx.fillStyle = '#0088ff';
+  ctx.beginPath();
+  ctx.arc(targetX, targetY, 6, 0, 2 * Math.PI);
+  ctx.fill();
+}
+
+function updateFeedUI(vector) {
+  if (!window.arohaFeed) return;
+  const items = window.arohaFeed.getRankedFeed(vector);
+
+  feedContainer.innerHTML = items.map(item => `
+    <div class="feed-item" style="border-left-color: ${item.relevance > 70 ? '#00ffcc' : '#0088ff'}">
+      <div class="feed-header">
+        <span>${item.category} | ${item.id}</span>
+        <span style="color: #00ffcc; font-weight: bold;">${item.relevance}% Match</span>
+      </div>
+      <div class="feed-title">${item.title}</div>
+      <div class="feed-summary">${item.summary}</div>
+    </div>
+  `).join('');
+}
+
+function syncPipeline() {
+  if (!window.arohaEngine) return;
+
+  const payload = window.arohaEngine.generateTelemetryFrame(offsetSlider.value, phaseSlider.value);
+
+  ampDisplay.innerText = parseFloat(offsetSlider.value).toFixed(4);
+  stateDisplay.innerText = payload.state_shift;
+  telemetryDisplay.innerText = JSON.stringify(payload, null, 2);
+
+  renderVectorCanvas(payload.geometry.spatial_matrix);
+  updateFeedUI(payload.geometry.spatial_matrix);
+
+  if (window.arohaSynth) {
+    window.arohaSynth.updateFromTelemetry(payload);
+  }
+}
+
+// 13-Step Automated Pulse Control
+pulseBtn.addEventListener('click', () => {
+  if (pulseInterval) {
+    clearInterval(pulseInterval);
+    pulseInterval = null;
+    pulseBtn.innerText = 'Start 13-Step Pulse';
+    pulseBtn.classList.remove('active');
+    stepDisplay.innerText = 'Manual';
+  } else {
+    pulseBtn.innerText = 'Stop 13-Step Pulse';
+    pulseBtn.classList.add('active');
+    pulseInterval = setInterval(() => {
+      currentPulseStep = (currentPulseStep + 1) % totalSteps;
+      const stepOffset = (currentPulseStep / (totalSteps - 1)).toFixed(4);
+      offsetSlider.value = stepOffset;
+      stepDisplay.innerText = `S_${currentPulseStep} (${stepOffset})`;
+      syncPipeline();
+    }, 1000);
+  }
+});
+
+// Custom Node Submission
+document.getElementById('submit-node-btn').addEventListener('click', () => {
+  const title = document.getElementById('node-title').value.trim();
+  const category = document.getElementById('node-category').value.trim() || 'Custom';
+  const summary = document.getElementById('node-summary').value.trim() || 'User submitted intent node.';
+  const vecStr = document.getElementById('node-vector').value.trim();
+
+  if (!title) {
+    alert('Please provide a Node Title.');
+    return;
+  }
+
+  let coords = [-0.2000, 0.9500, 0.0000];
+  if (vecStr) {
+    const parts = vecStr.split(',').map(n => parseFloat(n.trim()));
+    if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      coords = [parts[0], parts[1], 0.0000];
+    }
+  }
+
+  if (window.arohaFeed) {
+    const newId = `NODE-0${window.arohaFeed.signalNodes.length + 1}`;
+    window.arohaFeed.signalNodes.push({
+      id: newId,
+      title: title,
+      category: category,
+      vector: coords,
+      summary: summary
+    });
+
+    document.getElementById('node-title').value = '';
+    document.getElementById('node-category').value = '';
+    document.getElementById('node-summary').value = '';
+    document.getElementById('node-vector').value = '';
+
+    syncPipeline();
+  }
+});
+
+// Audio Toggle Event
+toggleBtn.addEventListener('click', () => {
+  if (window.arohaSynth && window.arohaSynth.isPlaying) {
+    window.arohaSynth.stop();
+    toggleBtn.innerText = 'Engage Audio';
+    toggleBtn.classList.remove('active');
+  } else if (window.arohaSynth) {
+    window.arohaSynth.start();
+    toggleBtn.innerText = 'Mute Audio';
+    toggleBtn.classList.add('active');
+  }
+});
+
+offsetSlider.addEventListener('input', syncPipeline);
+phaseSlider.addEventListener('input', syncPipeline);
+
+// Initial Execution
+syncPipeline();
+</script>
+</body>
+</html>
