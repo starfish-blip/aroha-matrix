@@ -1,158 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aroha System Workspace</title>
-  <style>
-    :root {
-      --resonance-freq: 272Hz;
-      --mesh-opacity: 0.5;
-      --accent-color: #00ffcc;
+// Initialize Hermes WebSocket Connection
+const hermes = new WebSocket('ws://localhost:8080');
+
+hermes.onopen = () => {
+  console.log('[AROHA MATRIX] Connected to Hermes Stream');
+};
+
+hermes.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+
+  if (data.adaptation_trigger) {
+    // 1. Map intensity directly to Trajectory Offset Deviation
+    const rawIntensity = data.adaptation_trigger.intensity_scalar; // Value between 0.05 and 0.95
+    
+    // 2. Locate slider elements on the DOM
+    const offsetSlider = document.querySelector('input[type="range"]:nth-of-type(1)');
+    const lagSlider = document.querySelector('input[type="range"]:nth-of-type(2)');
+
+    if (offsetSlider) {
+      offsetSlider.value = rawIntensity;
+      // Trigger native input event so the page updates UI state
+      offsetSlider.dispatchEvent(new Event('input'));
     }
 
-    body {
-      margin: 0;
-      background: #0f172a;
-      color: #f8fafc;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding: 28px;
+    // 3. Map phase offset to Phase Lag slider
+    if (lagSlider && data.resonance) {
+      lagSlider.value = (data.resonance.phase_offset_rad / (2 * Math.PI)).toFixed(2);
+      lagSlider.dispatchEvent(new Event('input'));
     }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 20px;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    .panel {
-      background: #1e293b;
-      padding: 16px 24px;
-      border-radius: 8px;
-      border: 1px solid #334155;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .status-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .status-indicator {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #ef4444; /* Default Red (Disconnected) */
-    }
-
-    .status-indicator.connected {
-      background: #22c55e; /* Connected Green */
-    }
-
-    .telemetry-display {
-      font-family: monospace;
-      background: #090d16;
-      padding: 16px;
-      border-radius: 6px;
-      white-space: pre-wrap;
-      word-break: break-all;
-      color: #38bdf8;
-      max-height: 400px;
-      overflow-y: auto;
-    }
-
-    .metric-value {
-      color: var(--accent-color);
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="grid">
-    <div class="panel">
-      <div class="status-bar">
-        <h2>AROHA Dynamic Adaptation Layer</h2>
-        <div>
-          <span id="connection-status-text">Disconnected</span>
-          <span id="status-dot" class="status-indicator"></span>
-        </div>
-      </div>
-      <p>Fundamental Frequency: <span id="freq-val" class="metric-value">--</span></p>
-      <p>Amplitude Scalar: <span id="amp-val" class="metric-value">--</span></p>
-      <p>State Shift: <span id="state-val" class="metric-value">--</span></p>
-    </div>
-
-    <div class="panel">
-      <h3>Raw Hermes Telemetry Stream</h3>
-      <div id="telemetry-out" class="telemetry-display">Waiting for wss://stream from Hermes...</div>
-    </div>
-  </div>
-
-  <!-- Internal Scripts & Modules -->
-  <script src="trinity-engine.js"></script>
-  <script src="aroha-engine.js"></script>
-
-  <!-- Live Hermes Telemetry Client -->
-  <script>
-    (function () {
-      const statusDot = document.getElementById('status-dot');
-      const statusText = document.getElementById('connection-status-text');
-      const telemetryOut = document.getElementById('telemetry-out');
-      const freqVal = document.getElementById('freq-val');
-      const ampVal = document.getElementById('amp-val');
-      const stateVal = document.getElementById('state-val');
-
-      // Connect to local Hermes WebSocket Server
-      const socket = new WebSocket('ws://localhost:8080');
-
-      socket.onopen = () => {
-        console.log('[AROHA UI] Connected to Hermes Telemetry Daemon');
-        statusDot.classList.add('connected');
-        statusText.innerText = 'Hermes Live';
-      };
-
-      socket.onmessage = (event) => {
-        const telemetry = JSON.parse(event.data);
-
-        // Update raw telemetry dump
-        telemetryOut.innerText = JSON.stringify(telemetry, null, 2);
-
-        // Extract metrics directly to UI elements
-        if (telemetry.resonance) {
-          freqVal.innerText = `${telemetry.resonance.fundamental_hz} Hz`;
-          ampVal.innerText = telemetry.resonance.amplitude;
-          
-          // Dynamically adjust CSS root variables
-          document.documentElement.style.setProperty('--resonance-freq', `${telemetry.resonance.fundamental_hz}Hz`);
-          document.documentElement.style.setProperty('--mesh-opacity', telemetry.resonance.amplitude);
-        }
-
-        if (telemetry.adaptation_trigger) {
-          stateVal.innerText = telemetry.adaptation_trigger.state_shift;
-        }
-
-        // Pass frame to AROHA engine if defined
-        if (typeof updateArohaMesh === 'function') {
-          updateArohaMesh(telemetry);
-        }
-      };
-
-      socket.onclose = () => {
-        console.log('[AROHA UI] Disconnected from Hermes Telemetry Daemon');
-        statusDot.classList.remove('connected');
-        statusText.innerText = 'Disconnected';
-      };
-
-      socket.onerror = (err) => {
-        console.error('[AROHA UI] Socket Error:', err);
-      };
-    })();
-  </script>
-</body>
-</html>
+  }
+};
