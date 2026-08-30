@@ -1,53 +1,46 @@
 {
   "system_info": {
     "name": "AROHA Matrix Core",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "harmonic_target": 36.6,
     "synergy_mechanic": "1+1=3",
     "overage_threshold": 0.6
   },
-  "cycle_architecture": {
-    "phase_1": {
-      "name": "Origin & Baseline (Displacement)",
-      "range": [1, 12],
-      "focus": "Tension and initial state logging (t_-1)"
-    },
-    "phase_2": {
-      "name": "Integration & Equilibrium",
-      "range": [13, 24],
-      "focus": "Channel alignment and friction discovery"
-    },
-    "phase_3": {
-      "name": "Emergent Overshoot (Synthesis)",
-      "range": [25, 36],
-      "focus": "Negative space filtering and harmonic completion"
-    },
-    "overage_zone": {
-      "value": 0.6,
-      "focus": "Inertia lock and automated momentum commitment"
-    }
-  },
-  "resonance_thresholds": {
-    "clear_signal": {
-      "min_score": 0.80,
-      "action": "Maintain trajectory, log baseline"
-    },
-    "harmonic_friction": {
-      "min_score": 0.45,
-      "action": "Recalibrate predictive offset"
-    },
-    "knot_detected": {
-      "min_score": 0.00,
-      "action": "Trigger negative-space elimination and diagnostic isolate"
-    }
-  },
-  "state_log": [
+  "learning_modules": [
     {
-      "node_id": "init_001",
-      "timestamp_registered": 1788090000,
-      "payload": "Baseline System Initialization",
-      "resonance_index": 1.0000,
-      "status": "CLEAR_SIGNAL"
+      "id": "mod_01",
+      "cycle_range": "1-12",
+      "phase": "Phase 1: Baseline Pull",
+      "title": "Displacement & Origin",
+      "description": "Log initial state parameters, isolate structural tension, and define baseline metrics.",
+      "offset": 0.0,
+      "lag": 0.0,
+      "hint": "Baseline is optimal. Maintain current trajectory to establish clear signal reference."
+    },
+    {
+      "id": "mod_02",
+      "cycle_range": "13-24",
+      "phase": "Phase 2: Equilibrium",
+      "title": "Integration & Channel State",
+      "description": "Map friction points, analyze temporal lag, and stabilize system inputs.",
+      "offset": 2.5,
+      "lag": 0.4,
+      "hint": "Friction detected. Adjust temporal pace to align user input with predicted vector."
+    },
+    {
+      "id": "mod_03",
+      "cycle_range": "25-36.6",
+      "phase": "Phase 3: Emergent Synthesis",
+      "title": "Overage & 1+1=3 Emergence",
+      "description": "Execute overshoot trajectory, cross 0.6 threshold, and unlock emergent payload.",
+      "offset": 6.0,
+      "lag": 1.2,
+      "hint": "Knot state reached! Execute Auto Align to re-establish zero-point calibration."
     }
-  ]
+  ],
+  "resonance_thresholds": {
+    "clear_signal": { "min_score": 0.80, "action": "Maintain trajectory, log baseline" },
+    "harmonic_friction": { "min_score": 0.45, "action": "Recalibrate predictive offset" },
+    "knot_detected": { "min_score": 0.00, "action": "Trigger negative-space elimination and diagnostic isolate" }
+  }
 }
