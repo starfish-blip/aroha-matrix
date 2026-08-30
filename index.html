@@ -66,8 +66,10 @@
 <script>
     let pipeline;
     let coreSchema = null;
+    let lastOffset = null;
+    let lastLag = null;
 
-    // Load static core parameters from matrix-core.json
+    // Load core parameters from matrix-core.json
     fetch('matrix-core.json')
         .then(response => response.json())
         .then(data => {
@@ -82,17 +84,23 @@
         })
         .catch(err => console.error("Could not load matrix-core.json:", err));
 
-    // Listen to real-time events from the resonance iframe
+    // Throttled event listener to prevent browser freezes
     window.addEventListener("message", (event) => {
         if (event.data && event.data.type === "RESONANCE_UPDATE" && pipeline) {
-            const output = pipeline.executeCycle(
-                `Phase Vector: ${coreSchema ? coreSchema.system_info.harmonic_target : 36.6}`,
-                `Offset: ${event.data.offset}, Lag: ${event.data.lag}`
-            );
-            
-            // Display live emergent calculation directly on screen
-            const streamBox = document.getElementById('liveStream');
-            streamBox.textContent = `Emergent State Output: ${output.emergentResult.synthesisPayload} | Synergy: ${output.emergentResult.synergyFactor}`;
+            // Only execute if values actually changed
+            if (event.data.offset !== lastOffset || event.data.lag !== lastLag) {
+                lastOffset = event.data.offset;
+                lastLag = event.data.lag;
+
+                const output = pipeline.executeCycle(
+                    `Phase Vector: ${coreSchema ? coreSchema.system_info.harmonic_target : 36.6}`,
+                    `Offset: ${event.data.offset}, Lag: ${event.data.lag}`
+                );
+                
+                // Update on-screen stream box safely
+                const streamBox = document.getElementById('liveStream');
+                streamBox.textContent = `Emergent State Output: ${output.emergentResult.synthesisPayload} | Synergy: ${output.emergentResult.synergyFactor}`;
+            }
         }
     });
 </script>
