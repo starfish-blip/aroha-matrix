@@ -26,7 +26,18 @@
             border: 1px solid #334155; 
         }
         .panel h2 { margin-top: 0; font-size: 1.2rem; }
-        .panel p { margin-bottom: 0; color: #94a3b8; font-size: 0.9rem; }
+        .panel p { margin-bottom: 6px; color: #94a3b8; font-size: 0.9rem; }
+        .data-stream {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #38bdf8;
+            background: #090d16;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #1e293b;
+            margin-top: 10px;
+            word-break: break-all;
+        }
         iframe { 
             width: 100%; 
             height: 560px; 
@@ -40,8 +51,9 @@
 
 <div class="grid">
     <div class="panel">
-        <h2>System Workspace Baseline</h2>
-        <p>Status: Aroha & Trinity Engine Pipeline Connected</p>
+        <h2 id="sysName">Loading AROHA Matrix...</h2>
+        <p id="sysDetails">Status: Initializing Core State Schema...</p>
+        <div class="data-stream" id="liveStream">Awaiting engine telemetry...</div>
     </div>
 
     <!-- Diagnostic Visualizer Mount -->
@@ -52,23 +64,35 @@
 <script src="aroha-engine.js"></script>
 <script src="trinity-engine.js"></script>
 <script>
-    // Initialize Pipeline Bridge if available
     let pipeline;
-    if (typeof SystemBridge !== 'undefined') {
-        pipeline = new SystemBridge();
-        console.log("SystemBridge Initialized Successfully.");
-    } else {
-        console.log("Waiting for Trinity/Aroha engine definitions...");
-    }
+    let coreSchema = null;
+
+    // Load static core parameters from matrix-core.json
+    fetch('matrix-core.json')
+        .then(response => response.json())
+        .then(data => {
+            coreSchema = data;
+            document.getElementById('sysName').textContent = data.system_info.name;
+            document.getElementById('sysDetails').textContent = 
+                `Harmonic Target: ${data.system_info.harmonic_target} | Synergy: ${data.system_info.synergy_mechanic} | Overage Threshold: ${data.system_info.overage_threshold}`;
+            
+            if (typeof SystemBridge !== 'undefined') {
+                pipeline = new SystemBridge();
+            }
+        })
+        .catch(err => console.error("Could not load matrix-core.json:", err));
 
     // Listen to real-time events from the resonance iframe
     window.addEventListener("message", (event) => {
         if (event.data && event.data.type === "RESONANCE_UPDATE" && pipeline) {
             const output = pipeline.executeCycle(
-                `Predicted Trajectory (36.6 Cycle)`,
-                `User Offset: ${event.data.offset}, Lag: ${event.data.lag}`
+                `Phase Vector: ${coreSchema ? coreSchema.system_info.harmonic_target : 36.6}`,
+                `Offset: ${event.data.offset}, Lag: ${event.data.lag}`
             );
-            console.log("Pipeline Cycle Execution Output:", output.emergentResult);
+            
+            // Display live emergent calculation directly on screen
+            const streamBox = document.getElementById('liveStream');
+            streamBox.textContent = `Emergent State Output: ${output.emergentResult.synthesisPayload} | Synergy: ${output.emergentResult.synergyFactor}`;
         }
     });
 </script>
