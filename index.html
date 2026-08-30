@@ -16,7 +16,7 @@
             display: grid; 
             grid-template-columns: 1fr; 
             gap: 20px; 
-            max-width: 700px; 
+            max-width: 750px; 
             margin: 0 auto; 
         }
         .panel { 
@@ -38,6 +38,40 @@
             margin-top: 10px;
             word-break: break-all;
         }
+
+        /* Module Card Grid Styles */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .module-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        .module-card:hover {
+            border-color: #38bdf8;
+            transform: translateY(-2px);
+        }
+        .module-card h4 { margin: 0 0 6px 0; font-size: 0.9rem; color: #f8fafc; }
+        .module-card p { margin: 0; font-size: 0.75rem; color: #94a3b8; }
+        .tag {
+            display: inline-block;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #334155;
+            color: #38bdf8;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
         iframe { 
             width: 100%; 
             height: 560px; 
@@ -53,11 +87,32 @@
     <div class="panel">
         <h2 id="sysName">Loading AROHA Matrix...</h2>
         <p id="sysDetails">Status: Initializing Core State Schema...</p>
-        <div class="data-stream" id="liveStream">Awaiting engine telemetry...</div>
+        
+        <!-- Live Data Stream Box -->
+        <div class="data-stream" id="liveStream">Select a learning module to test resonance trajectory...</div>
+
+        <!-- Interactive Module Cards -->
+        <div class="card-grid">
+            <div class="module-card" onclick="selectModule('Phase 1: Baseline Pull', 0.0, 0.0)">
+                <span class="tag">CYCLE 1-12</span>
+                <h4>Displacement</h4>
+                <p>Log origin state & tension.</p>
+            </div>
+            <div class="module-card" onclick="selectModule('Phase 2: Equilibrium', 2.5, 0.4)">
+                <span class="tag">CYCLE 13-24</span>
+                <h4>Integration</h4>
+                <p>Map friction & channel state.</p>
+            </div>
+            <div class="module-card" onclick="selectModule('Phase 3: Emergent Synthesis', 6.0, 1.2)">
+                <span class="tag">CYCLE 25-36.6</span>
+                <h4>Overage (0.6)</h4>
+                <p>Execute 1+1=3 emergence.</p>
+            </div>
+        </div>
     </div>
 
     <!-- Diagnostic Visualizer Mount -->
-    <iframe src="resonance_widget.html"></iframe>
+    <iframe id="widgetIframe" src="resonance_widget.html"></iframe>
 </div>
 
 <!-- Core Engine Scripts -->
@@ -69,7 +124,7 @@
     let lastOffset = null;
     let lastLag = null;
 
-    // Load core parameters from matrix-core.json
+    // Load static core parameters from matrix-core.json
     fetch('matrix-core.json')
         .then(response => response.json())
         .then(data => {
@@ -84,10 +139,22 @@
         })
         .catch(err => console.error("Could not load matrix-core.json:", err));
 
-    // Throttled event listener to prevent browser freezes
+    // Handle Module Selection Click
+    function selectModule(moduleName, offset, lag) {
+        if (!pipeline) return;
+
+        const output = pipeline.executeCycle(
+            `Selected Module: [${moduleName}]`,
+            `Trajectory Offset: ${offset}, Phase Lag: ${lag}`
+        );
+
+        const streamBox = document.getElementById('liveStream');
+        streamBox.textContent = `Active Module: ${moduleName} | Emergent Payload: ${output.emergentResult.synthesisPayload} | Synergy: ${output.emergentResult.synergyFactor}`;
+    }
+
+    // Throttled event listener for widget updates
     window.addEventListener("message", (event) => {
         if (event.data && event.data.type === "RESONANCE_UPDATE" && pipeline) {
-            // Only execute if values actually changed
             if (event.data.offset !== lastOffset || event.data.lag !== lastLag) {
                 lastOffset = event.data.offset;
                 lastLag = event.data.lag;
@@ -97,7 +164,6 @@
                     `Offset: ${event.data.offset}, Lag: ${event.data.lag}`
                 );
                 
-                // Update on-screen stream box safely
                 const streamBox = document.getElementById('liveStream');
                 streamBox.textContent = `Emergent State Output: ${output.emergentResult.synthesisPayload} | Synergy: ${output.emergentResult.synergyFactor}`;
             }
