@@ -1,0 +1,36 @@
+\
+Set-Content -Path "aroha_init.py" -Value @'
+# Minimal AROHA initialization (ZFP)
+from uuid import uuid4
+
+AROHA_ID = f"aroha://starfish-blip/{uuid4()}"
+
+PROFILE_DEFAULT = {
+  "id": "profile://default/unassigned",
+  "trust_level": 0.0,
+  "expected_sample_rate": 48000,
+  "allowed_data_types": ["binary_frames","json_meta","float32_wave"]
+}
+
+INGEST_REGISTRY = {}
+EVENT_LOG = []
+
+def register_default_channel():
+    desc = {
+        "channel_id":"stdin_default",
+        "transport":"file",
+        "framing":"length-prefixed",
+        "codec":"json+float32_le",
+        "checksum":"crc32",
+        "max_latency_ms":200
+    }
+    INGEST_REGISTRY[desc["channel_id"]] = desc
+    EVENT_LOG.append({"event":"register_channel","channel":desc})
+    return desc["channel_id"]
+
+# initialize
+register_default_channel()
+print("AROHA initialized:", AROHA_ID)
+'@
+
+python aroha_init.py
