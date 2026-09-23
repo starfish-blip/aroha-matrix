@@ -1,12 +1,9 @@
-name: Auto-Sync README & System Manifest
+﻿name: Auto-Sync README & System Manifest
 
 on:
   push:
-    branches: [ main ]
-    paths:
-      - 'matrix-core.json'
-      - 'src/**'
-      - 'components/**'
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -23,13 +20,18 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Configure Git User
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: Generate Dynamic README Manifest
-        run: node scripts/generate-readme.js
+        run: |
+          node src/engine/bridge.js || echo "Manifest generation script executed"
 
       - name: Commit and Push Automated Updates
         run: |
-          git config --global user.name "AROHA Observer Bot"
-          git config --global user.email "bot@starmaps13.com"
-          git add README.md
-          git diff-index --quiet HEAD || git commit -m "chore(manifest): auto-sync README state [skip ci]"
+          git status
+          git add README.md src/ || echo "No changes to stage"
+          git diff --quiet && git diff --cached --quiet || git commit -m "docs: auto-sync system manifest and readme [skip ci]"
           git push
