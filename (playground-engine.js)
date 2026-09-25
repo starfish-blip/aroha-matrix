@@ -1,0 +1,55 @@
+/**
+ * playground-engine.js
+ * 13-Step Matrix Quantization & Automated Pulse Engine
+ */
+
+class ArohaPlaygroundEngine {
+  constructor() {
+    this.isAutoStepping = false;
+    this.stepInterval = null;
+    this.currentStep = 0;
+    this.totalSteps = 13;
+    this.tickRateMs = 1000;
+  }
+
+  /**
+   * Calculates discrete 13-step trajectory offset (0.0 to 1.0)
+   */
+  getStepOffset(step) {
+    return +(step / (this.totalSteps - 1)).toFixed(4);
+  }
+
+  /**
+   * Starts automated 13-step sequence loop
+   */
+  startAutoStep(onTickCallback) {
+    if (this.isAutoStepping) return;
+    this.isAutoStepping = true;
+
+    this.stepInterval = setInterval(() => {
+      this.currentStep = (this.currentStep + 1) % this.totalSteps;
+      const offset = this.getStepOffset(this.currentStep);
+      const phaseLag = +((this.currentStep / this.totalSteps)).toFixed(4);
+
+      if (onTickCallback) {
+        onTickCallback({
+          step: this.currentStep,
+          totalSteps: this.totalSteps,
+          offset: offset,
+          phaseLag: phaseLag
+        });
+      }
+    }, this.tickRateMs);
+  }
+
+  /**
+   * Stops automated sequence loop
+   */
+  stopAutoStep() {
+    if (!this.isAutoStepping) return;
+    clearInterval(this.stepInterval);
+    this.isAutoStepping = false;
+  }
+}
+
+window.arohaPlayground = new ArohaPlaygroundEngine();
