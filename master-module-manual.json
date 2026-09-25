@@ -1,0 +1,11 @@
+{
+  "title": "AROHA Suite Master Module Manual",
+  "version": "2.0.0",
+  "target": "Public Release",
+  "zones": {
+    "zone3": "Terra - Spine Calibration (0.680 ohms)",
+    "zone2": "Mid-Zone - 12-House Chromatic Dial (272Hz)",
+    "zone1": "Cosmic Dome - 9-Node Learning Matrix"
+  },
+  "timestamp": "2026-09-11T05:37:19.751Z"
+}

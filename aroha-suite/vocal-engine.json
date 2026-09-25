@@ -1,0 +1,26 @@
+{
+  "execution": "Māori Creation Story",
+  "pipeline": [
+    {
+      "part": 1,
+      "key": "C",
+      "hz": 272
+    },
+    {
+      "part": 2,
+      "key": "I",
+      "hz": 288.17
+    },
+    {
+      "part": 3,
+      "key": "A",
+      "hz": 305.31
+    },
+    {
+      "part": 4,
+      "key": "E",
+      "hz": 323.46
+    }
+  ],
+  "status": "ACTIVE"
+}

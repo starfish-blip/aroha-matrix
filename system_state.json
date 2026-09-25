@@ -1,9 +1,8 @@
 {
-  "timestamp": 1788834756679,
+  "timestamp": 1790218293422,
   "state": {
-    "operationalState": "VALIDATING",
-    "energy": 99,
-    "step": 999,
-    "timestamp": 1788834756678
+    "operationalState": "IDLE",
+    "energy": 100,
+    "step": 0
   }
 }

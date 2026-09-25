@@ -1,0 +1,60 @@
+{
+  "system": "AROHA-MATRIX-CORE",
+  "tier": 2,
+  "nodes": [
+    {
+      "nodeId": 1,
+      "status": "STANDBY",
+      "stabilityThreshold": 0.1,
+      "routingProtocol": "REMEDIATION"
+    },
+    {
+      "nodeId": 2,
+      "status": "STANDBY",
+      "stabilityThreshold": 0.2,
+      "routingProtocol": "REMEDIATION"
+    },
+    {
+      "nodeId": 3,
+      "status": "STANDBY",
+      "stabilityThreshold": 0.3,
+      "routingProtocol": "REMEDIATION"
+    },
+    {
+      "nodeId": 4,
+      "status": "STANDBY",
+      "stabilityThreshold": 0.4,
+      "routingProtocol": "REMEDIATION"
+    },
+    {
+      "nodeId": 5,
+      "status": "STANDBY",
+      "stabilityThreshold": 0.5,
+      "routingProtocol": "REMEDIATION"
+    },
+    {
+      "nodeId": 6,
+      "status": "STANDBY",
+      "stabilityThreshold": 0.6,
+      "routingProtocol": "SYNTHESIS"
+    },
+    {
+      "nodeId": 7,
+      "status": "STANDBY",
+      "stabilityThreshold": 0.7,
+      "routingProtocol": "SYNTHESIS"
+    },
+    {
+      "nodeId": 8,
+      "status": "STANDBY",
+      "stabilityThreshold": 0.8,
+      "routingProtocol": "SYNTHESIS"
+    },
+    {
+      "nodeId": 9,
+      "status": "STANDBY",
+      "stabilityThreshold": 0.9,
+      "routingProtocol": "SYNTHESIS"
+    }
+  ]
+}
