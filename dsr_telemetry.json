@@ -1,0 +1,16 @@
+{
+    "zone": "Zone 2 - Acoustic Bridge",
+    "protocol": "Dynamic Sampling Rate (DSR)",
+    "active_buffer": "Buffer A (Elephant Mode)",
+    "baseline_frequency_hz": 60,
+    "high_res_frequency_hz": 250,
+    "vector_samples": [
+        0.2911,
+        0.8248,
+        0.5078,
+        0.1839,
+        0.7612
+    ],
+    "heterodyne_status": "Phase-shift filtering active",
+    "timestamp": 1790212505.3081985
+}
