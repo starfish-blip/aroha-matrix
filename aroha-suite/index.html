@@ -5,15 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AROHA Framework | starmaps13.com</title>
     <style>
-        body { margin: 0; background: #0a0a0a; color: #00ffff; font-family: monospace; }
-        #app-shell { display: flex; flex-direction: column; height: 100vh; }
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 20px; background: #0a0a0a; color: #00ffff; font-family: monospace; }
+        h1 { margin-top: 0; color: #00ffff; text-shadow: 0 0 8px rgba(0, 255, 255, 0.5); }
+        .zone-card { border: 1px solid #00ffff; padding: 15px; margin-bottom: 20px; border-radius: 4px; background: rgba(0,255,255,0.02); }
+        .zone-title { font-weight: bold; font-size: 1.1em; margin-bottom: 10px; color: #00ffff; }
+        .btn { background: #00ffff; color: #000; border: none; padding: 8px 16px; font-family: monospace; font-weight: bold; cursor: pointer; border-radius: 2px; margin-right: 5px; margin-bottom: 5px; }
+        .btn:hover { background: #80ffff; }
+        #tab3-portal-root { min-height: 250px; border: 1px dashed rgba(0,255,255,0.3); position: relative; }
     </style>
 </head>
 <body>
-    <div id="app-shell">
+    <h1>AROHA Portal</h1>
+
+    <!-- Zone 1: Spatial AR Portal -->
+    <div class="zone-card">
+        <div class="zone-title">Zone 1: Spatial AR Portal (Point 25)</div>
         <div id="tab3-portal-root"></div>
     </div>
+
+    <!-- Zone 2: Acoustic Resonator Hub -->
+    <div class="zone-card">
+        <div class="zone-title">Zone 2: Acoustic Synth & Resonator</div>
+        <button class="btn" onclick="alert('Acoustic Drone Active')">Start Drone Engine</button>
+        <div style="margin-top: 10px;">
+            <button class="btn">174 Hz</button>
+            <button class="btn">285 Hz</button>
+            <button class="btn">396 Hz</button>
+            <button class="btn">432 Hz</button>
+            <button class="btn">528 Hz</button>
+            <button class="btn">261.63 Hz (C4)</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="aroha-state-bridge.js"></script>
     <script src="public/tab3-spatial-ar.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof ArohaSpatialARPortal !== 'undefined') {
+                window.arPortal = new ArohaSpatialARPortal();
+                console.log('[AROHA] Spatial AR Portal Mounted Successfully');
+            }
+        });
+    </script>
 </body>
 </html>
