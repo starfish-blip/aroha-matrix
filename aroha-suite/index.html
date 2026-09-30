@@ -9,14 +9,17 @@
         body { margin: 0; padding: 20px; background: #0a0a0a; color: #00ffff; font-family: monospace; }
         h1 { margin-top: 0; color: #00ffff; text-shadow: 0 0 8px rgba(0, 255, 255, 0.5); }
         .zone-card { border: 1px solid #00ffff; padding: 15px; margin-bottom: 20px; border-radius: 4px; background: rgba(0,255,255,0.02); }
-        .zone-title { font-weight: bold; font-size: 1.1em; margin-bottom: 10px; color: #00ffff; }
-        .btn { background: #00ffff; color: #000; border: none; padding: 8px 16px; font-family: monospace; font-weight: bold; cursor: pointer; border-radius: 2px; margin-right: 5px; margin-bottom: 5px; }
-        .btn:hover { background: #80ffff; }
-        #tab3-portal-root { min-height: 250px; border: 1px dashed rgba(0,255,255,0.3); position: relative; }
+        .zone-title { font-weight: bold; font-size: 1.1em; margin-bottom: 12px; color: #00ffff; }
+        .btn { background: #00ffff; color: #000; border: none; padding: 8px 12px; font-family: monospace; font-weight: bold; cursor: pointer; border-radius: 2px; margin: 3px; }
+        .btn:hover { background: #80ffff; box-shadow: 0 0 6px #00ffff; }
+        .spine-grid { display: grid; grid-template-columns: repeat(11, 1fr); gap: 4px; margin-top: 10px; }
+        .spine-btn { background: rgba(0,255,255,0.1); color: #00ffff; border: 1px solid #00ffff; padding: 6px 0; font-size: 0.8em; text-align: center; cursor: pointer; }
+        .spine-btn:hover { background: #00ffff; color: #000; }
+        #tab3-portal-root { min-height: 220px; border: 1px dashed rgba(0,255,255,0.3); position: relative; }
     </style>
 </head>
 <body>
-    <h1>AROHA Portal</h1>
+    <h1>AROHA Portal <span style="font-size:0.5em; color:#888;">| 36.6°C Anchor</span></h1>
 
     <!-- Zone 1: Spatial AR Portal -->
     <div class="zone-card">
@@ -24,28 +27,46 @@
         <div id="tab3-portal-root"></div>
     </div>
 
-    <!-- Zone 2: Acoustic Resonator Hub -->
+    <!-- Zone 2: Acoustic Resonator Hub & 33-Spine Strip -->
     <div class="zone-card">
-        <div class="zone-title">Zone 2: Acoustic Synth & Resonator</div>
-        <button class="btn" onclick="alert('Acoustic Drone Active')">Start Drone Engine</button>
-        <div style="margin-top: 10px;">
-            <button class="btn">174 Hz</button>
-            <button class="btn">285 Hz</button>
-            <button class="btn">396 Hz</button>
-            <button class="btn">432 Hz</button>
-            <button class="btn">528 Hz</button>
-            <button class="btn">261.63 Hz (C4)</button>
+        <div class="zone-title">Zone 2: 33-Node Spine Periodic Resonator</div>
+        <div style="margin-bottom: 10px;">
+            <button class="btn" onclick="triggerNode(1)">C4 Core (261.63 Hz)</button>
+            <button class="btn" onclick="triggerNode(12)">Thoracic T12 (348.88 Hz)</button>
+            <button class="btn" onclick="triggerNode(33)">Atlas C1 (523.26 Hz)</button>
         </div>
+
+        <div style="font-size:0.85em; color:#aaa; margin-top:10px;">Select Vertebral Sound Gate (Nodes 1–33):</div>
+        <div class="spine-grid" id="spineContainer"></div>
     </div>
 
     <!-- Scripts -->
     <script src="aroha-state-bridge.js"></script>
     <script src="public/tab3-spatial-ar.js"></script>
     <script>
+        function triggerNode(index) {
+            window.dispatchEvent(new CustomEvent('AROHA_PLAY_SPINE_NODE', { 
+                detail: { nodeIndex: index } 
+            }));
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            // Render 33 Spine Node Buttons
+            const container = document.getElementById('spineContainer');
+            if (container) {
+                for (let i = 1; i <= 33; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'spine-btn';
+                    btn.innerText = `N${i}`;
+                    btn.title = `Play Spine Node ${i}`;
+                    btn.onclick = () => triggerNode(i);
+                    container.appendChild(btn);
+                }
+            }
+
+            // Initialize Spatial AR
             if (typeof ArohaSpatialARPortal !== 'undefined') {
                 window.arPortal = new ArohaSpatialARPortal();
-                console.log('[AROHA] Spatial AR Portal Mounted Successfully');
             }
         });
     </script>
