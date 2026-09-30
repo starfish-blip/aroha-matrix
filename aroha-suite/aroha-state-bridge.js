@@ -1,6 +1,6 @@
 ﻿/**
- * Master Event Bridge & Acoustic Synth Engine v2.4.0
- * Binds Zone 1, Zone 2, and Zone 3 Telemetry Loops
+ * Master Event Bridge & Acoustic Synth Engine v2.6.0
+ * Includes AnalyserNode for CRT Canvas Oscilloscope
  */
 (function() {
   'use strict';
@@ -12,16 +12,17 @@
         baseFreq: 261.63,    // C4 Middle C
         activeZone: 3,
         maramatakaPhase: 'Rākaunui',
-        spineNodes: 33
+        tier1Facts: new Set()
       };
       
       this.audioCtx = null;
-      this.activeOscillators = [];
+      this.analyser = null;
       this.init();
     }
 
     init() {
-      console.log("[AROHA BRIDGE] System initialized. Baseline locked at 36.6°C / 14.7 psi.");
+      console.log("[AROHA BRIDGE] Master System Loop Active.");
+      this.bindLocalStorage();
       this.setupGlobalEventListeners();
     }
 
@@ -29,20 +30,20 @@
       if (!this.audioCtx) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         this.audioCtx = new AudioContext();
+        
+        // Setup Analyser Node for CRT Waveform Rendering
+        this.analyser = this.audioCtx.createAnalyser();
+        this.analyser.fftSize = 1024;
+        this.analyser.connect(this.audioCtx.destination);
       }
     }
 
-    /**
-     * Plays microtonally shifted 33-spine elemental node frequency
-     * @param {number} nodeIndex Vertebra index (1 to 33)
-     */
     playSpineFrequency(nodeIndex) {
       this.initAudioContext();
       if (this.audioCtx.state === 'suspended') {
         this.audioCtx.resume();
       }
 
-      // Base formula: f_node = (C4 + (nodeIndex * 0.27)) * harmonicRatio
       const harmonicRatio = 1 + ((nodeIndex - 1) / 33);
       const targetFrequency = (this.state.baseFreq + this.state.thermalDelta) * harmonicRatio;
 
@@ -52,30 +53,29 @@
       osc.type = nodeIndex <= 12 ? 'sine' : (nodeIndex <= 24 ? 'triangle' : 'sawtooth');
       osc.frequency.setValueAtTime(targetFrequency, this.audioCtx.currentTime);
 
-      gain.gain.setValueAtTime(0.15, this.audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.2, this.audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.0001, this.audioCtx.currentTime + 1.8);
 
+      // Route Oscillator -> Gain -> Analyser -> Speakers
       osc.connect(gain);
-      gain.connect(this.audioCtx.destination);
+      gain.connect(this.analyser);
 
       osc.start();
       osc.stop(this.audioCtx.currentTime + 1.8);
 
-      console.log(`[ACOUSTIC SYNTH] Node ${nodeIndex}/33 Output: ${targetFrequency.toFixed(2)} Hz (${osc.type} wave)`);
+      console.log(`[SPINE AUDIO] Playing Node ${nodeIndex}/33: ${targetFrequency.toFixed(2)} Hz`);
     }
 
-    evaluatePoint25Candidate(candidate) {
-      const passesCheck = candidate.pressure === 14.7 && candidate.temperature === 36.6;
-      if (passesCheck) {
-        console.log("%c[POINT 25] Gold Emergence (1+1=3) Validated.", "color:#ffd700; font-weight:bold;");
-      } else {
-        console.warn("[POINT 25] Magenta Purge Reset triggered.");
+    bindLocalStorage() {
+      const stored = localStorage.getItem('aroha_mem');
+      if (stored) {
+        try { this.state = { ...this.state, ...JSON.parse(stored) }; } catch(e) {}
       }
     }
 
     setupGlobalEventListeners() {
       window.addEventListener('AROHA_PLAY_SPINE_NODE', (e) => {
-        if (e.detail && e.detail.nodeIndex) {
+        if (e.detail && e.detail.nodeIndex !== undefined) {
           this.playSpineFrequency(e.detail.nodeIndex);
         }
       });
