@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AROHA Framework | starmaps13.com</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00ffff">
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; padding: 20px; background: #0a0a0a; color: #00ffff; font-family: monospace; }
@@ -20,10 +22,11 @@
         input[type="text"] { background: #111; border: 1px solid #00ffff; color: #00ffff; padding: 8px; font-family: monospace; width: calc(100% - 110px); }
         .task-list { margin-top: 10px; list-style-type: square; padding-left: 20px; }
         .task-item { margin-bottom: 5px; }
+        #swStatus { font-size: 0.75em; color: #00ff00; margin-left: 10px; }
     </style>
 </head>
 <body>
-    <h1>AROHA Master Portal <span style="font-size:0.5em; color:#888;">| 36.6°C / 14.7 psi Anchor</span></h1>
+    <h1>AROHA Master Portal <span id="swStatus">[PWA Offline Ready]</span></h1>
 
     <!-- Zone 1: Spatial AR Portal -->
     <div class="zone-card">
@@ -73,7 +76,7 @@
             const tasks = JSON.parse(localStorage.getItem('aroha_tasks') || '[]');
             const list = document.getElementById('taskList');
             list.innerHTML = '';
-            tasks.forEach((t, i) => {
+            tasks.forEach((t) => {
                 const li = document.createElement('li');
                 li.className = 'task-item';
                 li.innerText = t;
@@ -126,7 +129,6 @@
                     ctx.lineTo(canvas.width, canvas.height / 2);
                     ctx.stroke();
                 } else {
-                    // Flat idle line
                     ctx.lineWidth = 1;
                     ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)';
                     ctx.beginPath();
@@ -138,8 +140,16 @@
             renderFrame();
         }
 
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((reg) => console.log('[PWA] Service Worker Registered:', reg.scope))
+                    .catch((err) => console.warn('[PWA] SW Registration Failed:', err));
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            // Render 33 Spine Node Buttons
             const container = document.getElementById('spineContainer');
             if (container) {
                 for (let i = 1; i <= 33; i++) {
@@ -151,11 +161,9 @@
                 }
             }
 
-            // Init Tasks & Canvas
             loadTasks();
             initOscilloscope();
 
-            // Initialize Spatial AR
             if (typeof ArohaSpatialARPortal !== 'undefined') {
                 window.arPortal = new ArohaSpatialARPortal();
             }
