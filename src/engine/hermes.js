@@ -1,4 +1,4 @@
-import { WebSocketServer } from "ws";
+﻿import { WebSocketServer } from "ws";
 import { exec } from "child_process";
 import fs from "fs";
 import path from "path";
@@ -54,5 +54,6 @@ function broadcast(data) {
     });
 }
 
-console.log("Hermes WebSocket engine running on ws://localhost:8080");
+console.log("Hermes WebSocket engine running on ws://localhost:8090");
+
 

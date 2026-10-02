@@ -1,11 +1,11 @@
-
+﻿
 /**
  * hermes-client.js
  * Robust Client Adapter for Live Telemetry Stream
  */
 
 class HermesClient {
-  constructor(serverUrl = 'ws://localhost:8080') {
+  constructor(serverUrl = 'ws://localhost:8090') {
     this.serverUrl = serverUrl;
     this.ws = null;
     this.isConnected = false;
@@ -67,3 +67,4 @@ class HermesClient {
 }
 
 window.hermesClient = new HermesClient();
+
