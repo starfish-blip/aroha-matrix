@@ -1,211 +1,76 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AROHA 3-Zone Portal | starmaps13.com</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AROHA Framework | starmaps13.com</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; padding: 20px; background: #0a0a0a; color: #00ffff; font-family: monospace; }
+h1 { margin-top: 0; color: #00ffff; text-shadow: 0 0 8px rgba(0, 255, 255, 0.5); }
+.zone-card { border: 1px solid #00ffff; padding: 15px; margin-bottom: 20px; border-radius: 4px; background: rgba(0,255,255,0.02); }
+.zone-title { font-weight: bold; font-size: 1.1em; margin-bottom: 12px; color: #00ffff; }
+.btn { background: #00ffff; color: #000; border: none; padding: 8px 12px; font-family: monospace; font-weight: bold; cursor: pointer; border-radius: 2px; margin: 3px; }
+.btn:hover { background: #80ffff; box-shadow: 0 0 6px #00ffff; }
+.spine-grid { display: grid; grid-template-columns: repeat(11, 1fr); gap: 4px; margin-top: 10px; }
+.spine-btn { background: rgba(0,255,255,0.1); color: #00ffff; border: 1px solid #00ffff; padding: 6px 0; font-size: 0.8em; text-align: center; cursor: pointer; }
+.spine-btn:hover { background: #00ffff; color: #000; }
+#tab3-portal-root { min-height: 220px; border: 1px dashed rgba(0,255,255,0.3); position: relative; }
+</style>
 </head>
-<body class="bg-stone-900 text-stone-100 min-h-screen flex flex-col font-sans">
+<body>
+    <h1>AROHA Portal <span style="font-size:0.5em; color:#888;">| 36.6°C Anchor</span></h1>
 
-  <!-- Header Navigation -->
-  <header class="border-b border-amber-600/30 p-4 flex flex-wrap justify-between items-center bg-stone-950 gap-2">
-    <h1 class="text-xl font-bold tracking-wider text-amber-500">AROHA Portal <span class="text-xs text-stone-400">| 36.6°C Anchor</span></h1>
-    <nav class="flex gap-2">
-      <button onclick="switchTab('tab-tasks')" class="tab-btn bg-amber-600/20 px-3 py-1.5 rounded text-xs hover:bg-amber-600/40 border border-amber-600/40">Tasks & Maramataka</button>
-      <button onclick="switchTab('tab-audio')" class="tab-btn bg-stone-800 px-3 py-1.5 rounded text-xs hover:bg-amber-600/40 border border-stone-700">Acoustic Resonator</button>
-      <button onclick="switchTab('tab-spatial')" class="tab-btn bg-stone-800 px-3 py-1.5 rounded text-xs hover:bg-amber-600/40 border border-stone-700">Spatial EXIF</button>
-    </nav>
-  </header>
+    <!-- Zone 1: Spatial AR Portal -->
+    <div class="zone-card">
+        <div class="zone-title">Zone 1: Spatial AR Portal (Point 25)</div>
+        <div id="tab3-portal-root"></div>
+    </div>
 
-  <!-- Main Viewports -->
-  <main class="flex-grow p-4 md:p-6 max-w-5xl mx-auto w-full">
-    
-    <!-- Tab 1: Tasks & Maramataka -->
-    <section id="tab-tasks" class="tab-content block space-y-4">
-      <h2 class="text-lg font-semibold text-amber-400">Task Manager & Maramataka Lunar Sync</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-stone-800/60 p-4 rounded border border-stone-700 space-y-3">
-          <h3 class="font-bold text-sm text-amber-200">Current Phase: Te Huna / Tangaroa</h3>
-          <p class="text-xs text-stone-300">Optimal phase for root planting, local cultivation, and timber preparation.</p>
-          <input type="text" id="task-input" placeholder="Add planting event or workshop task..." class="w-full bg-stone-900 border border-stone-700 p-2 text-xs rounded text-stone-100">
-          <button onclick="addTask()" class="bg-amber-600 text-white text-xs px-4 py-2 rounded font-semibold w-full">Add Local Task</button>
-        </div>
-        <div class="bg-stone-800/60 p-4 rounded border border-stone-700">
-          <h3 class="font-bold text-sm mb-2 text-stone-200">Scheduled Items</h3>
-          <ul id="task-list" class="space-y-2 text-xs text-stone-300"></ul>
-        </div>
-      </div>
-    </section>
-
-    <!-- Tab 2: Acoustic Resonator & Song Engine -->
-    <section id="tab-audio" class="tab-content hidden space-y-4">
-      <h2 class="text-lg font-semibold text-amber-400">Acoustic Resonator & Song Engine</h2>
-      
-      <!-- Tone.js Oscillator Controller -->
-      <div class="bg-stone-800/60 p-4 rounded border border-stone-700 space-y-3">
-        <div class="flex flex-wrap items-center gap-4">
-          <button onclick="toggleAudio()" class="bg-amber-600 px-4 py-2 rounded text-xs font-semibold">Toggle Synth Engine</button>
-          <label class="text-xs text-stone-300">Base Tuning:
-            <select id="freq-select" onchange="updatePitch(this.value)" class="bg-stone-900 border border-stone-700 rounded px-2 py-1 text-xs text-amber-300 ml-1">
-              <option value="272">272 Hz (Acoustic Resonance)</option>
-              <option value="432">432 Hz (Natural Tuning)</option>
-              <option value="440">440 Hz (Standard Concert)</option>
-            </select>
-          </label>
-        </div>
-      </div>
-
-      <!-- Quick Song & Chord Lookup Engine -->
-      <div class="bg-stone-800/60 p-4 rounded border border-stone-700 space-y-3">
-        <h3 class="text-sm font-bold text-amber-300">Quick Song & Chord Fetcher</h3>
-        
-        <div class="flex gap-2">
-          <input type="text" id="song-query" placeholder="Enter song title or artist..." 
-                 class="w-full bg-stone-900 border border-stone-700 p-2 text-xs text-stone-100 rounded">
-          <button onclick="fetchSongChords()" class="bg-amber-600 px-4 py-2 rounded text-xs font-bold text-white">
-            Fetch
-          </button>
+    <!-- Zone 2: Acoustic Resonator Hub & 33-Spine Strip -->
+    <div class="zone-card">
+        <div class="zone-title">Zone 2: 33-Node Spine Periodic Resonator</div>
+        <div style="margin-bottom: 10px;">
+            <button class="btn" onclick="alert('Acoustic Drone Active')">Start Drone Engine</button>
+            <button class="btn" onclick="triggerNode(1)">C4 Core (261.63 Hz)</button>
+            <button class="btn" onclick="triggerNode(12)">Thoracic T12 (348.88 Hz)</button>
+            <button class="btn" onclick="triggerNode(33)">Atlas C1 (523.26 Hz)</button>
         </div>
 
-        <div id="quick-links" class="flex gap-2 text-xs">
-          <button onclick="openGuitarTuna()" class="bg-stone-900 border border-stone-700 px-3 py-1.5 rounded text-amber-400 hover:border-amber-500">
-            🎸 Open in GuitarTuna
-          </button>
-          <button onclick="exportSongPDF()" class="bg-stone-900 border border-stone-700 px-3 py-1.5 rounded text-stone-300 hover:border-amber-500">
-            📄 Download PDF Chart
-          </button>
-        </div>
+        <div style="font-size:0.85em; color:#aaa; margin-top:10px;">Select Vertebral Sound Gate (Nodes 1–33):</div>
+        <div class="spine-grid" id="spineContainer"></div>
+    </div>
 
-        <div id="chord-display" class="bg-stone-950 p-4 rounded font-mono text-xs text-stone-300 min-h-[120px] border border-stone-800 leading-relaxed">
-          Song chords and chart layout will render here for 272 Hz / 432 Hz play-along...
-        </div>
-      </div>
-    </section>
+    <!-- Scripts -->
+    <script src="aroha-state-bridge.js"></script>
+    <script src="public/tab3-spatial-ar.js"></script>
+    <script>
+        function triggerNode(index) {
+            window.dispatchEvent(new CustomEvent('AROHA_PLAY_SPINE_NODE', { 
+                detail: { nodeIndex: index } 
+            }));
+        }
 
-    <!-- Tab 3: Spatial AR & EXIF Reader -->
-    <section id="tab-spatial" class="tab-content hidden space-y-4">
-      <h2 class="text-lg font-semibold text-amber-400">Spatial AR & Photo GPS Reader</h2>
-      <div class="bg-stone-800/60 p-4 rounded border border-stone-700 space-y-3">
-        <p class="text-xs text-stone-300">Upload an image taken at a local marker post to reveal GPS coordinates and historical node links.</p>
-        <input type="file" id="photo-input" accept="image/*" onchange="parseExif(this)" class="text-xs text-stone-400 block w-full">
-        <div id="exif-output" class="text-xs font-mono bg-stone-950 p-4 rounded border border-stone-800 text-amber-300 min-h-[80px]">
-          Select an image with GPS metadata to inspect location coordinates.
-        </div>
-      </div>
-    </section>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Render 33 Spine Node Buttons
+            const container = document.getElementById('spineContainer');
+            if (container) {
+                for (let i = 1; i <= 33; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'spine-btn';
+                    btn.innerText = N;
+                    btn.title = Play Spine Node ;
+                    btn.onclick = () => triggerNode(i);
+                    container.appendChild(btn);
+                }
+            }
 
-  </main>
-
-  <script>
-    // Tab Controller
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      document.getElementById(tabId).classList.remove('hidden');
-    }
-
-    // Task Manager (Local Storage)
-    document.addEventListener('DOMContentLoaded', loadTasks);
-
-    function addTask() {
-      const input = document.getElementById('task-input');
-      const val = input.value.trim();
-      if (!val) return;
-      
-      const tasks = JSON.parse(localStorage.getItem('aroha_tasks') || '[]');
-      tasks.push(val);
-      localStorage.setItem('aroha_tasks', JSON.stringify(tasks));
-      input.value = '';
-      renderTasks();
-    }
-
-    function loadTasks() {
-      renderTasks();
-    }
-
-    function renderTasks() {
-      const list = document.getElementById('task-list');
-      const tasks = JSON.parse(localStorage.getItem('aroha_tasks') || '[]');
-      list.innerHTML = tasks.map((t, i) => `
-        <li class="bg-stone-900 p-2 rounded border border-stone-800 flex justify-between items-center">
-          <span>${t}</span>
-          <button onclick="removeTask(${i})" class="text-red-400 hover:text-red-300 font-bold ml-2">×</button>
-        </li>
-      `).join('');
-    }
-
-    function removeTask(index) {
-      const tasks = JSON.parse(localStorage.getItem('aroha_tasks') || '[]');
-      tasks.splice(index, 1);
-      localStorage.setItem('aroha_tasks', JSON.stringify(tasks));
-      renderTasks();
-    }
-
-    // Audio Engine (Tone.js)
-    let synth;
-    function toggleAudio() {
-      if (!synth) {
-        synth = new Tone.Synth().toDestination();
-        const freq = document.getElementById('freq-select').value;
-        synth.triggerAttack(freq);
-      } else {
-        synth.triggerRelease();
-        synth = null;
-      }
-    }
-
-    function updatePitch(val) {
-      if (synth) {
-        synth.frequency.setValueAtTime(parseFloat(val), Tone.now());
-      }
-    }
-
-    // Chord & PDF Engine
-    function fetchSongChords() {
-      const song = document.getElementById('song-query').value;
-      const display = document.getElementById('chord-display');
-      if (!song) return;
-      
-      display.innerHTML = `<strong>${song.toUpperCase()}</strong><br><br>[Intro]<br>G  -  D  -  Em  -  C<br><br>[Verse 1]<br>G &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; D<br>Ready for the resonance anchor...<br>Em &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; C<br>Tuned to 272 Hz baseline.`;
-    }
-
-    function openGuitarTuna() {
-      const song = encodeURIComponent(document.getElementById('song-query').value);
-      if (song) {
-        window.open(`https://open.guitartuna.com/search?q=${song}`, '_blank');
-      }
-    }
-
-    function exportSongPDF() {
-      const element = document.getElementById('chord-display');
-      const opt = {
-        margin:       0.5,
-        filename:     'aroha-chord-chart.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-      };
-      html2pdf().set(opt).from(element).save();
-    }
-
-    // EXIF Metadata Reader
-    function parseExif(input) {
-      if (input.files && input.files[0]) {
-        EXIF.getData(input.files[0], function() {
-          const lat = EXIF.getTag(this, "GPSLatitude");
-          const lon = EXIF.getTag(this, "GPSLongitude");
-          const out = document.getElementById('exif-output');
-          if (lat && lon) {
-            out.innerText = `GPS Coordinates Found:\nLat: ${lat}\nLon: ${lon}\nStatus: Node verified. Ready for AR map mapping.`;
-          } else {
-            out.innerText = "No EXIF GPS metadata found in target image.";
-          }
+            // Initialize Spatial AR
+            if (typeof ArohaSpatialARPortal !== 'undefined') {
+                window.arPortal = new ArohaSpatialARPortal();
+                console.log('[AROHA] Spatial AR Portal Mounted Successfully');
+            }
         });
-      }
-    }
-  </script>
+    </script>
 </body>
 </html>
