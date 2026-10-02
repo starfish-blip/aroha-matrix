@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AROHA Neemwest - Spatial Matrix Gallery</title>
+  <style>
+    body { background: #04040a; color: #cbd5e1; font-family: monospace; margin: 0; padding: 20px; }
+    h1 { color: #00d4ff; font-size: 1.5rem; margin-bottom: 5px; }
+    p { color: #64748b; margin-top: 0; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 20px; }
+    .card { background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 12px; }
+    .card img { width: 100%; border-radius: 4px; display: block; }
+    .meta { font-size: 0.8rem; margin-top: 8px; color: #94a3b8; }
+    .btn { background: #00d4ff; color: #04040a; border: none; padding: 8px 12px; font-weight: bold; border-radius: 4px; cursor: pointer; margin-top: 8px; width: 100%; }
+    .btn:hover { background: #38bdf8; }
+  </style>
+</head>
+<body>
+  <h1>AROHA NEEMWEST SPATIAL MATRIX GALLERY</h1>
+  <p>Live Telemetry & Frequency Drift Hourly Capture Archive</p>
+  
+  <div id="gallery" class="grid">Loading charts...</div>
+
+  <script>
+    async function loadCharts() {
+      try {
+        const res = await fetch('/api/neemwest/spatial/charts');
+        const json = await res.json();
+        const gallery = document.getElementById('gallery');
+        
+        if (!json.data || json.data.length === 0) {
+          gallery.innerHTML = '<p>No hourly charts found in ./hourly_charts.</p>';
+          return;
+        }
+
+        gallery.innerHTML = json.data.map(chart => `
+          <div class="card">
+            <img src="${chart.url}" alt="${chart.filename}">
+            <div class="meta">
+              <strong>${chart.filename}</strong><br>
+              Time: ${new Date(chart.timestamp).toLocaleString()}<br>
+              Size: ${chart.sizeMb} MB
+            </div>
+            <button class="btn" onclick="window.open('/api/neemwest/spatial/charts/report-pdf?chartA=${chart.filename}&chartB=${chart.filename}')">Download PDF Report</button>
+          </div>
+        `).join('');
+      } catch (err) {
+        document.getElementById('gallery').innerHTML = `<p style="color: #ef4444;">Error loading charts: ${err.message}</p>`;
+      }
+    }
+    loadCharts();
+  </script>
+</body>
+</html>
