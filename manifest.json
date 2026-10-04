@@ -1,0 +1,13 @@
+{
+  "system": "AROHA Sovereign Web Architecture",
+  "workspace": "aroha-suite",
+  "executionMode": "Local Hermes Instance ($0 cost, full privacy)",
+  "biologicalBaseline": "36.6�C",
+  "spectralLock": "1 + 1 = 3",
+  "generatedAt": "2026-10-02T15:49:34.799Z",
+  "payloads": [
+    "day1-facebook-reels-payload.json",
+    "day2-instagram-reels-payload.json",
+    "day3-tiktok-subscriber-portal-payload.json"
+  ]
+}
