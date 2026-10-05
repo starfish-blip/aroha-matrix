@@ -1,0 +1,16 @@
+﻿{
+  "short_name": "AROHA",
+  "name": "AROHA Framework | Spatial & Acoustic Portal",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0a0a0a",
+  "theme_color": "#00ffff",
+  "display": "standalone",
+  "orientation": "any"
+}

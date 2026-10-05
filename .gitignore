@@ -1,0 +1,32 @@
+.ssh/
+AppData/
+.git-credentials
+.config/
+.impeccable/
+.overture/
+.pm2/
+.th-client/
+.vscode/
+.vscode-shared/
+node_modules/
+_backup_conflict/
+*.log
+/Application Data/
+/Cookies/
+/Documents/My Music/
+/Documents/My Pictures/
+/Documents/My Videos/
+/Local Settings/
+/My Documents/
+/NetHood/
+/PrintHood/
+/Recent/
+/SendTo/
+/Start Menu/
+/Templates/
+/Contacts/
+/Favorites/
+/Links/
+/Saved Games/
+/Searches/
+/AppData/
