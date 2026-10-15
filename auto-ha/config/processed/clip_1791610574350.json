@@ -1,0 +1,7 @@
+{
+  "id": 1791610574350,
+  "content": "Start-Process cmd.exe -ArgumentList \"/c node `\"$HOME\\aroha-matrix\\auto-ha\\src\\clipboard_watcher.js`\"\" -WindowStyle Minimized\nStart-Process cmd.exe -ArgumentList \"/c node `\"$HOME\\aroha-matrix\\auto-ha\\src\\queue_processor.js`\"\" -WindowStyle Minimized",
+  "capturedAt": "2026-10-10T05:36:14.350Z",
+  "status": "dispatched",
+  "processedAt": "2026-10-10T05:36:15.397Z"
+}

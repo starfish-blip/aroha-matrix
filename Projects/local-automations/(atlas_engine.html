@@ -1,0 +1,23 @@
+if (navigator.requestMIDIAccess) {
+    navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
+}
+
+function onMIDISuccess(midiAccess) {
+    for (let input of midiAccess.inputs.values()) {
+        input.onmidimessage = getMIDIMessage;
+    }
+    console.log("[AROHA] MIDI Controller Connected & Listening");
+}
+
+function getMIDIMessage(message) {
+    let [command, control, value] = message.data;
+    // Map CC values (0-127) to normalized float (0.0 - 1.0)
+    let normalized = value / 127.0;
+    
+    // Dispatch to active layer parameter
+    updateArohaMatrixParameter(control, normalized);
+}
+
+function onMIDIFailure() {
+    console.warn("[AROHA] Could not access MIDI devices.");
+}

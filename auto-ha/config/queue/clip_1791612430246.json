@@ -1,0 +1,6 @@
+{
+  "id": 1791612430246,
+  "content": "My bad, mo.ui.table expects structured records like a Pandas DataFrame or a list of dictionaries rather than a raw list of lists.\nWrap it in a Pandas DataFrame so it formats cleanly and satisfies the table component:\nimport pandas as pd\nimport numpy as np\n\n# Generate grid and wrap in a DataFrame for the table UI\narr = np.random.randint(1, 10, size=(3, 3))\ndf = pd.DataFrame(arr, columns=[\"X_Node\", \"Y_Node\", \"Z_Node\"])\n\nspatial_grid = mo.ui.table(df)\nspatial_grid\n\nDrop that into the cell and run it-that will lock down the format and render the table right away.",
+  "capturedAt": "2026-10-10T06:07:10.246Z",
+  "status": "pending_processing"
+}

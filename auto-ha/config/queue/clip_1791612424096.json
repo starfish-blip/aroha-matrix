@@ -1,0 +1,6 @@
+{
+  "id": 1791612424096,
+  "content": "Ah, Marimo is letting you know that mo was already defined in a previous cell (cell-0). Because Marimo tracks variable definitions strictly to avoid hidden state bugs, you don't need to re-import mo or np here if you already imported them higher up in the notebook.\nTo fix this warning, just delete the import lines (import marimo as mo and import numpy as np) from this current cell since they are already active in your session.\nYour cell should only contain the unique logic:\ndef get_node_matrix():\n    return np.random.randint(1, 10, size=(3, 3))\n\nmatrix_data = get_node_matrix()\nspatial_grid = mo.ui.table(matrix_data.tolist())\nspatial_grid\n\nClear out those duplicate definitions, and it will run smoothly!",
+  "capturedAt": "2026-10-10T06:07:04.096Z",
+  "status": "pending_processing"
+}

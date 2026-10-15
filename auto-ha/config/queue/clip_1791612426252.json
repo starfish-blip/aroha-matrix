@@ -1,0 +1,6 @@
+{
+  "id": 1791612426252,
+  "content": "That's an easy fix! Since Marimo treats each cell's namespace strictly, you just need to import numpy right inside that same cell where you're using np.\nUpdate the top of that cell to include the import:\nimport numpy as np\n\ndef get_node_matrix():\n    return np.random.randint(1, 10, size=(3, 3))\n\nmatrix_data = get_node_matrix()\nspatial_grid = mo.ui.table(matrix_data.tolist())\nspatial_grid\n\nRun the cell again, and that NameError will disappear!",
+  "capturedAt": "2026-10-10T06:07:06.252Z",
+  "status": "pending_processing"
+}

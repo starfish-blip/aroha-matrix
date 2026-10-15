@@ -1,0 +1,11 @@
+﻿{
+    "projectName":  "Auto Ha \u0026 AROHA Matrix",
+    "lastUpdated":  "2026-10-10 15:31:38",
+    "activeDaemons":  [
+                          "clipboard_watcher.js",
+                          "queue_processor.js"
+                      ],
+    "gitBranch":  "starfish-blip/aroha-matrix",
+    "status":  "Operational - Daemons running in background",
+    "buildNotes":  "Clipboard watcher polling every 2s, queue processor scanning every 3s."
+}

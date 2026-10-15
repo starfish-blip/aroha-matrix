@@ -1,0 +1,7 @@
+{
+  "id": 1791610004327,
+  "content": "Stop-Process -Name node -Force -ErrorAction SilentlyContinue\nGet-Process | Sort-Object CPU -Descending | Select-Object -First 5",
+  "capturedAt": "2026-10-10T05:26:44.327Z",
+  "status": "dispatched",
+  "processedAt": "2026-10-10T05:26:45.565Z"
+}

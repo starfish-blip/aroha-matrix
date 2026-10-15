@@ -1,0 +1,7 @@
+{
+  "id": 1791609506892,
+  "content": "# Remove the invalid test file\nRemove-Item \"$HOME\\aroha-matrix\\auto-ha\\config\\queue\\test-clip.json\" -Force -ErrorAction SilentlyContinue\n\n# Create a clean, properly formatted JSON test file\n$testPayload = '{\"timestamp\": \"2026-10-10 18:18:00\", \"source\": \"manual-test\", \"content\": \"Aroha matrix pipeline test\"}'\n$testPayload | Out-File -FilePath \"$HOME\\aroha-matrix\\auto-ha\\config\\queue\\test-clip.json\" -Encoding utf8\n\n# Run the queue processor in the foreground to verify it processes successfully\nnode \"$HOME\\aroha-matrix\\auto-ha\\src\\queue_processor.js\"",
+  "capturedAt": "2026-10-10T05:18:26.892Z",
+  "status": "dispatched",
+  "processedAt": "2026-10-10T05:18:29.193Z"
+}

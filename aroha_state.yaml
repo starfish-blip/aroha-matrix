@@ -1,0 +1,9 @@
+# aroha_state.yaml
+sequence_active: true
+state:
+  h: 2.828
+  label: "volumetric equilibrium — tetra stable"
+  field_3:
+    scale_multiplier: 1.0
+    wireframe: true
+    color: 0x00ffcc

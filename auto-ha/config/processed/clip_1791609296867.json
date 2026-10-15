@@ -1,0 +1,7 @@
+{
+  "id": 1791609296867,
+  "content": "# Notice the typo in the previous path (\"archa-matrix\" instead of \"aroha-matrix\"). Let's fix that typo, clear the lingering test file, and test again.\nRemove-Item \"$HOME\\aroha-matrix\\auto-ha\\config\\queue\\test-clip.json\" -Force -ErrorAction SilentlyContinue\n$testPayload = @{ timestamp = (Get-Date).ToString(\"yyyy-MM-dd HH:mm:ss\"); source = \"manual-test\"; content = \"Aroha matrix pipeline test\" } | ConvertTo-Json\n$testPayload | Out-File -FilePath \"$HOME\\aroha-matrix\\auto-ha\\config\\queue\\test-clip.json\" -Encoding utf8\nStart-Sleep -Seconds 2\nGet-ChildItem -Path \"$HOME\\aroha-matrix\\auto-ha\\config\\queue\" -Recurse\nGet-ChildItem -Path \"$HOME\\aroha-matrix\\auto-ha\\config\\processed\" -Recurse",
+  "capturedAt": "2026-10-10T05:14:56.867Z",
+  "status": "dispatched",
+  "processedAt": "2026-10-10T05:14:58.056Z"
+}

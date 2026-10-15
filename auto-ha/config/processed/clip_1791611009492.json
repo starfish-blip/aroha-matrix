@@ -1,0 +1,7 @@
+{
+  "id": 1791611009492,
+  "content": "Get-ChildItem \"$HOME\\aroha-matrix\\auto-ha\\config\\queue\"\nGet-ChildItem \"$HOME\\aroha-matrix\\auto-ha\\config\\processed\"",
+  "capturedAt": "2026-10-10T05:43:29.493Z",
+  "status": "dispatched",
+  "processedAt": "2026-10-10T05:43:30.397Z"
+}

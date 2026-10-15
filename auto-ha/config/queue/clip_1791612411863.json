@@ -1,0 +1,6 @@
+{
+  "id": 1791612411863,
+  "content": "To load spatial matrices or JSON configurations into your workflow via PowerShell, use the following commands to check your path and run your loading script.\n# Check current directory and look for your spatial configuration\nGet-Location\nTest-Path \".\\config\\spatial_matrix.json\"\n\n# Run your matrix processing Python script\npython3 -m src.aroha_engine --load-matrix=config/spatial_matrix.json\n\nVerification: Confirm that Test-Path returns True and that your script executes without throwing a FileNotFoundError or syntax exception.\nWould you like to map these dimensional coordinates directly into a Three.js visualizer or a Marimo grid component next?",
+  "capturedAt": "2026-10-10T06:06:51.863Z",
+  "status": "pending_processing"
+}

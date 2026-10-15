@@ -1,0 +1,7 @@
+{
+  "id": 1791609858517,
+  "content": "Set-Content -Path \"$HOME\\aroha-matrix\\auto-ha\\config\\queue\\test-clip.json\" -Value '{\"timestamp\":\"2026-10-10 18:18:00\",\"source\":\"manual-test\",\"content\":\"Aroha matrix pipeline test\"}' -Encoding utf8",
+  "capturedAt": "2026-10-10T05:24:18.518Z",
+  "status": "dispatched",
+  "processedAt": "2026-10-10T05:24:19.213Z"
+}

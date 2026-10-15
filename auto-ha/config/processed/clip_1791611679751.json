@@ -1,0 +1,7 @@
+{
+  "id": 1791611679751,
+  "content": "Remove-Item \"$HOME\\aroha-matrix\\auto-ha\\config\\queue\\test-clip.json\" -ErrorAction SilentlyContinue\nSet-Content \"$HOME\\aroha-matrix\\auto-ha\\config\\queue\\clip_test.json\" '{\"timestamp\":1791609211317,\"data\":\"test\"}' -Encoding UTF8",
+  "capturedAt": "2026-10-10T05:54:39.751Z",
+  "status": "dispatched",
+  "processedAt": "2026-10-10T05:54:39.965Z"
+}

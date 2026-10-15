@@ -1,0 +1,6 @@
+{
+  "id": 1791612428499,
+  "content": "That ValueError happens because NumPy generates special integer types (np.int64) that the table component doesn't automatically recognize as standard JSON types.\nTo fix it, just cast the values to standard Python integers (int) so the table can read them cleanly. Update your cell with this version:\nimport numpy as np\n\ndef get_node_matrix():\n    # Convert numpy ints to standard Python ints for JSON compatibility\n    arr = np.random.randint(1, 10, size=(3, 3))\n    return [[int(x) for x in row] for row in arr]\n\nmatrix_data = get_node_matrix()\nspatial_grid = mo.ui.table(matrix_data)\nspatial_grid\n\nRun that cell, and your spatial grid will render right away!",
+  "capturedAt": "2026-10-10T06:07:08.499Z",
+  "status": "pending_processing"
+}

@@ -1,0 +1,6 @@
+{
+  "id": 1791612416191,
+  "content": "It looks like the import statements (import marimo as mo and import numpy as np) ended up at the bottom of your cell, but Python reads code from top to bottom-so it tries to use np before it knows what it is!\nTo fix this, just move those two import lines right to the top of the cell so it looks like this:\nimport marimo as mo\nimport numpy as np\n\ndef get_node_matrix():\n    return np.random.randint(1, 10, size=(3, 3))\n\nmatrix_data = get_node_matrix()\nspatial_grid = mo.ui.table(matrix_data.tolist())\nspatial_grid\n\nClear out anything else below that, re-run the cell, and your grid will render properly!",
+  "capturedAt": "2026-10-10T06:06:56.191Z",
+  "status": "pending_processing"
+}

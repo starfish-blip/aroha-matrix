@@ -1,0 +1,6 @@
+{
+  "id": 1791612421980,
+  "content": "If the text cell is locked or acting up, you don't have to fight it line by line. Here are two quick ways to clear it out:\n\nOption 1 (Convert to Markdown): Click on the cell, and at the bottom toolbar of that specific cell, switch it from Python to Markdown so it safely treats the text as notes instead of code.\nOption 2 (Delete the Cell): Click the delete/trash icon on the right side of that troublesome cell to wipe it entirely, then click the + or Python button to add a fresh, clean code cell.\n\nOnce you have a fresh cell, paste just this clean code block into it:\nimport marimo as mo\nimport numpy as np\n\ndef get_node_matrix():\n    return np.random.randint(1, 10, size=(3, 3))\n\nmatrix_data = get_node_matrix()\nspatial_grid = mo.ui.table(matrix_data.tolist())\nspatial_grid",
+  "capturedAt": "2026-10-10T06:07:01.980Z",
+  "status": "pending_processing"
+}

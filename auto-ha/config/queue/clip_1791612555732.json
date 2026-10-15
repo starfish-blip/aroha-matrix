@@ -1,0 +1,6 @@
+{
+  "id": 1791612555732,
+  "content": "Get-ChildItem \"$HOME\\aroha-matrix\\auto-ha\\config\\processed\" | Sort-Object LastWriteTime -Descending",
+  "capturedAt": "2026-10-10T06:09:15.732Z",
+  "status": "pending_processing"
+}

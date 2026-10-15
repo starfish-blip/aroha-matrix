@@ -1,0 +1,7 @@
+{
+  "id": 1791609218648,
+  "content": "# Drop a new test payload into the queue directory to verify end-to-end processing with the running daemons\n$testPayload = @{ timestamp = (Get-Date).ToString(\"yyyy-MM-dd HH:mm:ss\"); source = \"manual-test\"; content = \"Aroha matrix pipeline test\" } | ConvertTo-Json\n$testPayload | Out-File -FilePath \"$HOME\\aroha-matrix\\auto-ha\\config\\queue\\test-clip.json\" -Encoding utf8\nStart-Sleep -Seconds 2\nGet-ChildItem -Path \"$HOME\\aroha-matrix\\auto-ha\\config\\queue\" -Recurse\nGet-ChildItem -Path \"$HOME\\aroha-matrix\\auto-ha\\config\\processed\" -Recurse",
+  "capturedAt": "2026-10-10T05:13:38.648Z",
+  "status": "dispatched",
+  "processedAt": "2026-10-10T05:13:39.384Z"
+}

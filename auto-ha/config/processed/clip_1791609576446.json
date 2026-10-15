@@ -1,0 +1,7 @@
+{
+  "id": 1791609576446,
+  "content": "$testPayload = '{\"timestamp\": \"2026-10-10 18:18:00\", \"source\": \"manual-test\", \"content\": \"Aroha matrix pipeline test\"}'\n$testPayload | Out-File -FilePath \"$HOME\\aroha-matrix\\auto-ha\\config\\queue\\test-clip.json\" -Encoding utf8",
+  "capturedAt": "2026-10-10T05:19:36.446Z",
+  "status": "dispatched",
+  "processedAt": "2026-10-10T05:19:38.485Z"
+}

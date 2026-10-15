@@ -1,0 +1,7 @@
+{
+  "id": 1791609358283,
+  "content": "# Let's run the queue processor directly in the foreground to see why test-clip.json isn't being consumed and check its logs\nnode \"$HOME\\aroha-matrix\\auto-ha\\src\\queue_processor.js\"",
+  "capturedAt": "2026-10-10T05:15:58.283Z",
+  "status": "dispatched",
+  "processedAt": "2026-10-10T05:15:58.419Z"
+}

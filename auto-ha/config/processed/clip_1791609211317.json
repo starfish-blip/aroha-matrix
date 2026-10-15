@@ -1,0 +1,7 @@
+{
+  "id": 1791609211317,
+  "content": "# Refresh the current PowerShell session PATH environment variable so node is recognized immediately\n$env:Path = [System.Environment]::GetEnvironmentVariable(\"Path\",\"Machine\") + \";\" + [System.Environment]::GetEnvironmentVariable(\"Path\",\"User\")\n\n# Stop any existing node processes and clear out old test queue files\nStop-Process -Name node -Force -ErrorAction SilentlyContinue\nRemove-Item \"$HOME\\aroha-matrix\\auto-ha\\config\\queue\\*\" -Force -ErrorAction SilentlyContinue\nRemove-Item \"$HOME\\aroha-matrix\\auto-ha\\config\\processed\\*\" -Force -ErrorAction SilentlyContinue\n\n# Launch both background daemons cleanly via cmd wrapper in minimized windows\nStart-Process cmd.exe -ArgumentList \"/c node `\"$HOME\\aroha-matrix\\auto-ha\\src\\clipboard_watcher.js`\"\" -WindowStyle Minimized\nStart-Process cmd.exe -ArgumentList \"/c node `\"$HOME\\aroha-matrix\\auto-ha\\src\\queue_processor.js`\"\" -WindowStyle Minimized\n\n# Verify execution and check active node processes\nStart-Sleep -Seconds 2\nGet-Process node -ErrorAction SilentlyContinue\nGet-ChildItem -Path \"$HOME\\aroha-matrix\\auto-ha\\config\\queue\" -Recurse\nGet-ChildItem -Path \"$HOME\\aroha-matrix\\auto-ha\\config\\processed\" -Recurse",
+  "capturedAt": "2026-10-10T05:13:31.317Z",
+  "status": "dispatched",
+  "processedAt": "2026-10-10T05:13:33.365Z"
+}

@@ -1,0 +1,30 @@
+Set-Content -Path "atlas_engine.html" -Value "<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <title>AROHA Engine - Atlas UI</title>
+    <style>
+        body { margin: 0; background: #050505; color: #fff; font-family: sans-serif; overflow: hidden; }
+        #canvas-container { width: 100vw; height: 100vh; }
+        .hud { position: absolute; top: 20px; left: 20px; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div class='hud'>
+        <h1>AROHA Harmonic Instrument</h1>
+        <p>Status: <span id='status'>Connecting...</span></p>
+    </div>
+    <div id='canvas-container'></div>
+    <script>
+        const ws = new WebSocket('ws://localhost:3000/ws/aroha');
+        ws.onopen = () => {
+            console.log('AROHA Engine connected.');
+            document.getElementById('status').innerText = 'Online & Synchronized';
+        };
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log('State updated:', data);
+        };
+    </script>
+</body>
+</html>"
