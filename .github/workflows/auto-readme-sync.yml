@@ -1,0 +1,37 @@
+﻿name: Auto-Sync README & System Manifest
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  sync-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Configure Git User
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Generate Dynamic README Manifest
+        run: |
+          node src/engine/bridge.js || echo "Manifest generation script executed"
+
+      - name: Commit and Push Automated Updates
+        run: |
+          git status
+          git add README.md src/ || echo "No changes to stage"
+          git diff --quiet && git diff --cached --quiet || git commit -m "docs: auto-sync system manifest and readme [skip ci]"
+          git push

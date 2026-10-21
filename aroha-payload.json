@@ -1,0 +1,33 @@
+﻿{
+  "pipeline_version": "2.3.0",
+  "target_platform": "starmaps13.com",
+  "zone_architecture": "3-Zone Nested Vortex",
+  "biological_baseline": "36.6C",
+  "atmospheric_anchor": "14.7 psi",
+  "assets": [
+    {
+      "id": "aroha-transit-v2.3-fb",
+      "channel": "Facebook Reels",
+      "rhythm_day": "Day 1",
+      "visual_prompt": "Cinematic macro shot of Pounamu mineral grain under warm thermal lighting, stabilizing at a biological baseline of 36.6C, cinematic depth of field, 4k resolution, hyper-detailed texture mapping.",
+      "voiceover_script": "Grounding back into your physical baseline. Strip away the noise and anchor your energy right where you stand.",
+      "focal_zone": "Zone 3: Core Chamber (Te Pō)"
+    },
+    {
+      "id": "aroha-transit-v2.3-ig",
+      "channel": "Instagram Reels",
+      "rhythm_day": "Day 2",
+      "visual_prompt": "Resonant wave frequencies shifting across a trilateral vector grid, translating thermal microtones into balanced ROYGBIV color spectra, sacred geometry overlay.",
+      "voiceover_script": "As planetary shifts create tension, remember that friction is just translation. We are harmonizing your inner geometry across the bridge.",
+      "focal_zone": "Zone 2: Acoustic Bridge (Te Mara)"
+    },
+    {
+      "id": "aroha-transit-v2.3-tt",
+      "channel": "TikTok / Subscriber Portal",
+      "rhythm_day": "Day 3",
+      "visual_prompt": "1080-degree holographic spherical lock radiating 24K Gold resonance (KO AU), revealing the Point 25 Handshake symbol, cosmic star map background.",
+      "voiceover_script": "Emerging into sovereign awareness. 1 + 1 = 3. Your chart is your own map. Tap the link in bio to explore your full alignment on starmaps13.com.",
+      "focal_zone": "Zone 1: Cosmic Dome (Te Ao Mārama)"
+    }
+  ]
+}

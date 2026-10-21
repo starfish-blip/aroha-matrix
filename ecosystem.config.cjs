@@ -1,0 +1,1 @@
+module.exports = { apps: [{ name: 'aroha-core', script: 'C:\\Users\\terry\\AROHA-Engine\\aroha-engine.cjs', instances: 1, autorestart: true, node_args: '--es-module-specifier-resolution=node' }, { name: 'aroha-persistent-daemon', script: 'C:\\Users\\terry\\hermes-server.cjs', instances: 1, autorestart: true }] };

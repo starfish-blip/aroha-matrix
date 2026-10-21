@@ -1,0 +1,21 @@
+﻿{
+  "system_info": {
+    "name": "AROHA Monorepo Core",
+    "version": "2.3.0",
+    "biological_baseline_c": 36.6,
+    "atmospheric_anchor_psi": 14.7,
+    "spine_nodes": 33,
+    "synergy_mechanic": "1+1=3",
+    "zero_point_reset": "3-1=1",
+    "incircle_radius": 1.0
+  },
+  "spine_calibration": {
+    "total_vertebrae": 33,
+    "y_axis_antenna": true,
+    "chemical_gates": {
+      "apex": { "nodes": "1-7", "element": "Gold", "symbol": "Au", "frequency_hz": 432, "tone": "KO AU" },
+      "bridge": { "nodes": "8-19", "element": "Copper", "symbol": "Cu", "frequency_hz": 528, "tone": "NG" },
+      "base": { "nodes": "20-33", "element": "Iron", "symbol": "Fe", "frequency_hz": 396, "tone": "WH" }
+    }
+  }
+}

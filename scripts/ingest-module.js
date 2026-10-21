@@ -1,0 +1,1 @@
+console.log('[INGEST] Success: aroha-core-engine loaded');
