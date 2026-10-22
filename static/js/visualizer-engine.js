@@ -6,7 +6,7 @@ class ArohaVisualizer {
         this.particles = null;
         this.geometry = null;
         this.material = null;
-        this.count = 15000;
+        this.count = 25000;
         this.turbulence = 1.0;
         this.frequency = 432.0;
         this.symmetry = 4;
@@ -19,7 +19,7 @@ class ArohaVisualizer {
         
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.z = 50;
+        this.camera.position.z = 45;
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -31,12 +31,16 @@ class ArohaVisualizer {
         const colors = new Float32Array(this.count * 3);
 
         for (let i = 0; i < this.count * 3; i += 3) {
-            positions[i] = (Math.random() - 0.5) * 80;
-            positions[i+1] = (Math.random() - 0.5) * 80;
-            positions[i+2] = (Math.random() - 0.5) * 80;
+            const u = Math.random() * Math.PI * 2;
+            const v = Math.random() * Math.PI;
+            const r = 15 + Math.random() * 10;
+            
+            positions[i] = r * Math.sin(v) * Math.cos(u);
+            positions[i+1] = r * Math.sin(v) * Math.sin(u);
+            positions[i+2] = r * Math.cos(v);
 
             colors[i] = 0.0;
-            colors[i+1] = 0.94;
+            colors[i+1] = 0.85 + Math.random() * 0.15;
             colors[i+2] = 1.0;
         }
 
@@ -44,11 +48,11 @@ class ArohaVisualizer {
         this.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
         this.material = new THREE.PointsMaterial({
-            size: 0.8,
+            size: 1.2,
             vertexColors: true,
             blending: THREE.AdditiveBlending,
             transparent: true,
-            opacity: 0.85
+            opacity: 0.9
         });
 
         this.particles = new THREE.Points(this.geometry, this.material);
@@ -85,14 +89,14 @@ class ArohaVisualizer {
         requestAnimationFrame(() => this.animate());
 
         const positions = this.geometry.attributes.position.array;
-        const time = Date.now() * 0.001 * this.turbulence;
+        const time = Date.now() * 0.0008 * this.turbulence;
 
-        let audioLevel = 0.1;
+        let audioLevel = 0.2;
         if (this.audioEngine && this.audioEngine.analyser) {
             const data = new Uint8Array(this.audioEngine.analyser.frequencyBinCount);
             this.audioEngine.analyser.getByteFrequencyData(data);
             const sum = data.reduce((a, b) => a + b, 0);
-            audioLevel = (sum / data.length) / 128.0;
+            audioLevel = (sum / data.length) / 100.0;
         }
 
         for (let i = 0; i < this.count * 3; i += 3) {
@@ -100,18 +104,25 @@ class ArohaVisualizer {
             let y = positions[i+1];
             let z = positions[i+2];
 
-            // Waveform displacement and symmetry modulation
-            positions[i+1] += Math.sin(time + x * 0.05) * 0.05 * (audioLevel + 0.5) * this.turbulence;
-            positions[i] += Math.cos(time + y * 0.05) * 0.05 * (audioLevel + 0.5) * this.turbulence;
+            const angle = time + (i * 0.0001);
+            const symFactor = this.symmetry;
+            
+            // Sacred geometry toroidal/cymatic vortex deformation
+            const radius = Math.sqrt(x*x + y*y);
+            const phi = Math.atan2(y, x);
 
-            // Reset bounds
-            if (Math.abs(positions[i]) > 60) positions[i] *= -0.9;
-            if (Math.abs(positions[i+1]) > 60) positions[i+1] *= -0.9;
+            positions[i] = Math.cos(phi * symFactor + time) * (radius + Math.sin(time + z * 0.1) * audioLevel * 5 * this.turbulence);
+            positions[i+1] = Math.sin(phi * symFactor + time) * (radius + Math.cos(time + z * 0.1) * audioLevel * 5 * this.turbulence);
+            positions[i+2] += Math.sin(time * 2 + radius * 0.05) * audioLevel * 2;
+
+            if (Math.abs(positions[i+2]) > 40) {
+                positions[i+2] *= -0.8;
+            }
         }
 
         this.geometry.attributes.position.needsUpdate = true;
-        this.particles.rotation.y = time * 0.1;
-        this.particles.rotation.z = time * 0.05;
+        this.particles.rotation.y = time * 0.2;
+        this.particles.rotation.z = time * 0.1;
 
         this.renderer.render(this.scene, this.camera);
     }
