@@ -1,0 +1,1 @@
+document.addEventListener('DOMContentLoaded', () => { document.querySelectorAll('.grid > div, section').forEach(el => { el.draggable = true; el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', e.target.id)); }); });

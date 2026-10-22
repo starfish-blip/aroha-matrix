@@ -1,0 +1,18 @@
+// Example: Triadic Agent with Doping and Decomposition Feedback
+export function processHarmonicState(inputs, dopantAgent) {
+  // 1. Doping Phase: Introduce agent bias / reward weight
+  const energizedInput = inputs.map(val => val * dopantAgent.valenceMultiplier);
+
+  // 2. Selection & Emergence (The Yellow Container)
+  const primarySelection = energizedInput.reduce((max, current) => current > max ? current : max, 0);
+
+  // 3. Decomposition Phase: Deconstruct unselected elements into background telemetry
+  const decomposedResidue = energizedInput
+    .filter(val => val !== primarySelection)
+    .reduce((sum, val) => sum + val, 0) / inputs.length;
+
+  return {
+    outputState: primarySelection,          // The primary emergent result
+    telemetryResidue: decomposedResidue    // The recycled background frequency
+  };
+}

@@ -1,0 +1,132 @@
+{
+  "base_frequency": 432,
+  "waveform": "sine",
+  "fader_bank": [
+    {
+      "fader_index": 1,
+      "frequency": 305.47,
+      "default_gain_db": 0.0
+    },
+    {
+      "fader_index": 2,
+      "frequency": 323.63,
+      "default_gain_db": 0.0
+    },
+    {
+      "fader_index": 3,
+      "frequency": 342.88,
+      "default_gain_db": 0.0
+    },
+    {
+      "fader_index": 4,
+      "frequency": 363.27,
+      "default_gain_db": 0.0
+    },
+    {
+      "fader_index": 5,
+      "frequency": 384.87,
+      "default_gain_db": 0.0
+    },
+    {
+      "fader_index": 6,
+      "frequency": 407.75,
+      "default_gain_db": 0.0
+    },
+    {
+      "fader_index": 7,
+      "frequency": 432.0,
+      "default_gain_db": 0.0
+    },
+    {
+      "fader_index": 8,
+      "frequency": 457.69,
+      "default_gain_db": 0.0
+    },
+    {
+      "fader_index": 9,
+      "frequency": 484.9,
+      "default_gain_db": 0.0
+    },
+    {
+      "fader_index": 10,
+      "frequency": 513.74,
+      "default_gain_db": 0.0
+    },
+    {
+      "fader_index": 11,
+      "frequency": 544.29,
+      "default_gain_db": 0.0
+    },
+    {
+      "fader_index": 12,
+      "frequency": 576.65,
+      "default_gain_db": 0.0
+    }
+  ],
+  "midi_references": {
+    "C4_freq": 261.63,
+    "A4_freq": 440.0,
+    "fader_bank": [
+      {
+        "fader_index": 1,
+        "frequency": 305.47,
+        "default_gain_db": 0.0
+      },
+      {
+        "fader_index": 2,
+        "frequency": 323.63,
+        "default_gain_db": 0.0
+      },
+      {
+        "fader_index": 3,
+        "frequency": 342.88,
+        "default_gain_db": 0.0
+      },
+      {
+        "fader_index": 4,
+        "frequency": 363.27,
+        "default_gain_db": 0.0
+      },
+      {
+        "fader_index": 5,
+        "frequency": 384.87,
+        "default_gain_db": 0.0
+      },
+      {
+        "fader_index": 6,
+        "frequency": 407.75,
+        "default_gain_db": 0.0
+      },
+      {
+        "fader_index": 7,
+        "frequency": 432.0,
+        "default_gain_db": 0.0
+      },
+      {
+        "fader_index": 8,
+        "frequency": 457.69,
+        "default_gain_db": 0.0
+      },
+      {
+        "fader_index": 9,
+        "frequency": 484.9,
+        "default_gain_db": 0.0
+      },
+      {
+        "fader_index": 10,
+        "frequency": 513.74,
+        "default_gain_db": 0.0
+      },
+      {
+        "fader_index": 11,
+        "frequency": 544.29,
+        "default_gain_db": 0.0
+      },
+      {
+        "fader_index": 12,
+        "frequency": 576.65,
+        "default_gain_db": 0.0
+      }
+    ]
+  }
+}

@@ -1,0 +1,329 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AROHA Engine - Advanced Modular Laboratory</title>
+    <style>
+        body { background: #020408; color: #00ffcc; font-family: monospace; margin: 0; padding: 15px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; overflow: hidden; }
+        header { display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid rgba(0,255,204,0.3); padding-bottom: 8px; }
+        .dashboard { display: grid; grid-template-columns: 300px 1fr; gap: 15px; flex: 1; min-height: 0; }
+        .sidebar { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-right: 5px; }
+        .panel { background: #0b101d; border: 1px solid rgba(0,255,204,0.3); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,255,204,0.04); }
+        .canvas-stack { display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 0; }
+        h2 { font-size: 0.8rem; margin-top: 0; margin-bottom: 10px; color: #00ffcc; text-transform: uppercase; letter-spacing: 1px; }
+        .canvas-container { flex: 1; position: relative; width: 100%; background: #04060b; border-radius: 6px; overflow: hidden; border: 1px solid rgba(0,255,204,0.15); min-height: 150px; }
+        canvas { width: 100% !important; height: 100% !important; display: block; }
+        button { background: rgba(0,255,204,0.1); border: 1px solid #00ffcc; color: #00ffcc; padding: 10px; font-family: monospace; cursor: pointer; border-radius: 4px; font-size: 0.85rem; transition: all 0.2s; width: 100%; margin-bottom: 10px; }
+        button:hover { background: rgba(0,255,204,0.25); box-shadow: 0 0 12px rgba(0,255,204,0.4); }
+        .control-group { margin-bottom: 10px; font-size: 0.8rem; }
+        .control-group label { display: flex; justify-content: space-between; margin-bottom: 4px; color: #88a0c0; }
+        .control-group input[type="range"], .control-group select { width: 100%; background: #04060b; border: 1px solid rgba(0,255,204,0.3); color: #00ffcc; padding: 4px; border-radius: 4px; font-family: monospace; accent-color: #00ffcc; }
+        .stats { font-size: 0.8rem; line-height: 1.6; color: #88a0c0; }
+        .stats span { color: #00ffcc; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>AROHA // MODULAR LABORATORY SUITE v2.5</h1>
+        <div>MIDI STATUS: <span id="midi-status" style="color: #ffaa00;">WAITING FOR INIT</span></div>
+    </header>
+
+    <div class="dashboard">
+        <div class="sidebar">
+            <div class="panel">
+                <h2>Hardware Gateway</h2>
+                <button id="init-btn">INIT LABORATORY</button>
+                <div class="control-group">
+                    <label><span>Master Volume</span><span id="vol-val">0.0</span></label>
+                    <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.0">
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Harmonic & Scale Matrix</h2>
+                <div class="control-group">
+                    <label><span>Quantize Scale</span></label>
+                    <select id="scale-select">
+                        <option value="chromatic">Chromatic (Raw)</option>
+                        <option value="pentatonic" selected>Minor Pentatonic</option>
+                        <option value="dorian">Dorian Mode</option>
+                        <option value="harmonic">Harmonic Minor</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label><span>Manual Mode M</span><span id="m-val">3.0</span></label>
+                    <input type="range" id="m-slider" min="1" max="8" step="0.1" value="3.0">
+                </div>
+                <div class="control-group">
+                    <label><span>Manual Mode N</span><span id="n-val">3.0</span></label>
+                    <input type="range" id="n-slider" min="1" max="8" step="0.1" value="3.0">
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Telemetry Data</h2>
+                <div class="stats">
+                    <div>Frequency: <span id="val-freq">0.00 Hz</span></div>
+                    <div>Active Note: <span id="val-note">None</span></div>
+                    <div>Device: <span id="val-device">None</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="canvas-stack">
+            <div class="panel" style="flex: 2;">
+                <h2>2D Chladni Resonance Field & Particle Scatter</h2>
+                <div class="canvas-container" id="chladni-box">
+                    <canvas id="chladni-canvas"></canvas>
+                </div>
+            </div>
+            <div class="panel" style="flex: 1;">
+                <h2>Real-Time Audio Waveform Telemetry</h2>
+                <div class="canvas-container" id="scope-box">
+                    <canvas id="scope-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let audioCtx, masterGain, analyser;
+        let m = 3, n = 3;
+        let targetM = 3, targetN = 3;
+
+        const cCanvas = document.getElementById('chladni-canvas');
+        const cCtx = cCanvas.getContext('2d');
+        const sCanvas = document.getElementById('scope-canvas');
+        const sCtx = sCanvas.getContext('2d');
+
+        let particles = [];
+        const PARTICLE_COUNT = 1800;
+
+        const volumeSlider = document.getElementById('volume-slider');
+        const volValDisplay = document.getElementById('vol-val');
+        const mSlider = document.getElementById('m-slider');
+        const nSlider = document.getElementById('n-slider');
+        const mValDisplay = document.getElementById('m-val');
+        const nValDisplay = document.getElementById('n-val');
+        const scaleSelect = document.getElementById('scale-select');
+
+        volumeSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            volValDisplay.innerText = val.toFixed(2);
+            if (masterGain) masterGain.gain.setValueAtTime(val, audioCtx.currentTime);
+        });
+
+        mSlider.addEventListener('input', (e) => {
+            targetM = parseFloat(e.target.value);
+            mValDisplay.innerText = targetM.toFixed(1);
+        });
+
+        nSlider.addEventListener('input', (e) => {
+            targetN = parseFloat(e.target.value);
+            nValDisplay.innerText = targetN.toFixed(1);
+        });
+
+        function resizeCanvases() {
+            cCanvas.width = document.getElementById('chladni-box').clientWidth;
+            cCanvas.height = document.getElementById('chladni-box').clientHeight;
+            sCanvas.width = document.getElementById('scope-box').clientWidth;
+            sCanvas.height = document.getElementById('scope-box').clientHeight;
+            
+            if (particles.length === 0) initParticles();
+        }
+        window.addEventListener('resize', resizeCanvases);
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                particles.push({
+                    x: Math.random() * cCanvas.width,
+                    y: Math.random() * cCanvas.height,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: (Math.random() - 0.5) * 2
+                });
+            }
+        }
+
+        function getChladniVal(x, y, width, height, currentM, currentN) {
+            const scale = Math.PI;
+            const nx = (x / width) * scale * currentM;
+            const ny = (y / height) * scale * currentN;
+            return Math.sin(nx) * Math.sin((y / height) * scale * currentM) - Math.sin((x / width) * scale * currentN) * Math.sin(ny);
+        }
+
+        // Scale Quantization Rules (relative to root C / offset)
+        const scales = {
+            chromatic: [0,1,2,3,4,5,6,7,8,9,10,11],
+            pentatonic: [0,3,5,7,10],
+            dorian: [0,2,3,5,7,9,10],
+            harmonic: [0,2,3,5,7,8,11]
+        };
+
+        function quantizeNote(midiNote) {
+            const scaleType = scaleSelect.value;
+            if (scaleType === 'chromatic') return midiNote;
+            const allowedIntervals = scales[scaleType];
+            const octave = Math.floor(midiNote / 12);
+            const semitone = midiNote % 12;
+            
+            // Find closest allowed interval
+            let closest = allowedIntervals[0];
+            let minDiff = Math.abs(semitone - closest);
+            for (let interval of allowedIntervals) {
+                let diff = Math.abs(semitone - interval);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closest = interval;
+                }
+            }
+            return octave * 12 + closest;
+        }
+
+        const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        function getNoteName(midiNote) {
+            return noteNames[midiNote % 12] + Math.floor(midiNote / 12 - 1);
+        }
+
+        function animate() {
+            m += (targetM - m) * 0.1;
+            n += (targetN - n) * 0.1;
+
+            // Sync sliders if changed via MIDI
+            if (document.activeElement !== mSlider) {
+                mSlider.value = m.toFixed(1);
+                mValDisplay.innerText = m.toFixed(1);
+            }
+            if (document.activeElement !== nSlider) {
+                nSlider.value = n.toFixed(1);
+                nValDisplay.innerText = n.toFixed(1);
+            }
+
+            const width = cCanvas.width;
+            const height = cCanvas.height;
+
+            cCtx.fillStyle = 'rgba(4, 6, 11, 0.35)';
+            cCtx.fillRect(0, 0, width, height);
+
+            cCtx.fillStyle = '#00ffcc';
+            for (let p of particles) {
+                const val = getChladniVal(p.x, p.y, width, height, m, n);
+                
+                const h = 1.0;
+                const valX = getChladniVal(p.x + h, p.y, width, height, m, n) - getChladniVal(p.x - h, p.y, width, height, m, n);
+                const valY = getChladniVal(p.x, p.y + h, width, height, m, n) - getChladniVal(p.x, p.y - h, width, height, m, n);
+
+                p.vx = p.vx * 0.82 - valX * 18.0 + (Math.random() - 0.5) * 0.6;
+                p.vy = p.vy * 0.82 - valY * 18.0 + (Math.random() - 0.5) * 0.6;
+
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0) p.x = width;
+                if (p.x > width) p.x = 0;
+                if (p.y < 0) p.y = height;
+                if (p.y > height) p.y = 0;
+
+                if (Math.abs(val) < 0.18) {
+                    cCtx.fillRect(p.x, p.y, 2, 2);
+                }
+            }
+
+            sCtx.fillStyle = '#04060b';
+            sCtx.fillRect(0, 0, sCanvas.width, sCanvas.height);
+
+            if (analyser) {
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                analyser.getByteTimeDomainData(dataArray);
+
+                sCtx.lineWidth = 2;
+                sCtx.strokeStyle = '#00ffcc';
+                sCtx.beginPath();
+
+                const sliceWidth = sCanvas.width / bufferLength;
+                let x = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    const v = dataArray[i] / 128.0;
+                    const y = (v * sCanvas.height) / 2;
+
+                    if (i === 0) sCtx.moveTo(x, y);
+                    else sCtx.lineTo(x, y);
+
+                    x += sliceWidth;
+                }
+                sCtx.lineTo(sCanvas.width, sCanvas.height / 2);
+                sCtx.stroke();
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        document.getElementById('init-btn').addEventListener('click', async () => {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') await audioCtx.resume();
+                
+                masterGain = audioCtx.createGain();
+                masterGain.gain.value = parseFloat(volumeSlider.value);
+
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 2048;
+
+                masterGain.connect(analyser);
+                analyser.connect(audioCtx.destination);
+
+                resizeCanvases();
+                animate();
+
+                if (navigator.requestMIDIAccess) {
+                    const midiAccess = await navigator.requestMIDIAccess({ sysex: false });
+                    let found = false;
+                    for (let input of midiAccess.inputs.values()) {
+                        found = true;
+                        document.getElementById('midi-status').innerText = 'CONNECTED (' + input.name + ')';
+                        document.getElementById('midi-status').style.color = '#00ffcc';
+                        document.getElementById('val-device').innerText = input.name;
+
+                        input.onmidimessage = (event) => {
+                            const [status, data1, data2] = event.data;
+                            const command = status >> 4;
+                            if (command === 9 && data2 > 0) {
+                                const quantizedNote = quantizeNote(data1);
+                                const freq = 440 * Math.pow(2, (quantizedNote - 69) / 12);
+                                
+                                const osc = audioCtx.createOscillator();
+                                const noteGain = audioCtx.createGain();
+                                osc.type = 'triangle';
+                                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                                noteGain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                                noteGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+                                
+                                osc.connect(noteGain);
+                                noteGain.connect(masterGain);
+                                osc.start();
+                                osc.stop(audioCtx.currentTime + 1.5);
+
+                                targetM = (quantizedNote % 5) + 1.5;
+                                targetN = ((quantizedNote * 2) % 6) + 1.5;
+
+                                document.getElementById('val-freq').innerText = freq.toFixed(2) + ' Hz';
+                                document.getElementById('val-note').innerText = getNoteName(quantizedNote) + ' (' + quantizedNote + ')';
+                            }
+                        };
+                    }
+                    if (!found) {
+                        document.getElementById('midi-status').innerText = 'NO MIDI PORTS FOUND';
+                        document.getElementById('midi-status').style.color = '#ff4444';
+                    }
+                }
+
+                document.getElementById('init-btn').innerText = 'LABORATORY ACTIVE';
+                document.getElementById('init-btn').style.borderColor = '#00ffcc';
+            } catch (err) {
+                alert('Init error: ' + err.message);
+            }
+        });
+    </script>
+</body>
+</html>

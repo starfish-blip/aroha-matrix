@@ -1,0 +1,74 @@
+{
+  "version": "1",
+  "metadata": {
+    "marimo_version": "0.25.1",
+    "script_metadata_hash": null
+  },
+  "cells": [
+    {
+      "id": "Hbol",
+      "code_hash": "93cd93ef8e50aa45cb94cbbd9ab248b6",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "MJUe",
+      "code_hash": "af9859e27e8d13900a23f219d34cbf7b",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/markdown": "<span class=\"markdown prose dark:prose-invert contents\"><h1 id=\"aroha-v34-acoustic-resonance-midi-engine\">AROHA v34 Acoustic Resonance &amp; MIDI Engine</h1>\n<span class=\"paragraph\">Reactive backend calculations for frequency mapping, 12-octave fader bank, and configuration export.</span></span>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "vblA",
+      "code_hash": "561482edcf8900728407b4040a04067f",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><marimo-ui-element object-id='vblA-0' random-id='2bf479e5-cd44-c470-c767-508272fc3644'><marimo-slider data-initial-value='432' data-label='&quot;&#92;u003cspan class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&#92;u003e&#92;u003cspan class=&#92;&quot;paragraph&#92;&quot;&#92;u003eBase Frequency (Hz)&#92;u003c/span&#92;u003e&#92;u003c/span&#92;u003e&quot;' data-start='100' data-stop='1000' data-step='1' data-steps='[]' data-debounce='false' data-disabled='false' data-orientation='&quot;horizontal&quot;' data-show-value='false' data-include-input='false' data-full-width='false'></marimo-slider></marimo-ui-element><marimo-ui-element object-id='vblA-1' random-id='ce2cc441-e958-2c6f-981f-49894784b1f6'><marimo-dropdown data-initial-value='[&quot;sine&quot;]' data-label='&quot;&#92;u003cspan class=&#92;&quot;markdown prose dark:prose-invert contents&#92;&quot;&#92;u003e&#92;u003cspan class=&#92;&quot;paragraph&#92;&quot;&#92;u003eWaveform Type&#92;u003c/span&#92;u003e&#92;u003c/span&#92;u003e&quot;' data-options='[&quot;sine&quot;,&quot;triangle&quot;,&quot;sawtooth&quot;,&quot;square&quot;]' data-allow-select-none='false' data-searchable='false' data-full-width='false' data-disabled='false'></marimo-dropdown></marimo-ui-element></div>"
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "bkHC",
+      "code_hash": "3a968e162c151c1a5d2c3f80323ad3cd",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/plain": ""
+          }
+        }
+      ],
+      "console": []
+    },
+    {
+      "id": "lEQa",
+      "code_hash": "17c525fe573e718abe7495ed603bfee9",
+      "outputs": [
+        {
+          "type": "data",
+          "data": {
+            "text/html": "<div style='display: flex;flex: 1;flex-direction: column;justify-content: flex-start;align-items: normal;flex-wrap: nowrap;gap: 0.5rem'><span class=\"markdown prose dark:prose-invert contents\"><span class=\"paragraph\"><strong>Export Status:</strong> <code>[OK] Successfully exported acoustic_config.json to static/config/</code></span></span><marimo-json-output data-json-data='{&quot;base_frequency&quot;:432,&quot;waveform&quot;:&quot;sine&quot;,&quot;fader_bank&quot;:[{&quot;fader_index&quot;:1,&quot;frequency&quot;:305.47,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:2,&quot;frequency&quot;:323.63,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:3,&quot;frequency&quot;:342.88,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:4,&quot;frequency&quot;:363.27,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:5,&quot;frequency&quot;:384.87,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:6,&quot;frequency&quot;:407.75,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:7,&quot;frequency&quot;:432.0,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:8,&quot;frequency&quot;:457.69,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:9,&quot;frequency&quot;:484.9,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:10,&quot;frequency&quot;:513.74,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:11,&quot;frequency&quot;:544.29,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:12,&quot;frequency&quot;:576.65,&quot;default_gain_db&quot;:0.0}],&quot;midi_references&quot;:{&quot;C4_freq&quot;:261.63,&quot;A4_freq&quot;:440.0,&quot;fader_bank&quot;:[{&quot;fader_index&quot;:1,&quot;frequency&quot;:305.47,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:2,&quot;frequency&quot;:323.63,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:3,&quot;frequency&quot;:342.88,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:4,&quot;frequency&quot;:363.27,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:5,&quot;frequency&quot;:384.87,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:6,&quot;frequency&quot;:407.75,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:7,&quot;frequency&quot;:432.0,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:8,&quot;frequency&quot;:457.69,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:9,&quot;frequency&quot;:484.9,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:10,&quot;frequency&quot;:513.74,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:11,&quot;frequency&quot;:544.29,&quot;default_gain_db&quot;:0.0},{&quot;fader_index&quot;:12,&quot;frequency&quot;:576.65,&quot;default_gain_db&quot;:0.0}]}}' data-value-types='&quot;json&quot;'></marimo-json-output></div>"
+          }
+        }
+      ],
+      "console": []
+    }
+  ]
+}

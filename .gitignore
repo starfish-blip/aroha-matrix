@@ -30,3 +30,5 @@ _backup_conflict/
 /Saved Games/
 /Searches/
 /AppData/
+.vercel
+.env*
