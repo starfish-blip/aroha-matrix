@@ -23,7 +23,7 @@
         .dock-row { display: flex; gap: 8px; align-items: center; }
         .fader-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; margin-top: 5px; }
         .fader-col { display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; color: #9ca3af; }
-        .fader-col input { writing-mode: bt-lr; -webkit-appearance: slider-vertical; width: 20px; height: 100px; margin-bottom: 4px; accent-color: #00f0ff; }
+        .fader-col input { writing-mode: vertical-lr; direction: rtl; width: 20px; height: 100px; margin-bottom: 4px; accent-color: #00f0ff; }
         
         #keyboard-dock { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(15, 15, 20, 0.9); border: 1px solid #1f1f28; padding: 10px; border-radius: 8px; z-index: 10; display: flex; gap: 4px; backdrop-filter: blur(10px); }
         .piano-key { width: 32px; height: 110px; background: #fff; border: 1px solid #000; border-radius: 0 0 4px 4px; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; font-size: 0.65rem; color: #000; font-weight: bold; z-index: 2; }
@@ -117,6 +117,14 @@
     <script src="/static/js/midi-bridge.js"></script>
 
     <script>
+        // Toggle Panel Collapse
+        function togglePanel(id) {
+            const panel = document.getElementById(id);
+            if (panel) {
+                panel.classList.toggle('collapsed');
+            }
+        }
+
         // Draggable Floating Panels
         function makeDraggable(elmnt) {
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
@@ -155,11 +163,6 @@
         makeDraggable(document.getElementById('dock-panel'));
         makeDraggable(document.getElementById('cymatic-panel'));
 
-        function togglePanel(id) {
-            const panel = document.getElementById(id);
-            panel.classList.toggle('collapsed');
-        }
-
         // Build Interactive Piano Keyboard
         const notes = [
             { note: 'C4', freq: 261.63, type: 'white' },
@@ -180,7 +183,7 @@
         const pianoContainer = document.getElementById('piano-keys-container');
         notes.forEach((k) => {
             const keyEl = document.createElement('div');
-            keyEl.className = 'piano-key ' + k.type;
+            keyEl.className = `piano-key ${k.type}`;
             keyEl.innerText = k.note;
             if (k.type === 'black') {
                 keyEl.style.position = 'absolute';
@@ -202,40 +205,62 @@
 
         // Initialize Audio & Faders
         document.getElementById('init-audio-btn').addEventListener('click', async () => {
-            await window.acousticEngine.init();
-            window.dspEngine.initEffects(window.acousticEngine.audioCtx, window.acousticEngine.masterGain);
-            window.arohaVisualizer.init(window.acousticEngine);
-            window.themeEngine.applyTheme('ocean', window.arohaVisualizer.layers);
+            if (window.acousticEngine) {
+                await window.acousticEngine.init();
+                if (window.dspEngine && window.acousticEngine.audioCtx) {
+                    window.dspEngine.initEffects(window.acousticEngine.audioCtx, window.acousticEngine.masterGain);
+                }
+                if (window.arohaVisualizer) {
+                    window.arohaVisualizer.init(window.acousticEngine);
+                }
+                if (window.themeEngine && window.arohaVisualizer) {
+                    window.themeEngine.applyTheme('ocean', window.arohaVisualizer.layers);
+                }
 
-            const container = document.getElementById('fader-bank-ui');
-            container.innerHTML = '';
+                const container = document.getElementById('fader-bank-ui');
+                container.innerHTML = '';
 
-            if (window.acousticEngine.config && window.acousticEngine.config.fader_bank) {
-                window.acousticEngine.config.fader_bank.forEach((fader, idx) => {
-                    const col = document.createElement('div');
-                    col.className = 'fader-col';
-                    const freqLabel = fader.frequency > 1000 ? (fader.frequency/1000).toFixed(1) + 'k' : fader.frequency.toFixed(0);
-                    col.innerHTML = 
-                        <span> + freqLabel + </span>
-                        <input type="range" min="-40" max="6" step="0.5" value="-40" data-fader=" + idx + ">
-                        <span>F + (idx+1) + </span>
-                    ;
-                    container.appendChild(col);
-                });
-
-                container.querySelectorAll('input[type=range]').forEach(input => {
-                    input.addEventListener('input', (e) => {
-                        const idx = parseInt(e.target.getAttribute('data-fader'));
-                        const val = parseFloat(e.target.value);
-                        window.acousticEngine.setFaderGain(idx, val);
-                        const freq = window.acousticEngine.config.fader_bank[idx].frequency;
-                        if (window.arohaVisualizer) window.arohaVisualizer.setFrequency(freq);
-                        document.getElementById('freq-display').innerText = freq.toFixed(2) + ' Hz';
+                if (window.acousticEngine.config && window.acousticEngine.config.fader_bank) {
+                    window.acousticEngine.config.fader_bank.forEach((fader, idx) => {
+                        const col = document.createElement('div');
+                        col.className = 'fader-col';
+                        const freqLabel = fader.frequency > 1000 ? (fader.frequency/1000).toFixed(1) + 'k' : fader.frequency.toFixed(0);
+                        col.innerHTML = `
+                            <span>${freqLabel}</span>
+                            <input type="range" min="-40" max="6" step="0.5" value="-40" data-fader="${idx}">
+                            <span>F${idx+1}</span>
+                        `;
+                        container.appendChild(col);
                     });
-                });
+
+                    container.querySelectorAll('input[type=range]').forEach(input => {
+                        input.addEventListener('input', (e) => {
+                            const idx = parseInt(e.target.getAttribute('data-fader'));
+                            const val = parseFloat(e.target.value);
+                            window.acousticEngine.setFaderGain(idx, val);
+                            const freq = window.acousticEngine.config.fader_bank[idx].frequency;
+                            if (window.arohaVisualizer) window.arohaVisualizer.setFrequency(freq);
+                            document.getElementById('freq-display').innerText = `${freq.toFixed(2)} Hz`;
+                        });
+                    });
+                }
+                document.getElementById('init-audio-btn').innerText = "Engine Active ?";
+                document.getElementById('init-audio-btn').style.background = "#059669";
             }
-            document.getElementById('init-audio-btn').innerText = "Engine Active ?";
-            document.getElementById('init-audio-btn').style.background = "#059669";
+        });
+
+        // UI Controls
+        document.getElementById('scale-select').addEventListener('change', (e) => {
+            if (window.scaleEngine) window.scaleEngine.setScale(e.target.value);
+        });
+        document.getElementById('symmetry-select').addEventListener('change', (e) => {
+            if (window.arohaVisualizer) window.arohaVisualizer.setSymmetry(e.target.value);
+        });
+        document.getElementById('theme-select').addEventListener('change', (e) => {
+            if (window.themeEngine && window.arohaVisualizer) window.themeEngine.applyTheme(e.target.value, window.arohaVisualizer.layers);
+        });
+        document.getElementById('turbulence-slider').addEventListener('input', (e) => {
+            if (window.arohaVisualizer) window.arohaVisualizer.setTurbulence(e.target.value);
         });
     </script>
 </body>
