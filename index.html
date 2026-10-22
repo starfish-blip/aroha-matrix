@@ -26,9 +26,9 @@
         .fader-col input { writing-mode: vertical-lr; direction: rtl; width: 18px; height: 80px; margin-bottom: 2px; accent-color: #00f0ff; }
         
         #keyboard-dock { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(15, 15, 20, 0.9); border: 1px solid #1f1f28; padding: 8px; border-radius: 8px; z-index: 10; display: flex; gap: 3px; backdrop-filter: blur(10px); }
-        .piano-key { width: 30px; height: 95px; background: #fff; border: 1px solid #000; border-radius: 0 0 4px 4px; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; font-size: 0.6rem; color: #000; font-weight: bold; z-index: 2; }
+        .piano-key { width: 30px; height: 95px; background: #fff; border: 1px solid #000; border-radius: 0 0 4px 4px; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; font-size: 0.6rem; color: #000; font-weight: bold; z-index: 2; transition: background 0.1s ease, box-shadow 0.1s ease; }
         .piano-key.black { width: 20px; height: 55px; background: #111; color: #fff; position: absolute; margin-left: -11px; z-index: 3; border-radius: 0 0 3px 3px; }
-        .piano-key:hover, .piano-key.active { background: #00f0ff !important; color: #000; }
+        .piano-key:hover, .piano-key.active { background: #00f0ff !important; color: #000; box-shadow: 0 0 12px #00f0ff; }
     </style>
 </head>
 <body>
@@ -158,25 +158,26 @@
         makeDraggable(document.getElementById('cymatic-panel'));
 
         const notes = [
-            { note: 'C4', freq: 261.63, type: 'white' },
-            { note: 'C#4', freq: 277.18, type: 'black', offset: 21 },
-            { note: 'D4', freq: 293.66, type: 'white' },
-            { note: 'D#4', freq: 311.13, type: 'black', offset: 54 },
-            { note: 'E4', freq: 329.63, type: 'white' },
-            { note: 'F4', freq: 349.23, type: 'white' },
-            { note: 'F#4', freq: 369.99, type: 'black', offset: 118 },
-            { note: 'G4', freq: 392.00, type: 'white' },
-            { note: 'G#4', freq: 415.30, type: 'black', offset: 151 },
-            { note: 'A4', freq: 440.00, type: 'white' },
-            { note: 'A#4', freq: 466.16, type: 'black', offset: 184 },
-            { note: 'B4', freq: 493.88, type: 'white' },
-            { note: 'C5', freq: 523.25, type: 'white' }
+            { note: 'C4', midi: 60, freq: 261.63, type: 'white' },
+            { note: 'C#4', midi: 61, freq: 277.18, type: 'black', offset: 21 },
+            { note: 'D4', midi: 62, freq: 293.66, type: 'white' },
+            { note: 'D#4', midi: 63, freq: 311.13, type: 'black', offset: 54 },
+            { note: 'E4', midi: 64, freq: 329.63, type: 'white' },
+            { note: 'F4', midi: 65, freq: 349.23, type: 'white' },
+            { note: 'F#4', midi: 66, freq: 369.99, type: 'black', offset: 118 },
+            { note: 'G4', midi: 67, freq: 392.00, type: 'white' },
+            { note: 'G#4', midi: 68, freq: 415.30, type: 'black', offset: 151 },
+            { note: 'A4', midi: 69, freq: 440.00, type: 'white' },
+            { note: 'A#4', midi: 70, freq: 466.16, type: 'black', offset: 184 },
+            { note: 'B4', midi: 71, freq: 493.88, type: 'white' },
+            { note: 'C5', midi: 72, freq: 523.25, type: 'white' }
         ];
 
         const pianoContainer = document.getElementById('piano-keys-container');
         notes.forEach((k) => {
             const keyEl = document.createElement('div');
             keyEl.className = `piano-key ${k.type}`;
+            keyEl.setAttribute('data-midi', k.midi);
             keyEl.innerText = k.note;
             if (k.type === 'black') {
                 keyEl.style.position = 'absolute';
@@ -190,9 +191,8 @@
                 if (window.arohaVisualizer) {
                     window.arohaVisualizer.setFrequency(k.freq);
                 }
+                setTimeout(() => keyEl.classList.remove('active'), 250);
             });
-            keyEl.addEventListener('mouseup', () => { keyEl.classList.remove('active'); });
-            keyEl.addEventListener('mouseleave', () => { keyEl.classList.remove('active'); });
             pianoContainer.appendChild(keyEl);
         });
 
