@@ -1,110 +1,93 @@
-function onMIDISuccess(midiAccess) {
-    console.log("[MIDI] MIDI Access Granted");
-    const inputs = midiAccess.inputs.values();
-    for (let input of inputs) {
-        console.log(`[MIDI] Connected Input: ${input.name}`);
-        input.onmidimessage = handleMIDIMessage;
-    }
-    midiAccess.onstatechange = (e) => {
-        console.log(`[MIDI] State Change: ${e.port.name} - ${e.port.state}`);
-    };
-}
-
-function onMIDIFailure(msg) {
-    console.warn("[MIDI] Failed to get MIDI access - ", msg);
-}
-
-function handleMIDIMessage(event) {
-    const [status, data1, data2] = event.data;
-    const command = status >> 4;
-    let note = data1;
-    const velocity = data2;
-
-    // Apply Harmonic Scale Quantization if active
-    if (window.scaleEngine) {
-        note = window.scaleEngine.quantizeNote(note);
+// AROHA WebMIDI Bridge for M-Audio Oxygen 61
+class MidiBridge {
+    constructor() {
+        this.midiAccess = null;
+        this.inputs = [];
+        this.connectedDevice = null;
     }
 
-    // Apply Octave Shift if defined
-    if (typeof currentOctaveShift !== 'undefined') {
-        note += (currentOctaveShift * 12);
-    }
-
-    // Note On (command 9)
-    if (command === 9 && velocity > 0) {
-        if (note === 36) {
-            const panicBtn = document.getElementById('panic-btn');
-            if (panicBtn) panicBtn.click();
-            return;
-        } else if (note === 38) {
-            const binBtn = document.getElementById('toggle-binaural');
-            if (binBtn) binBtn.click();
+    async init() {
+        if (!navigator.requestMIDIAccess) {
+            console.warn("WebMIDI is not supported in this browser.");
             return;
         }
 
-        if (window.arpeggiatorEngine) {
-            window.arpeggiatorEngine.addNote(note);
+        try {
+            this.midiAccess = await navigator.requestMIDIAccess();
+            this.setupInputs();
+            this.midiAccess.onstatechange = (e) => this.handleStateChange(e);
+            console.log("[MIDI] WebMIDI Initialized Successfully");
+        } catch (err) {
+            console.error("[MIDI] Failed to get MIDI access:", err);
         }
+    }
 
-        const frequency = 440 * Math.pow(2, (note - 69) / 12);
-        if (window.acousticEngine && typeof window.acousticEngine.playTone === 'function') {
-            window.acousticEngine.playTone(frequency);
+    setupInputs() {
+        this.inputs = [];
+        let found = false;
+        for (let input of this.midiAccess.inputs.values()) {
+            this.inputs.push(input);
+            input.onmidimessage = (msg) => this.handleMidiMessage(msg);
+            console.log(`[MIDI] Connected Input: ${input.name}`);
+            this.connectedDevice = input.name;
+            found = true;
+        }
+        if (!found) {
+            console.log("[MIDI] No MIDI devices detected. Please connect your Oxygen 61.");
+        }
+    }
+
+    handleStateChange(e) {
+        console.log(`[MIDI] Device state change: ${e.port.name} (${e.port.state})`);
+        this.setupInputs();
+    }
+
+    handleMidiMessage(event) {
+        const [status, data1, data2] = event.data;
+        const command = status >> 4;
+        const channel = status & 0xf;
+
+        // Note On (command 9) with velocity > 0
+        if (command === 9 && data2 > 0) {
+            const freq = this.midiNoteToFreq(data1);
+            console.log(`[MIDI] Note On: Note ${data1} (${freq.toFixed(2)} Hz) Vel ${data2}`);
+            
+            if (window.acousticEngine && window.acousticEngine.audioCtx) {
+                window.acousticEngine.playTone(freq);
+            }
+            if (window.arohaVisualizer) {
+                window.arohaVisualizer.setFrequency(freq);
+            }
         }
         
-        if (window.cymaticEngine) {
-            window.cymaticEngine.setFrequency(frequency);
-            const freqDisplay = document.getElementById('freq-display');
-            if (freqDisplay) freqDisplay.innerText = `${frequency.toFixed(2)} Hz`;
-        }
-
-        if (window.arohaVisualizer && typeof window.arohaVisualizer.setFrequency === 'function') {
-            window.arohaVisualizer.setFrequency(frequency);
-        }
-    }
-    // Note Off
-    else if (command === 8 || (command === 9 && velocity === 0)) {
-        if (window.arpeggiatorEngine) {
-            window.arpeggiatorEngine.removeNote(note);
-        }
-    }
-    
-    // Control Change (command 11) - M-Audio Oxygen 61 physical sliders send CC 13 - 24
-    else if (command === 11) {
-        const ccNum = data1;
-        const val = data2; 
-
-        let faderIdx = -1;
-        if (ccNum >= 13 && ccNum <= 24) {
-            faderIdx = ccNum - 13;
-        } else if (ccNum >= 70 && ccNum <= 81) {
-            faderIdx = ccNum - 70;
-        } else if (ccNum >= 0 && ccNum <= 11) {
-            faderIdx = ccNum;
-        }
-
-        if (faderIdx !== -1) {
-            const minDb = -40;
-            const maxDb = 6;
-            const dbVal = minDb + (val / 127) * (maxDb - minDb);
-
-            const slider = document.querySelector(`input[data-fader="${faderIdx}"]`);
-            if (slider) slider.value = dbVal;
-
-            if (window.acousticEngine && typeof window.acousticEngine.setFaderGain === 'function') {
-                window.acousticEngine.setFaderGain(faderIdx, dbVal);
-            }
-
-            if (window.acousticEngine && window.acousticEngine.config && window.acousticEngine.config.fader_bank) {
-                const freq = window.acousticEngine.config.fader_bank[faderIdx].frequency;
-                if (window.cymaticEngine) {
-                    window.cymaticEngine.setFrequency(freq);
-                    const freqDisplay = document.getElementById('freq-display');
-                    if (freqDisplay) freqDisplay.innerText = `${freq.toFixed(2)} Hz`;
-                }
-                if (window.arohaVisualizer && typeof window.arohaVisualizer.setFrequency === 'function') {
-                    window.arohaVisualizer.setFrequency(freq);
+        // Control Change (command 11) - Maps physical knobs/sliders
+        else if (command === 11) {
+            console.log(`[MIDI] CC Controller ${data1}: Value ${data2}`);
+            
+            // Map CC 7 (Volume / Slider) or common knob controllers to turbulence or master gain
+            if (data1 === 7 || data1 === 74) {
+                const normalizedVal = data2 / 127.0 * 3.0; // scale 0 to 3.0
+                const slider = document.getElementById('turbulence-slider');
+                if (slider) {
+                    slider.value = normalizedVal;
+                    if (window.arohaVisualizer) {
+                        window.arohaVisualizer.setTurbulence(normalizedVal);
+                    }
                 }
             }
         }
+    }
+
+    midiNoteToFreq(note) {
+        return 440 * Math.pow(2, (note - 69) / 12);
     }
 }
+
+window.midiBridge = new MidiBridge();
+
+// Auto-initialize MIDI when window loads or audio engine starts
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        window.midiBridge.init();
+    }, 1000);
+});
