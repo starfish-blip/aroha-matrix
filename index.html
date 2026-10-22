@@ -200,337 +200,8 @@
                 keyEl.classList.remove('active');
             });
             keyEl.addEventListener('mouseleave', () => {
-                keyEl.classList
-class ArohaVisualizer {
-    constructor() {
-        this.scene = null;
-        this.camera = null;
-        this.renderer = null;
-        this.particles = null;
-        this.geometry = null;
-        this.material = null;
-        this.count = 25000;
-        this.turbulence = 1.0;
-        this.frequency = 432.0;
-        this.symmetry = 4;
-        this.synthesisMode = false;
-    }
-
-    init(audioEngine) {
-        this.audioEngine = audioEngine;
-        const container = document.getElementById('canvas-container');
-        
-        this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.z = 45;
-
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        container.appendChild(this.renderer.domElement);
-
-        this.geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(this.count * 3);
-        const colors = new Float32Array(this.count * 3);
-
-        for (let i = 0; i < this.count * 3; i += 3) {
-            const u = Math.random() * Math.PI * 2;
-            const v = Math.random() * Math.PI;
-            const r = 15 + Math.random() * 10;
-            
-            positions[i] = r * Math.sin(v) * Math.cos(u);
-            positions[i+1] = r * Math.sin(v) * Math.sin(u);
-            positions[i+2] = r * Math.cos(v);
-
-            colors[i] = 0.0;
-            colors[i+1] = 0.85 + Math.random() * 0.15;
-            colors[i+2] = 1.0;
-        }
-
-        this.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        this.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-        this.material = new THREE.PointsMaterial({
-            size: 1.2,
-            vertexColors: true,
-            blending: THREE.AdditiveBlending,
-            transparent: true,
-            opacity: 0.9
-        });
-
-        this.particles = new THREE.Points(this.geometry, this.material);
-        this.scene.add(this.particles);
-
-        window.addEventListener('resize', () => this.onWindowResize());
-        this.animate();
-    }
-
-    setTurbulence(val) {
-        this.turbulence = parseFloat(val);
-    }
-
-    setFrequency(freq) {
-        this.frequency = freq;
-    }
-
-    setSymmetry(sym) {
-        this.symmetry = parseInt(sym);
-    }
-
-    toggleSynthesisDemonstration() {
-        this.synthesisMode = !this.synthesisMode;
-        return this.synthesisMode;
-    }
-
-    onWindowResize() {
-        this.camera.aspect = window.innerWidth / window.innerHeight;
-        this.camera.updateProjectionMatrix();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
-    animate() {
-        requestAnimationFrame(() => this.animate());
-
-        const positions = this.geometry.attributes.position.array;
-        const time = Date.now() * 0.0008 * this.turbulence;
-
-        let audioLevel = 0.2;
-        if (this.audioEngine && this.audioEngine.analyser) {
-            const data = new Uint8Array(this.audioEngine.analyser.frequencyBinCount);
-            this.audioEngine.analyser.getByteFrequencyData(data);
-            const sum = data.reduce((a, b) => a + b, 0);
-            audioLevel = (sum / data.length) / 100.0;
-        }
-
-        for (let i = 0; i < this.count * 3; i += 3) {
-            let x = positions[i];
-            let y = positions[i+1];
-            let z = positions[i+2];
-
-            const angle = time + (i * 0.0001);
-            const symFactor = this.symmetry;
-            
-            // Sacred geometry toroidal/cymatic vortex deformation
-            const radius = Math.sqrt(x*x + y*y);
-            const phi = Math.atan2(y, x);
-
-            positions[i] = Math.cos(phi * symFactor + time) * (radius + Math.sin(time + z * 0.1) * audioLevel * 5 * this.turbulence);
-            positions[i+1] = Math.sin(phi * symFactor + time) * (radius + Math.cos(time + z * 0.1) * audioLevel * 5 * this.turbulence);
-            positions[i+2] += Math.sin(time * 2 + radius * 0.05) * audioLevel * 2;
-
-            if (Math.abs(positions[i+2]) > 40) {
-                positions[i+2] *= -0.8;
-            }
-        }
-
-        this.geometry.attributes.position.needsUpdate = true;
-        this.particles.rotation.y = time * 0.2;
-        this.particles.rotation.z = time * 0.1;
-
-        this.renderer.render(this.scene, this.camera);
-    }
-}
-
-window.arohaVisualizer = new ArohaVisualizer(); = @"
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>AROHA Engine v34 - Unified Acoustic & Visualizer Matrix</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <style>
-        body { background: #050508; color: #00f0ff; font-family: monospace; margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: auto; }
-        
-        .floating-panel { position: absolute; background: rgba(15, 15, 20, 0.85); border: 1px solid #1f1f28; border-radius: 8px; backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 10; display: flex; flex-direction: column; transition: max-height 0.3s ease; }
-        .panel-header { background: #1f1f28; padding: 8px 12px; cursor: move; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: bold; border-top-left-radius: 7px; border-top-right-radius: 7px; user-select: none; }
-        .panel-body { padding: 12px; display: flex; flex-direction: column; gap: 10px; max-height: 450px; overflow-y: auto; }
-        .collapsed .panel-body { display: none; }
-        .minimize-btn { background: none; border: none; color: #00f0ff; cursor: pointer; font-family: monospace; font-weight: bold; }
-
-        #dock-panel { top: 20px; left: 20px; width: 380px; }
-        #cymatic-panel { top: 20px; right: 20px; width: 180px; align-items: center; }
-
-        button, select { width: 100%; padding: 8px; background: #1f1f28; border: 1px solid #3a3a48; color: #fff; border-radius: 4px; font-family: monospace; cursor: pointer; }
-        button:hover, select:hover { background: #2563eb; }
-        .dock-row { display: flex; gap: 8px; align-items: center; }
-        .fader-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; margin-top: 5px; }
-        .fader-col { display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; color: #9ca3af; }
-        .fader-col input { writing-mode: bt-lr; -webkit-appearance: slider-vertical; width: 20px; height: 100px; margin-bottom: 4px; accent-color: #00f0ff; }
-        
-        #keyboard-dock { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(15, 15, 20, 0.9); border: 1px solid #1f1f28; padding: 10px; border-radius: 8px; z-index: 10; display: flex; gap: 4px; backdrop-filter: blur(10px); }
-        .piano-key { width: 32px; height: 110px; background: #fff; border: 1px solid #000; border-radius: 0 0 4px 4px; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; font-size: 0.65rem; color: #000; font-weight: bold; z-index: 2; }
-        .piano-key.black { width: 22px; height: 65px; background: #111; color: #fff; position: absolute; margin-left: -12px; z-index: 3; border-radius: 0 0 3px 3px; }
-        .piano-key:hover, .piano-key.active { background: #00f0ff !important; color: #000; }
-    </style>
-</head>
-<body>
-
-    <div id="canvas-container"></div>
-
-    <!-- Cymatic Resonance Panel -->
-    <div id="cymatic-panel" class="floating-panel">
-        <div class="panel-header"><span>CYMATIC MAP</span><button class="minimize-btn" onclick="togglePanel('cymatic-panel')">_</button></div>
-        <div class="panel-body" style="align-items: center;">
-            <canvas id="cymatic-canvas" width="140" height="140" style="border-radius: 50%; border: 2px solid #00f0ff; background: #000;"></canvas>
-            <div id="freq-display" style="font-size: 0.75rem; margin-top: 6px; color: #9ca3af;">432.00 Hz</div>
-        </div>
-    </div>
-
-    <!-- Control Dock Panel -->
-    <div id="dock-panel" class="floating-panel">
-        <div class="panel-header"><span>AROHA v34 // CONTROL DOCK</span><button class="minimize-btn" onclick="togglePanel('dock-panel')">_</button></div>
-        <div class="panel-body">
-            <button id="init-audio-btn">Initialize Audio, MIDI & Visualizer</button>
-
-            <div class="dock-row">
-                <select id="focus-preset">
-                    <option value="2.0">Gateway Focus 10 (2.0 Hz)</option>
-                    <option value="6.0" selected>Gateway Focus 12 (6.0 Hz)</option>
-                    <option value="10.0">Gateway Focus 15 (10.0 Hz)</option>
-                    <option value="40.0">Gateway Focus 21 (40.0 Hz)</option>
-                </select>
-                <button id="toggle-binaural">Binaural ON</button>
-            </div>
-
-            <div class="dock-row">
-                <select id="scale-select">
-                    <option value="pentatonic" selected>Scale: Pentatonic</option>
-                    <option value="dorian">Scale: Dorian</option>
-                    <option value="solfeggio">Scale: Solfeggio</option>
-                </select>
-                <select id="symmetry-select">
-                    <option value="3">3-Fold</option>
-                    <option value="4" selected>4-Fold</option>
-                    <option value="5">5-Fold</option>
-                    <option value="6">6-Fold</option>
-                </select>
-            </div>
-
-            <div class="dock-row">
-                <select id="theme-select">
-                    <option value="ocean" selected>Theme: Deep Ocean</option>
-                    <option value="solar">Theme: Solar Gold</option>
-                    <option value="nebula">Theme: Nebula Violet</option>
-                    <option value="matrix">Theme: Matrix Green</option>
-                </select>
-            </div>
-
-            <div class="dock-row">
-                <button id="latch-btn">Chord Latch: OFF</button>
-                <button id="live-mic-btn">Live Input</button>
-            </div>
-
-            <div class="dock-row" style="flex-direction: column; align-items: stretch; gap: 4px; font-size: 0.75rem; color: #9ca3af;">
-                <span>Turbulence / Vortex Depth</span>
-                <input type="range" id="turbulence-slider" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 100%;">
-            </div>
-
-            <div style="font-size: 0.75rem; color: #9ca3af; margin-top: 2px;">Solfeggio Fader Bank</div>
-            <div class="fader-grid" id="fader-bank-ui"></div>
-        </div>
-    </div>
-
-    <!-- Interactive On-Screen Keyboard -->
-    <div id="keyboard-dock">
-        <div style="position: relative; display: flex;" id="piano-keys-container"></div>
-    </div>
-
-    <script src="/static/js/audio-engine.js"></script>
-    <script src="/static/js/visualizer-engine.js"></script>
-    <script src="/static/js/cymatic-engine.js"></script>
-    <script src="/static/js/binaural-engine.js"></script>
-    <script src="/static/js/arpeggiator-engine.js"></script>
-    <script src="/static/js/scale-engine.js"></script>
-    <script src="/static/js/theme-engine.js"></script>
-    <script src="/static/js/dsp-engine.js"></script>
-    <script src="/static/js/recorder-engine.js"></script>
-    <script src="/static/js/synergy-engine.js"></script>
-    <script src="/static/js/mesh-bridge.js"></script>
-    <script src="/static/js/midi-bridge.js"></script>
-
-    <script>
-        // Draggable Floating Panels
-        function makeDraggable(elmnt) {
-            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            const header = elmnt.querySelector('.panel-header');
-            if (header) {
-                header.onmousedown = dragMouseDown;
-            }
-
-            function dragMouseDown(e) {
-                e = e || window.event;
-                e.preventDefault();
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                document.onmouseup = closeDragElement;
-                document.onmousemove = elementDrag;
-            }
-
-            function elementDrag(e) {
-                e = e || window.event;
-                e.preventDefault();
-                pos1 = pos3 - e.clientX;
-                pos2 = pos4 - e.clientY;
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-                elmnt.style.right = "auto";
-            }
-
-            function closeDragElement() {
-                document.onmouseup = null;
-                document.onmousemove = null;
-            }
-        }
-
-        makeDraggable(document.getElementById('dock-panel'));
-        makeDraggable(document.getElementById('cymatic-panel'));
-
-        function togglePanel(id) {
-            const panel = document.getElementById(id);
-            panel.classList.toggle('collapsed');
-        }
-
-        // Build Interactive Piano Keyboard
-        const notes = [
-            { note: 'C4', freq: 261.63, type: 'white' },
-            { note: 'C#4', freq: 277.18, type: 'black', offset: 22 },
-            { note: 'D4', freq: 293.66, type: 'white' },
-            { note: 'D#4', freq: 311.13, type: 'black', offset: 56 },
-            { note: 'E4', freq: 329.63, type: 'white' },
-            { note: 'F4', freq: 349.23, type: 'white' },
-            { note: 'F#4', freq: 369.99, type: 'black', offset: 124 },
-            { note: 'G4', freq: 392.00, type: 'white' },
-            { note: 'G#4', freq: 415.30, type: 'black', offset: 158 },
-            { note: 'A4', freq: 440.00, type: 'white' },
-            { note: 'A#4', freq: 466.16, type: 'black', offset: 192 },
-            { note: 'B4', freq: 493.88, type: 'white' },
-            { note: 'C5', freq: 523.25, type: 'white' }
-        ];
-
-        const pianoContainer = document.getElementById('piano-keys-container');
-        notes.forEach((k) => {
-            const keyEl = document.createElement('div');
-            keyEl.className = 'piano-key ' + k.type;
-            keyEl.innerText = k.note;
-            if (k.type === 'black') {
-                keyEl.style.position = 'absolute';
-                keyEl.style.left = k.offset + 'px';
-            }
-            keyEl.addEventListener('mousedown', () => {
-                keyEl.classList.add('active');
-                if (window.acousticEngine && window.acousticEngine.audioCtx) {
-                    window.acousticEngine.playTone(k.freq);
-                }
-                if (window.arohaVisualizer) {
-                    window.arohaVisualizer.setFrequency(k.freq);
-                }
+                keyEl.classList.remove('active');
             });
-            keyEl.addEventListener('mouseup', () => { keyEl.classList.remove('active'); });
-            keyEl.addEventListener('mouseleave', () => { keyEl.classList.remove('active'); });
             pianoContainer.appendChild(keyEl);
         });
 
@@ -550,9 +221,9 @@ window.arohaVisualizer = new ArohaVisualizer(); = @"
                     col.className = 'fader-col';
                     const freqLabel = fader.frequency > 1000 ? (fader.frequency/1000).toFixed(1) + 'k' : fader.frequency.toFixed(0);
                     col.innerHTML = 
-                        <span> + freqLabel + </span>
-                        <input type="range" min="-40" max="6" step="0.5" value="-40" data-fader=" + idx + ">
-                        <span>F + (idx+1) + </span>
+                        <span>\</span>
+                        <input type="range" min="-40" max="6" step="0.5" value="-40" data-fader="\">
+                        <span>F\</span>
                     ;
                     container.appendChild(col);
                 });
@@ -564,12 +235,26 @@ window.arohaVisualizer = new ArohaVisualizer(); = @"
                         window.acousticEngine.setFaderGain(idx, val);
                         const freq = window.acousticEngine.config.fader_bank[idx].frequency;
                         if (window.arohaVisualizer) window.arohaVisualizer.setFrequency(freq);
-                        document.getElementById('freq-display').innerText = freq.toFixed(2) + ' Hz';
+                        document.getElementById('freq-display').innerText = \ Hz;
                     });
                 });
             }
             document.getElementById('init-audio-btn').innerText = "Engine Active ?";
             document.getElementById('init-audio-btn').style.background = "#059669";
+        });
+
+        // UI Controls
+        document.getElementById('scale-select').addEventListener('change', (e) => {
+            if (window.scaleEngine) window.scaleEngine.setScale(e.target.value);
+        });
+        document.getElementById('symmetry-select').addEventListener('change', (e) => {
+            if (window.arohaVisualizer) window.arohaVisualizer.setSymmetry(e.target.value);
+        });
+        document.getElementById('theme-select').addEventListener('change', (e) => {
+            if (window.themeEngine && window.arohaVisualizer) window.themeEngine.applyTheme(e.target.value, window.arohaVisualizer.layers);
+        });
+        document.getElementById('turbulence-slider').addEventListener('input', (e) => {
+            if (window.arohaVisualizer) window.arohaVisualizer.setTurbulence(e.target.value);
         });
     </script>
 </body>
