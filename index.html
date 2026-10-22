@@ -120,7 +120,7 @@
         // Draggable Floating Panels
         function makeDraggable(elmnt) {
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            const header = document.getElementById(elmnt.id + '-header') || elmnt.querySelector('.panel-header');
+            const header = elmnt.querySelector('.panel-header');
             if (header) {
                 header.onmousedown = dragMouseDown;
             }
@@ -131,7 +131,6 @@
                 pos3 = e.clientX;
                 pos4 = e.clientY;
                 document.onmouseup = closeDragElement;
-                document.onelementDrag = elementDrag;
                 document.onmousemove = elementDrag;
             }
 
@@ -181,7 +180,7 @@
         const pianoContainer = document.getElementById('piano-keys-container');
         notes.forEach((k) => {
             const keyEl = document.createElement('div');
-            keyEl.className = piano-key \;
+            keyEl.className = 'piano-key ' + k.type;
             keyEl.innerText = k.note;
             if (k.type === 'black') {
                 keyEl.style.position = 'absolute';
@@ -196,12 +195,8 @@
                     window.arohaVisualizer.setFrequency(k.freq);
                 }
             });
-            keyEl.addEventListener('mouseup', () => {
-                keyEl.classList.remove('active');
-            });
-            keyEl.addEventListener('mouseleave', () => {
-                keyEl.classList.remove('active');
-            });
+            keyEl.addEventListener('mouseup', () => { keyEl.classList.remove('active'); });
+            keyEl.addEventListener('mouseleave', () => { keyEl.classList.remove('active'); });
             pianoContainer.appendChild(keyEl);
         });
 
@@ -221,9 +216,9 @@
                     col.className = 'fader-col';
                     const freqLabel = fader.frequency > 1000 ? (fader.frequency/1000).toFixed(1) + 'k' : fader.frequency.toFixed(0);
                     col.innerHTML = 
-                        <span>\</span>
-                        <input type="range" min="-40" max="6" step="0.5" value="-40" data-fader="\">
-                        <span>F\</span>
+                        <span> + freqLabel + </span>
+                        <input type="range" min="-40" max="6" step="0.5" value="-40" data-fader=" + idx + ">
+                        <span>F + (idx+1) + </span>
                     ;
                     container.appendChild(col);
                 });
@@ -235,26 +230,12 @@
                         window.acousticEngine.setFaderGain(idx, val);
                         const freq = window.acousticEngine.config.fader_bank[idx].frequency;
                         if (window.arohaVisualizer) window.arohaVisualizer.setFrequency(freq);
-                        document.getElementById('freq-display').innerText = \ Hz;
+                        document.getElementById('freq-display').innerText = freq.toFixed(2) + ' Hz';
                     });
                 });
             }
             document.getElementById('init-audio-btn').innerText = "Engine Active ?";
             document.getElementById('init-audio-btn').style.background = "#059669";
-        });
-
-        // UI Controls
-        document.getElementById('scale-select').addEventListener('change', (e) => {
-            if (window.scaleEngine) window.scaleEngine.setScale(e.target.value);
-        });
-        document.getElementById('symmetry-select').addEventListener('change', (e) => {
-            if (window.arohaVisualizer) window.arohaVisualizer.setSymmetry(e.target.value);
-        });
-        document.getElementById('theme-select').addEventListener('change', (e) => {
-            if (window.themeEngine && window.arohaVisualizer) window.themeEngine.applyTheme(e.target.value, window.arohaVisualizer.layers);
-        });
-        document.getElementById('turbulence-slider').addEventListener('input', (e) => {
-            if (window.arohaVisualizer) window.arohaVisualizer.setTurbulence(e.target.value);
         });
     </script>
 </body>
