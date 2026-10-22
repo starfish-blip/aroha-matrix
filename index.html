@@ -9,7 +9,7 @@
         body { background: #050508; color: #00f0ff; font-family: monospace; margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: auto; }
         
-        .floating-panel { position: absolute; background: rgba(15, 15, 20, 0.85); border: 1px solid #00f0ff33; border-radius: 8px; backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 10; display: flex; flex-direction: column; transition: max-height 0.3s ease; }
+        .floating-panel { position: absolute; background: rgba(15, 15, 20, 0.9); border: 1px solid #00f0ff44; border-radius: 8px; backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 10; display: flex; flex-direction: column; transition: max-height 0.3s ease; }
         .panel-header { background: #1f1f28; padding: 8px 12px; cursor: move; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: bold; border-top-left-radius: 7px; border-top-right-radius: 7px; user-select: none; color: #00f0ff; }
         .panel-body { padding: 12px; display: flex; flex-direction: column; gap: 8px; max-height: calc(100vh - 180px); overflow-y: auto; }
         .collapsed .panel-body { display: none; }
@@ -25,7 +25,7 @@
         .fader-col { display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; color: #9ca3af; }
         .fader-col input { writing-mode: vertical-lr; direction: rtl; width: 18px; height: 80px; margin-bottom: 2px; accent-color: #00f0ff; }
         
-        #keyboard-dock { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(15, 15, 20, 0.9); border: 1px solid #00f0ff33; padding: 8px; border-radius: 8px; z-index: 10; display: flex; gap: 3px; backdrop-filter: blur(10px); }
+        #keyboard-dock { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(15, 15, 20, 0.9); border: 1px solid #00f0ff44; padding: 8px; border-radius: 8px; z-index: 10; display: flex; gap: 3px; backdrop-filter: blur(10px); }
         .piano-key { width: 30px; height: 95px; background: #e2e8f0; border: 1px solid #0f172a; border-radius: 0 0 4px 4px; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; font-size: 0.6rem; color: #0f172a; font-weight: bold; z-index: 2; transition: background 0.1s ease, box-shadow 0.1s ease; }
         .piano-key.black { width: 20px; height: 55px; background: #1e293b; color: #f8fafc; position: absolute; margin-left: -11px; z-index: 3; border-radius: 0 0 3px 3px; border: 1px solid #0f172a; }
         .piano-key:hover, .piano-key.active { background: #00f0ff !important; color: #050508 !important; box-shadow: 0 0 15px #00f0ff; }
@@ -44,7 +44,7 @@
         </div>
     </div>
 
-    <!-- Control Dock Panel -->
+    <!-- Control Dock Panel (Expanded by default) -->
     <div id="dock-panel" class="floating-panel">
         <div class="panel-header"><span>AROHA v34 // CONTROL DOCK</span><button class="minimize-btn" onclick="togglePanel('dock-panel')">_</button></div>
         <div class="panel-body">
