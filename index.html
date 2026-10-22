@@ -9,8 +9,8 @@
         body { background: #050508; color: #00f0ff; font-family: monospace; margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: auto; }
         
-        .floating-panel { position: absolute; background: rgba(15, 15, 20, 0.85); border: 1px solid #1f1f28; border-radius: 8px; backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 10; display: flex; flex-direction: column; transition: max-height 0.3s ease; }
-        .panel-header { background: #1f1f28; padding: 8px 12px; cursor: move; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: bold; border-top-left-radius: 7px; border-top-right-radius: 7px; user-select: none; }
+        .floating-panel { position: absolute; background: rgba(15, 15, 20, 0.85); border: 1px solid #00f0ff33; border-radius: 8px; backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 10; display: flex; flex-direction: column; transition: max-height 0.3s ease; }
+        .panel-header { background: #1f1f28; padding: 8px 12px; cursor: move; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: bold; border-top-left-radius: 7px; border-top-right-radius: 7px; user-select: none; color: #00f0ff; }
         .panel-body { padding: 12px; display: flex; flex-direction: column; gap: 8px; max-height: calc(100vh - 180px); overflow-y: auto; }
         .collapsed .panel-body { display: none; }
         .minimize-btn { background: none; border: none; color: #00f0ff; cursor: pointer; font-family: monospace; font-weight: bold; }
@@ -18,17 +18,17 @@
         #dock-panel { top: 20px; left: 20px; width: 380px; }
         #cymatic-panel { top: 20px; right: 20px; width: 180px; align-items: center; }
 
-        button, select { width: 100%; padding: 6px 8px; background: #1f1f28; border: 1px solid #3a3a48; color: #fff; border-radius: 4px; font-family: monospace; cursor: pointer; font-size: 0.75rem; }
-        button:hover, select:hover { background: #2563eb; }
+        button, select { width: 100%; padding: 6px 8px; background: #1f1f28; border: 1px solid #00f0ff55; color: #00f0ff; border-radius: 4px; font-family: monospace; cursor: pointer; font-size: 0.75rem; }
+        button:hover, select:hover { background: #00f0ff22; border-color: #00f0ff; }
         .dock-row { display: flex; gap: 8px; align-items: center; }
         .fader-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; margin-top: 2px; }
         .fader-col { display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; color: #9ca3af; }
         .fader-col input { writing-mode: vertical-lr; direction: rtl; width: 18px; height: 80px; margin-bottom: 2px; accent-color: #00f0ff; }
         
-        #keyboard-dock { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(15, 15, 20, 0.9); border: 1px solid #1f1f28; padding: 8px; border-radius: 8px; z-index: 10; display: flex; gap: 3px; backdrop-filter: blur(10px); }
-        .piano-key { width: 30px; height: 95px; background: #fff; border: 1px solid #000; border-radius: 0 0 4px 4px; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; font-size: 0.6rem; color: #000; font-weight: bold; z-index: 2; transition: background 0.1s ease, box-shadow 0.1s ease; }
-        .piano-key.black { width: 20px; height: 55px; background: #111; color: #fff; position: absolute; margin-left: -11px; z-index: 3; border-radius: 0 0 3px 3px; }
-        .piano-key:hover, .piano-key.active { background: #00f0ff !important; color: #000; box-shadow: 0 0 12px #00f0ff; }
+        #keyboard-dock { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(15, 15, 20, 0.9); border: 1px solid #00f0ff33; padding: 8px; border-radius: 8px; z-index: 10; display: flex; gap: 3px; backdrop-filter: blur(10px); }
+        .piano-key { width: 30px; height: 95px; background: #e2e8f0; border: 1px solid #0f172a; border-radius: 0 0 4px 4px; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; font-size: 0.6rem; color: #0f172a; font-weight: bold; z-index: 2; transition: background 0.1s ease, box-shadow 0.1s ease; }
+        .piano-key.black { width: 20px; height: 55px; background: #1e293b; color: #f8fafc; position: absolute; margin-left: -11px; z-index: 3; border-radius: 0 0 3px 3px; border: 1px solid #0f172a; }
+        .piano-key:hover, .piano-key.active { background: #00f0ff !important; color: #050508 !important; box-shadow: 0 0 15px #00f0ff; }
     </style>
 </head>
 <body>
@@ -40,7 +40,7 @@
         <div class="panel-header"><span>CYMATIC MAP</span><button class="minimize-btn" onclick="togglePanel('cymatic-panel')">_</button></div>
         <div class="panel-body" style="align-items: center;">
             <canvas id="cymatic-canvas" width="130" height="130" style="border-radius: 50%; border: 2px solid #00f0ff; background: #000;"></canvas>
-            <div id="freq-display" style="font-size: 0.75rem; margin-top: 4px; color: #9ca3af;">432.00 Hz</div>
+            <div id="freq-display" style="font-size: 0.75rem; margin-top: 4px; color: #00f0ff;">432.00 Hz</div>
         </div>
     </div>
 
@@ -88,12 +88,12 @@
                 <button id="live-mic-btn">Live Input</button>
             </div>
 
-            <div class="dock-row" style="flex-direction: column; align-items: stretch; gap: 4px; font-size: 0.75rem; color: #9ca3af;">
+            <div class="dock-row" style="flex-direction: column; align-items: stretch; gap: 4px; font-size: 0.75rem; color: #00f0ff;">
                 <span>Turbulence / Vortex Depth</span>
                 <input type="range" id="turbulence-slider" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 100%;">
             </div>
 
-            <div style="font-size: 0.75rem; color: #9ca3af; margin-top: 2px;">Solfeggio Fader Bank</div>
+            <div style="font-size: 0.75rem; color: #00f0ff; margin-top: 2px;">Solfeggio Fader Bank</div>
             <div class="fader-grid" id="fader-bank-ui"></div>
         </div>
     </div>
@@ -177,7 +177,7 @@
         notes.forEach((k) => {
             const keyEl = document.createElement('div');
             keyEl.className = `piano-key ${k.type}`;
-            keyEl.setAttribute('data-midi', k.midi);
+            keyEl.setAttribute('data-note', k.midi);
             keyEl.innerText = k.note;
             if (k.type === 'black') {
                 keyEl.style.position = 'absolute';
@@ -248,7 +248,9 @@
             if (window.arohaVisualizer) window.arohaVisualizer.setSymmetry(e.target.value);
         });
         document.getElementById('theme-select').addEventListener('change', (e) => {
-            if (window.themeEngine && window.arohaVisualizer) window.themeEngine.applyTheme(e.target.value, window.arohaVisualizer.layers);
+            if (window.themeEngine && window.arohaVisualizer) {
+                window.themeEngine.applyTheme(e.target.value, window.arohaVisualizer.layers);
+            }
         });
         document.getElementById('turbulence-slider').addEventListener('input', (e) => {
             if (window.arohaVisualizer) window.arohaVisualizer.setTurbulence(e.target.value);
