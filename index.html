@@ -1,260 +1,744 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AROHA Engine v34 - Unified Acoustic & Visualizer Matrix</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
+    <title>AROHA MASTER ENGINE v26.0 // AI REFLECTION ASSISTANT</title>
     <style>
-        body { background: #050508; color: #00f0ff; font-family: monospace; margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: auto; }
+        body { margin: 0; background: #05070a; color: #d0d8e8; font-family: 'Segoe UI', Tahoma, sans-serif; overflow: hidden; user-select: none; }
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
+        #start-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(7, 9, 15, 0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: opacity 0.5s; }
+        #start-overlay h1 { color: #00e5ff; letter-spacing: 4px; }
         
-        .floating-panel { position: absolute; background: rgba(15, 15, 20, 0.9); border: 1px solid #00f0ff44; border-radius: 8px; backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 10; display: flex; flex-direction: column; transition: max-height 0.3s ease; }
-        .panel-header { background: #1f1f28; padding: 8px 12px; cursor: move; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: bold; border-top-left-radius: 7px; border-top-right-radius: 7px; user-select: none; color: #00f0ff; }
-        .panel-body { padding: 12px; display: flex; flex-direction: column; gap: 8px; max-height: calc(100vh - 180px); overflow-y: auto; }
-        .collapsed .panel-body { display: none; }
-        .minimize-btn { background: none; border: none; color: #00f0ff; cursor: pointer; font-family: monospace; font-weight: bold; }
+        .ui-window { position: absolute; background: rgba(12, 18, 30, 0.9); border: 1px solid #2a3f5f; border-radius: 8px; backdrop-filter: blur(8px); z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,0.5); min-width: 260px; }
+        .window-header { display: flex; justify-content: space-between; align-items: center; background: rgba(20, 30, 50, 0.95); padding: 6px 10px; border-top-left-radius: 7px; border-top-right-radius: 7px; cursor: move; border-bottom: 1px solid #2a3f5f; }
+        .window-title { font-size: 0.7rem; font-weight: bold; color: #00e5ff; letter-spacing: 0.5px; }
+        .window-controls { display: flex; gap: 6px; }
+        .win-btn { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.75rem; padding: 0 4px; }
+        .win-btn:hover { color: #00e5ff; }
+        .window-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .window-body.minimized { display: none; }
 
-        #dock-panel { top: 20px; left: 20px; width: 380px; }
-        #cymatic-panel { top: 20px; right: 20px; width: 180px; align-items: center; }
+        #sidebar-explorer { position: fixed; top: 15px; left: 15px; width: 240px; max-height: calc(100vh - 140px); z-index: 20; background: rgba(10, 14, 23, 0.92); border: 1px solid #2a3f5f; border-radius: 8px; backdrop-filter: blur(10px); display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+        .sidebar-header { background: rgba(20, 30, 50, 0.95); padding: 8px 12px; font-size: 0.75rem; font-weight: bold; color: #00ffff; border-top-left-radius: 7px; border-top-right-radius: 7px; border-bottom: 1px solid #2a3f5f; display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-content { padding: 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; font-size: 0.68rem; }
+        .file-item { display: flex; align-items: center; gap: 6px; padding: 5px 8px; background: rgba(30, 41, 59, 0.5); border: 1px solid #1e293b; border-radius: 4px; cursor: pointer; transition: all 0.2s; color: #cbd5e1; }
+        .file-item:hover { background: rgba(0, 229, 255, 0.15); border-color: #00e5ff; color: #fff; }
 
-        button, select { width: 100%; padding: 6px 8px; background: #1f1f28; border: 1px solid #00f0ff55; color: #00f0ff; border-radius: 4px; font-family: monospace; cursor: pointer; font-size: 0.75rem; }
-        button:hover, select:hover { background: #00f0ff22; border-color: #00f0ff; }
-        .dock-row { display: flex; gap: 8px; align-items: center; }
-        .fader-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; margin-top: 2px; }
-        .fader-col { display: flex; flex-direction: column; align-items: center; font-size: 0.65rem; color: #9ca3af; }
-        .fader-col input { writing-mode: vertical-lr; direction: rtl; width: 18px; height: 80px; margin-bottom: 2px; accent-color: #00f0ff; }
+        .fader-bank { display: flex; gap: 8px; justify-content: space-around; overflow-x: auto; }
+        .fader { display: flex; flex-direction: column; align-items: center; font-size: 0.6rem; gap: 3px; position: relative; }
         
-        #keyboard-dock { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(15, 15, 20, 0.9); border: 1px solid #00f0ff44; padding: 8px; border-radius: 8px; z-index: 10; display: flex; gap: 3px; backdrop-filter: blur(10px); }
-        .piano-key { width: 30px; height: 95px; background: #e2e8f0; border: 1px solid #0f172a; border-radius: 0 0 4px 4px; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px; font-size: 0.6rem; color: #0f172a; font-weight: bold; z-index: 2; transition: background 0.1s ease, box-shadow 0.1s ease; }
-        .piano-key.black { width: 20px; height: 55px; background: #1e293b; color: #f8fafc; position: absolute; margin-left: -11px; z-index: 3; border-radius: 0 0 3px 3px; border: 1px solid #0f172a; }
-        .piano-key:hover, .piano-key.active { background: #00f0ff !important; color: #050508 !important; box-shadow: 0 0 15px #00f0ff; }
+        .seq-grid { display: grid; grid-template-columns: 70px repeat(16, 1fr); gap: 3px; align-items: center; font-size: 0.62rem; }
+        .seq-step { height: 22px; background: #151515; border: 1px solid rgba(255,255,255,0.05); border-radius: 3px; cursor: pointer; transition: all 0.1s; }
+        .seq-step:hover { background: #222; border-color: #00e5ff; }
+        .seq-step.active { background: #00e5ff; border-color: #fff; box-shadow: 0 0 8px rgba(0,229,255,0.6); }
+        .seq-step.current { border-color: #ffb000 !important; }
+
+        /* AI CHAT STYLES */
+        .chat-box { height: 110px; background: rgba(5, 7, 10, 0.8); border: 1px solid #1e293b; border-radius: 4px; padding: 6px; overflow-y: auto; font-size: 0.68rem; display: flex; flex-direction: column; gap: 4px; }
+        .chat-msg { padding: 4px 6px; border-radius: 4px; line-height: 1.3; }
+        .chat-msg.user { background: rgba(0, 229, 255, 0.15); color: #00e5ff; align-self: flex-end; }
+        .chat-msg.ai { background: rgba(30, 41, 59, 0.8); color: #cbd5e1; align-self: flex-start; }
+
+        input[type=range] { accent-color: #00e5ff; cursor: pointer; }
+        input[type=range].vertical { writing-mode: vertical-lr; direction: rtl; appearance: slider-vertical; width: 18px; height: 35px; }
+        select, button, input[type=text] { background: #1e293b; color: #00e5ff; border: 1px solid #2a3f5f; padding: 3px 6px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 0.68rem; }
+        select:hover, button:hover { background: #2a3f5f; }
+        input[type=text] { cursor: text; width: 100px; }
+        button.recording { background: #ff3333; color: white; border-color: #ff6666; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        .keyboard { display: flex; justify-content: center; height: 35px; background: #020617; border-radius: 6px; position: relative; border: 1px solid #2a3f5f; margin-top: 5px; }
+        .key { border: 1px solid #020617; cursor: pointer; border-radius: 0 0 3px 3px; }
+        .key.white { background: #f8fafc; width: 12px; height: 100%; position: relative; z-index: 1; }
+        .key.black { background: #0f172a; width: 7px; height: 55%; position: absolute; z-index: 2; margin-left: -3.5px; }
+        .key.active { background: #00ff88 !important; box-shadow: 0 0 10px #00ff88; }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
+    <div id="start-overlay">
+        <h1 style="color: #00e5ff; letter-spacing: 2px;">INITIALIZE AROHA OMNI-MATRIX v26.0</h1>
+        <p style="color: #94a3b8;">Click anywhere to unlock Audio & Local Ollama AI</p>
+    </div>
+
     <div id="canvas-container"></div>
 
-    <!-- Cymatic Resonance Panel -->
-    <div id="cymatic-panel" class="floating-panel">
-        <div class="panel-header"><span>CYMATIC MAP</span><button class="minimize-btn" onclick="togglePanel('cymatic-panel')">_</button></div>
-        <div class="panel-body" style="align-items: center;">
-            <canvas id="cymatic-canvas" width="130" height="130" style="border-radius: 50%; border: 2px solid #00f0ff; background: #000;"></canvas>
-            <div id="freq-display" style="font-size: 0.75rem; margin-top: 4px; color: #00f0ff;">432.00 Hz</div>
+    <div id="sidebar-explorer">
+        <div class="sidebar-header">
+            <span>📁 LOCAL WORKSPACE ASSETS</span>
+            <button class="win-btn" onclick="toggleSidebar()">_</button>
+        </div>
+        <div class="sidebar-content" id="sidebar-file-list"></div>
+    </div>
+
+    <div class="ui-window" id="win-header" style="top: 15px; right: 310px;">
+        <div class="window-header" onmousedown="startDrag(event, 'win-header')">
+            <span class="window-title">BACKEND TAPE DECK & CONTROL</span>
+            <div class="window-controls"><button class="win-btn" onclick="toggleMinimize('win-header')">_</button></div>
+        </div>
+        <div class="window-body">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem;">
+                <div>Theme: <select id="themeSelect"><option value="ocean">Deep Ocean</option><option value="gold">Matrix Gold</option><option value="cyber">Cyberpunk</option></select></div>
+                <button onclick="takeSnapshot()">Snapshot</button>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                <button id="recBtn" onclick="toggleAudioRecording()">Record & Upload</button>
+                <span style="color: #00ff88; font-size: 0.65rem;" id="midi-status">Ollama AI: Connected</span>
+            </div>
         </div>
     </div>
 
-    <!-- Control Dock Panel (Expanded by default) -->
-    <div id="dock-panel" class="floating-panel">
-        <div class="panel-header"><span>AROHA v34 // CONTROL DOCK</span><button class="minimize-btn" onclick="togglePanel('dock-panel')">_</button></div>
-        <div class="panel-body">
-            <button id="init-audio-btn">Initialize Audio, MIDI & Visualizer</button>
-
-            <div class="dock-row">
-                <select id="focus-preset">
-                    <option value="2.0">Gateway Focus 10 (2.0 Hz)</option>
-                    <option value="6.0" selected>Gateway Focus 12 (6.0 Hz)</option>
-                    <option value="10.0">Gateway Focus 15 (10.0 Hz)</option>
-                    <option value="40.0">Gateway Focus 21 (40.0 Hz)</option>
-                </select>
-                <button id="toggle-binaural">Binaural ON</button>
+    <!-- WINDOW 2: STEP SEQUENCER -->
+    <div class="ui-window" id="win-sequencer" style="top: 15px; left: 270px; width: 440px;">
+        <div class="window-header" onmousedown="startDrag(event, 'win-sequencer')">
+            <span class="window-title">16-STEP COSMOLOGICAL SEQUENCER</span>
+            <div class="window-controls">
+                <button onclick="toggleSequencerPlayback()" id="seqPlayBtn" style="color:#00ff88;">Play</button>
+                <button class="win-btn" onclick="toggleMinimize('win-sequencer')">_</button>
             </div>
+        </div>
+        <div class="window-body" id="sequencer-container"></div>
+    </div>
 
-            <div class="dock-row">
-                <select id="scale-select">
-                    <option value="pentatonic" selected>Scale: Pentatonic</option>
-                    <option value="dorian">Scale: Dorian</option>
-                    <option value="solfeggio">Scale: Solfeggio</option>
-                </select>
-                <select id="symmetry-select">
-                    <option value="3">3-Fold</option>
-                    <option value="4" selected>4-Fold</option>
-                    <option value="5">5-Fold</option>
-                    <option value="6">6-Fold</option>
-                </select>
+    <!-- WINDOW 3: AI REFLECTION COMPANION -->
+    <div class="ui-window" id="win-ai" style="top: 185px; left: 270px; width: 440px;">
+        <div class="window-header" onmousedown="startDrag(event, 'win-ai')">
+            <span class="window-title">AROHA AI REFLECTION COMPANION (OLLAMA)</span>
+            <div class="window-controls"><button class="win-btn" onclick="toggleMinimize('win-ai')">_</button></div>
+        </div>
+        <div class="window-body">
+            <div class="chat-box" id="chatBox">
+                <div class="chat-msg ai">Kia ora. I am AROHA, tuned to your local frequency. Share a reflection or ask a question.</div>
             </div>
-
-            <div class="dock-row">
-                <select id="theme-select">
-                    <option value="ocean" selected>Theme: Deep Ocean</option>
-                    <option value="solar">Theme: Solar Gold</option>
-                    <option value="nebula">Theme: Nebula Violet</option>
-                    <option value="matrix">Theme: Matrix Green</option>
-                </select>
+            <div style="display: flex; gap: 6px;">
+                <input type="text" id="aiInput" placeholder="Ask or reflect..." style="flex:1;" onkeypress="if(event.key==='Enter') sendAIPrompt()">
+                <button onclick="sendAIPrompt()">Reflect</button>
             </div>
-
-            <div class="dock-row">
-                <button id="latch-btn">Chord Latch: OFF</button>
-                <button id="live-mic-btn">Live Input</button>
-            </div>
-
-            <div class="dock-row" style="flex-direction: column; align-items: stretch; gap: 4px; font-size: 0.75rem; color: #00f0ff;">
-                <span>Turbulence / Vortex Depth</span>
-                <input type="range" id="turbulence-slider" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 100%;">
-            </div>
-
-            <div style="font-size: 0.75rem; color: #00f0ff; margin-top: 2px;">Solfeggio Fader Bank</div>
-            <div class="fader-grid" id="fader-bank-ui"></div>
         </div>
     </div>
 
-    <!-- Interactive On-Screen Keyboard -->
-    <div id="keyboard-dock">
-        <div style="position: relative; display: flex;" id="piano-keys-container"></div>
+    <!-- WINDOW 4: QUANTUM GEOMETRY -->
+    <div class="ui-window" id="win-geometry" style="top: 350px; right: 310px;">
+        <div class="window-header" onmousedown="startDrag(event, 'win-geometry')">
+            <span class="window-title">QUANTUM GEOMETRY & FEEDBACK</span>
+            <div class="window-controls"><button class="win-btn" onclick="toggleMinimize('win-geometry')">_</button></div>
+        </div>
+        <div class="window-body">
+            <div>
+                <span style="font-size: 0.6rem; color: #94a3b8; display: block;">Active Background Wheel</span>
+                <select id="wheelSelect" style="width: 100%;">
+                    <option value="camelot">🎵 Camelot Wheel (24 Keys)</option>
+                    <option value="periodic">⚛️ Periodic Table (Elements)</option>
+                    <option value="color">🌈 Color Theory Wheel</option>
+                    <option value="emotion">💜 Emotion Cycle Wheel</option>
+                    <option value="chakra">🕉️ Chakra System (7 Centers)</option>
+                    <option value="zodiac">⭐ Zodiac Wheel (12 Signs)</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: space-between;">
+                <div>
+                    <span style="font-size: 0.6rem; color: #94a3b8; display: block;">Wheel Spin</span>
+                    <input type="range" min="0" max="3.0" step="0.1" value="0.5" id="wheelSpin" style="width: 80px;">
+                </div>
+                <div>
+                    <span style="font-size: 0.6rem; color: #94a3b8; display: block;">Reactivity</span>
+                    <input type="range" min="0" max="3.0" step="0.1" value="1.5" id="audioReactivity" style="width: 80px;">
+                </div>
+                <div>
+                    <span style="font-size: 0.6rem; color: #94a3b8; display: block;">Feedback</span>
+                    <input type="range" min="0" max="0.98" step="0.02" value="0.85" id="feedbackGain" style="width: 80px;">
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script src="/static/js/audio-engine.js"></script>
-    <script src="/static/js/visualizer-engine.js"></script>
-    <script src="/static/js/cymatic-engine.js"></script>
-    <script src="/static/js/binaural-engine.js"></script>
-    <script src="/static/js/arpeggiator-engine.js"></script>
-    <script src="/static/js/scale-engine.js"></script>
-    <script src="/static/js/theme-engine.js"></script>
-    <script src="/static/js/dsp-engine.js"></script>
-    <script src="/static/js/recorder-engine.js"></script>
-    <script src="/static/js/synergy-engine.js"></script>
-    <script src="/static/js/mesh-bridge.js"></script>
-    <script src="/static/js/midi-bridge.js"></script>
+    <!-- WINDOW 5: PATCH MANAGER -->
+    <div class="ui-window" id="win-patches" style="top: 360px; right: 15px;">
+        <div class="window-header" onmousedown="startDrag(event, 'win-patches')">
+            <span class="window-title">SERVER PATCH & MANIFEST SYNC</span>
+            <div class="window-controls"><button class="win-btn" onclick="toggleMinimize('win-patches')">_</button></div>
+        </div>
+        <div class="window-body">
+            <div style="display: flex; gap: 6px; align-items: center;">
+                <input type="text" id="patchName" value="ArohaLive_01" placeholder="Patch Name">
+                <button onclick="savePatchToServer()">Save to Server</button>
+            </div>
+            <div>
+                <span style="font-size: 0.6rem; color: #94a3b8; display: block; margin-top: 4px;">Saved Patches</span>
+                <select id="patchSelect" style="width: 100%; margin-top: 2px;"></select>
+            </div>
+            <div style="display: flex; gap: 6px; margin-top: 4px;">
+                <button onclick="loadPatch()" style="flex:1;">Load Patch</button>
+                <button onclick="exportManifest()" style="flex:1;">Export JSON</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WINDOW 6: FADER BANK & KEYBOARD -->
+    <div class="ui-window" id="win-keyboard" style="bottom: 15px; left: 50%; transform: translateX(-50%); width: 680px;">
+        <div class="window-header" onmousedown="startDrag(event, 'win-keyboard')">
+            <span class="window-title">COSMOLOGICAL FADER BANK // CHORDS: <span id="last-note" style="color: #ffb000;">None</span></span>
+            <div class="window-controls"><button class="win-btn" onclick="toggleMinimize('win-keyboard')">_</button></div>
+        </div>
+        <div class="window-body">
+            <div class="fader-bank" id="fader-bank"></div>
+            <div class="keyboard" id="keyboard"></div>
+        </div>
+    </div>
 
     <script>
-        function togglePanel(id) {
-            const panel = document.getElementById(id);
-            if (panel) panel.classList.toggle('collapsed');
-        }
+        const API_URL = 'http://localhost:3013/api';
 
-        function makeDraggable(elmnt) {
-            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            const header = elmnt.querySelector('.panel-header');
-            if (header) header.onmousedown = dragMouseDown;
-
-            function dragMouseDown(e) {
-                e = e || window.event;
-                e.preventDefault();
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                document.onmouseup = closeDragElement;
-                document.onmousemove = elementDrag;
-            }
-
-            function elementDrag(e) {
-                e = e || window.event;
-                e.preventDefault();
-                pos1 = pos3 - e.clientX;
-                pos2 = pos4 - e.clientY;
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-                elmnt.style.right = "auto";
-            }
-
-            function closeDragElement() {
-                document.onmouseup = null;
-                document.onmousemove = null;
-            }
-        }
-
-        makeDraggable(document.getElementById('dock-panel'));
-        makeDraggable(document.getElementById('cymatic-panel'));
-
-        const notes = [
-            { note: 'C4', midi: 60, freq: 261.63, type: 'white' },
-            { note: 'C#4', midi: 61, freq: 277.18, type: 'black', offset: 21 },
-            { note: 'D4', midi: 62, freq: 293.66, type: 'white' },
-            { note: 'D#4', midi: 63, freq: 311.13, type: 'black', offset: 54 },
-            { note: 'E4', midi: 64, freq: 329.63, type: 'white' },
-            { note: 'F4', midi: 65, freq: 349.23, type: 'white' },
-            { note: 'F#4', midi: 66, freq: 369.99, type: 'black', offset: 118 },
-            { note: 'G4', midi: 67, freq: 392.00, type: 'white' },
-            { note: 'G#4', midi: 68, freq: 415.30, type: 'black', offset: 151 },
-            { note: 'A4', midi: 69, freq: 440.00, type: 'white' },
-            { note: 'A#4', midi: 70, freq: 466.16, type: 'black', offset: 184 },
-            { note: 'B4', midi: 71, freq: 493.88, type: 'white' },
-            { note: 'C5', midi: 72, freq: 523.25, type: 'white' }
+        const localDirectoryFiles = [
+            { name: 'server.js', type: 'code', icon: '⚡' },
+            { name: 'aroha-master-engine.html', type: 'code', icon: '📄' },
+            { name: 'patches/', type: 'folder', icon: '📁' },
+            { name: 'audio_recordings/', type: 'folder', icon: '📁' }
         ];
 
-        const pianoContainer = document.getElementById('piano-keys-container');
-        notes.forEach((k) => {
-            const keyEl = document.createElement('div');
-            keyEl.className = `piano-key ${k.type}`;
-            keyEl.setAttribute('data-note', k.midi);
-            keyEl.innerText = k.note;
-            if (k.type === 'black') {
-                keyEl.style.position = 'absolute';
-                keyEl.style.left = k.offset + 'px';
+        const fileListContainer = document.getElementById('sidebar-file-list');
+        localDirectoryFiles.forEach(file => {
+            const item = document.createElement('div');
+            item.className = 'file-item';
+            item.innerHTML = `<span>${file.icon}</span> <span>${file.name}</span>`;
+            item.onclick = () => alert(`Loaded workspace context: ${file.name}`);
+            fileListContainer.appendChild(item);
+        });
+
+        function toggleSidebar() {
+            const content = document.querySelector('#sidebar-explorer .sidebar-content');
+            content.style.display = content.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        // AI REFLECTION CHAT
+        async function sendAIPrompt() {
+            const input = document.getElementById('aiInput');
+            const chatBox = document.getElementById('chatBox');
+            const prompt = input.value.trim();
+            if(!prompt) return;
+
+            chatBox.innerHTML += `<div class="chat-msg user">${prompt}</div>`;
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            const loadingId = 'ai-loading-' + Date.now();
+            chatBox.innerHTML += `<div class="chat-msg ai" id="${loadingId}">Thinking...</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const res = await fetch(`${API_URL}/ai-reflect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, model: 'qwen2.5-coder' })
+                });
+                const json = await res.json();
+                document.getElementById(loadingId).remove();
+                if(json.status === 'success') {
+                    chatBox.innerHTML += `<div class="chat-msg ai">${json.response}</div>`;
+                } else {
+                    chatBox.innerHTML += `<div class="chat-msg ai" style="color:#ff3333;">Error reaching local Ollama service.</div>`;
+                }
+            } catch (e) {
+                document.getElementById(loadingId).remove();
+                chatBox.innerHTML += `<div class="chat-msg ai" style="color:#ff3333;">Server offline. Run: node server.js</div>`;
             }
-            keyEl.addEventListener('mousedown', () => {
-                keyEl.classList.add('active');
-                if (window.acousticEngine && window.acousticEngine.audioCtx) {
-                    window.acousticEngine.playTone(k.freq);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        const seqRows = [
+            { name: 'Saturn Kick', note: 36, grid: Array(16).fill(false) },
+            { name: 'Mars Snare', note: 38, grid: Array(16).fill(false) },
+            { name: 'Venus Hat', note: 42, grid: Array(16).fill(false) },
+            { name: 'Alpha Synth', note: 60, grid: Array(16).fill(false) }
+        ];
+        let currentStep = 0, seqPlaying = false, seqInterval = null;
+
+        function buildSequencerUI() {
+            const container = document.getElementById('sequencer-container');
+            container.innerHTML = '';
+            seqRows.forEach((row, rIdx) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'seq-grid';
+                let html = `<span style="color:#00e5ff; font-weight:bold;">${row.name}</span>`;
+                for (let s = 0; s < 16; s++) {
+                    html += `<div class="seq-step ${row.grid[s] ? 'active' : ''} ${currentStep === s ? 'current' : ''}" onclick="toggleSeqStep(${rIdx}, ${s})"></div>`;
                 }
-                if (window.arohaVisualizer) {
-                    window.arohaVisualizer.setFrequency(k.freq);
-                }
-                setTimeout(() => keyEl.classList.remove('active'), 250);
+                rowDiv.innerHTML = html;
+                container.appendChild(rowDiv);
             });
-            pianoContainer.appendChild(keyEl);
-        });
+        }
 
-        document.getElementById('init-audio-btn').addEventListener('click', async () => {
-            if (window.acousticEngine) {
-                await window.acousticEngine.init();
-                if (window.dspEngine && window.acousticEngine.audioCtx) {
-                    window.dspEngine.initEffects(window.acousticEngine.audioCtx, window.acousticEngine.masterGain);
-                }
-                if (window.arohaVisualizer) {
-                    window.arohaVisualizer.init(window.acousticEngine);
-                }
-                if (window.themeEngine && window.arohaVisualizer) {
-                    window.themeEngine.applyTheme('ocean', window.arohaVisualizer.layers);
-                }
+        function toggleSeqStep(rIdx, sIdx) {
+            seqRows[rIdx].grid[sIdx] = !seqRows[rIdx].grid[sIdx];
+            buildSequencerUI();
+        }
 
-                const container = document.getElementById('fader-bank-ui');
-                container.innerHTML = '';
+        function toggleSequencerPlayback() {
+            seqPlaying = !seqPlaying;
+            const btn = document.getElementById('seqPlayBtn');
+            btn.innerText = seqPlaying ? 'Stop' : 'Play';
+            btn.style.color = seqPlaying ? '#ff3333' : '#00ff88';
 
-                if (window.acousticEngine.config && window.acousticEngine.config.fader_bank) {
-                    window.acousticEngine.config.fader_bank.forEach((fader, idx) => {
-                        const col = document.createElement('div');
-                        col.className = 'fader-col';
-                        const freqLabel = fader.frequency > 1000 ? (fader.frequency/1000).toFixed(1) + 'k' : fader.frequency.toFixed(0);
-                        col.innerHTML = `
-                            <span>${freqLabel}</span>
-                            <input type="range" min="-40" max="6" step="0.5" value="-40" data-fader="${idx}">
-                            <span>F${idx+1}</span>
-                        `;
-                        container.appendChild(col);
+            if (seqPlaying) {
+                seqInterval = setInterval(() => {
+                    seqRows.forEach((row) => {
+                        if (row.grid[currentStep]) {
+                            noteOn(row.note, 100);
+                            setTimeout(() => noteOff(row.note), 150);
+                        }
                     });
+                    currentStep = (currentStep + 1) % 16;
+                    buildSequencerUI();
+                }, 125);
+            } else {
+                clearInterval(seqInterval);
+                currentStep = 0;
+                buildSequencerUI();
+            }
+        }
+        buildSequencerUI();
 
-                    container.querySelectorAll('input[type=range]').forEach(input => {
-                        input.addEventListener('input', (e) => {
-                            const idx = parseInt(e.target.getAttribute('data-fader'));
-                            const val = parseFloat(e.target.value);
-                            window.acousticEngine.setFaderGain(idx, val);
-                            const freq = window.acousticEngine.config.fader_bank[idx].frequency;
-                            if (window.arohaVisualizer) window.arohaVisualizer.setFrequency(freq);
-                            document.getElementById('freq-display').innerText = `${freq.toFixed(2)} Hz`;
-                        });
-                    });
+        function getPatchState() {
+            const faders = [];
+            document.querySelectorAll('.fader-input').forEach(inp => faders.push(inp.value));
+            return {
+                timestamp: Date.now(),
+                wheel: document.getElementById('wheelSelect').value,
+                wheelSpin: document.getElementById('wheelSpin').value,
+                audioReactivity: document.getElementById('audioReactivity').value,
+                feedbackGain: document.getElementById('feedbackGain').value,
+                vortexThrottle: '0.5',
+                theme: document.getElementById('themeSelect').value,
+                faders: faders,
+                seqRows: seqRows
+            };
+        }
+
+        async function savePatchToServer() {
+            const name = document.getElementById('patchName').value || 'DefaultPatch';
+            const state = getPatchState();
+            localStorage.setItem('aroha_patch_' + name, JSON.stringify(state));
+            refreshPatchList();
+
+            try {
+                await fetch(`${API_URL}/save-patch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, data: state })
+                });
+                alert(`Patch '${name}' saved to server & local storage!`);
+            } catch (err) {
+                alert(`Saved locally! (Server offline)`);
+            }
+        }
+
+        function refreshPatchList() {
+            const select = document.getElementById('patchSelect');
+            select.innerHTML = '';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('aroha_patch_')) {
+                    const patchName = key.replace('aroha_patch_', '');
+                    const opt = document.createElement('option');
+                    opt.value = patchName; opt.innerText = patchName;
+                    select.appendChild(opt);
                 }
-                document.getElementById('init-audio-btn').innerText = "Engine Active ?";
-                document.getElementById('init-audio-btn').style.background = "#059669";
             }
+        }
+
+        function loadPatch() {
+            const name = document.getElementById('patchSelect').value;
+            if (!name) return;
+            const data = JSON.parse(localStorage.getItem('aroha_patch_' + name));
+            if (!data) return;
+
+            document.getElementById('wheelSelect').value = data.wheel;
+            buildGeometryWheel(data.wheel);
+            document.getElementById('wheelSpin').value = data.wheelSpin;
+            document.getElementById('audioReactivity').value = data.audioReactivity;
+            if(data.feedbackGain) document.getElementById('feedbackGain').value = data.feedbackGain;
+            document.getElementById('themeSelect').value = data.theme;
+            
+            if (data.seqRows) {
+                seqRows.forEach((r, idx) => { if(data.seqRows[idx]) r.grid = data.seqRows[idx].grid; });
+                buildSequencerUI();
+            }
+
+            const themeEv = new Event('change');
+            document.getElementById('themeSelect').dispatchEvent(themeEv);
+
+            if (data.faders) {
+                document.querySelectorAll('.fader-input').forEach((inp, idx) => {
+                    if (data.faders[idx] !== undefined) {
+                        inp.value = data.faders[idx];
+                        const lbl = document.getElementById(`fader-val-${idx}`);
+                        if (lbl) lbl.innerText = data.faders[idx] + 'dB';
+                    }
+                });
+            }
+            document.getElementById('patchName').value = name;
+        }
+
+        function exportManifest() {
+            const state = getPatchState();
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `AROHA_manifest_${document.getElementById('patchName').value}.json`);
+            document.body.appendChild(dlAnchor); dlAnchor.click(); dlAnchor.remove();
+        }
+
+        let audioCtx = null, analyser = null, dataArray = null;
+        let destStreamNode = null, mediaRecorder = null, recordedChunks = [];
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 64;
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                
+                destStreamNode = audioCtx.createMediaStreamDestination();
+                analyser.connect(audioCtx.destination);
+                analyser.connect(destStreamNode);
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        async function toggleAudioRecording() {
+            initAudioContext();
+            const btn = document.getElementById('recBtn');
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                recordedChunks = [];
+                mediaRecorder = new MediaRecorder(destStreamNode.stream, { mimeType: 'audio/webm' });
+                mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+                mediaRecorder.onstop = async () => {
+                    const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                    const formData = new FormData();
+                    formData.append('audio', blob, 'aroha-performance.webm');
+                    try {
+                        await fetch(`${API_URL}/save-audio`, { method: 'POST', body: formData });
+                        alert(`Audio recorded and uploaded to server!`);
+                    } catch (e) {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none'; a.href = url; a.download = 'aroha-recording.webm';
+                        document.body.appendChild(a); a.click();
+                        a.remove();
+                    }
+                };
+                mediaRecorder.start();
+                btn.innerText = 'Stop & Upload'; btn.classList.add('recording');
+            } else {
+                mediaRecorder.stop();
+                btn.innerText = 'Record & Upload'; btn.classList.remove('recording');
+            }
+        }
+
+        function takeSnapshot() {
+            renderer.render(scene, camera);
+            const dataURL = renderer.domElement.toDataURL('image/png');
+            const link = document.createElement('a'); link.download = 'aroha-snapshot.png'; link.href = dataURL; link.click();
+        }
+
+        let activeWindow = null, startX = 0, startY = 0, initialX = 0, initialY = 0;
+        function startDrag(e, winId) {
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
+            activeWindow = document.getElementById(winId);
+            startX = e.clientX; startY = e.clientY;
+            const rect = activeWindow.getBoundingClientRect();
+            initialX = rect.left; initialY = rect.top;
+            activeWindow.style.transform = 'none';
+            document.addEventListener('mousemove', dragWindow);
+            document.addEventListener('mouseup', stopDrag);
+        }
+        function dragWindow(e) {
+            if (!activeWindow) return;
+            activeWindow.style.left = (initialX + (e.clientX - startX)) + 'px';
+            activeWindow.style.top = (initialY + (e.clientY - startY)) + 'px';
+        }
+        function stopDrag() {
+            activeWindow = null;
+            document.removeEventListener('mousemove', dragWindow);
+            document.removeEventListener('mouseup', stopDrag);
+        }
+        function toggleMinimize(winId) {
+            document.querySelector(`#${winId} .window-body`).classList.toggle('minimized');
+        }
+
+        const themes = { ocean: { bg: 0x05070a }, gold: { bg: 0x0a0702 }, cyber: { bg: 0x07000f } };
+        let currentTheme = themes.ocean;
+        document.getElementById('themeSelect').onchange = (e) => {
+            currentTheme = themes[e.target.value];
+            renderer.setClearColor(currentTheme.bg, 1);
+        };
+
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, -6, 6); camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(currentTheme.bg, 1);
+        container.appendChild(renderer.domElement);
+
+        const renderTargetA = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
+        const renderTargetB = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
+        let currentRT = renderTargetA, prevRT = renderTargetB;
+
+        const feedbackScene = new THREE.Scene();
+        const feedbackCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        const feedbackMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.85 });
+        const feedbackQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), feedbackMaterial);
+        feedbackScene.add(feedbackQuad);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; controls.dampingFactor = 0.05;
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderTargetA.setSize(window.innerWidth, window.innerHeight);
+            renderTargetB.setSize(window.innerWidth, window.innerHeight);
         });
 
-        document.getElementById('scale-select').addEventListener('change', (e) => {
-            if (window.scaleEngine) window.scaleEngine.setScale(e.target.value);
-        });
-        document.getElementById('symmetry-select').addEventListener('change', (e) => {
-            if (window.arohaVisualizer) window.arohaVisualizer.setSymmetry(e.target.value);
-        });
-        document.getElementById('theme-select').addEventListener('change', (e) => {
-            if (window.themeEngine && window.arohaVisualizer) {
-                window.themeEngine.applyTheme(e.target.value, window.arohaVisualizer.layers);
+        const wheelData = {
+            camelot: [{label:'8B',color:0xFF6B6B},{label:'3B',color:0x4ECDC4},{label:'10B',color:0x45B7D1},{label:'5B',color:0x96CEB4},{label:'12B',color:0xFECA57},{label:'7B',color:0xFF9FF3},{label:'2B',color:0x54A0FF},{label:'9B',color:0x5F27CD},{label:'4B',color:0x00D2D3},{label:'11B',color:0xFF6348},{label:'6B',color:0xC44569},{label:'1B',color:0xF8B500}],
+            periodic: [{label:'H',color:0xFF6B6B},{label:'He',color:0x4ECDC4},{label:'Li',color:0x45B7D1},{label:'Be',color:0x96CEB4},{label:'B',color:0xFECA57},{label:'C',color:0xFF9FF3}],
+            color: [{label:'Red',color:0xFF0000},{label:'Orange',color:0xFFA500},{label:'Yellow',color:0xFFFF00},{label:'Green',color:0x00FF00},{label:'Cyan',color:0x00FFFF},{label:'Blue',color:0x0000FF},{label:'Violet',color:0x8B00FF}],
+            emotion: [{label:'Joy',color:0xFFD700},{label:'Trust',color:0x87CEEB},{label:'Fear',color:0x4B0082},{label:'Surprise',color:0x00FFFF},{label:'Sadness',color:0x191970},{label:'Anger',color:0xDC143C}],
+            chakra: [{label:'Root',color:0xFF0000},{label:'Sacral',color:0xFF8C00},{label:'Solar',color:0xFFD700},{label:'Heart',color:0x00FF00},{label:'Throat',color:0x00BFFF},{label:'Third',color:0x4B0082},{label:'Crown',color:0x8B00FF}],
+            zodiac: [{label:'Aries',color:0xFF4500},{label:'Taurus',color:0x228B22},{label:'Gemini',color:0xFFD700},{label:'Cancer',color:0xC0C0C0},{label:'Leo',color:0xFF8C00},{label:'Virgo',color:0x8FBC8F}]
+        };
+
+        let wheelGroup = new THREE.Group();
+        scene.add(wheelGroup);
+
+        function buildGeometryWheel(wheelKey) {
+            while(wheelGroup.children.length > 0){ wheelGroup.remove(wheelGroup.children[0]); }
+            const segments = wheelData[wheelKey] || wheelData.camelot;
+            const count = segments.length;
+            const innerRadius = 1.0, outerRadius = 3.2;
+
+            for (let i = 0; i < count; i++) {
+                const angleStart = (i / count) * Math.PI * 2;
+                const angleEnd = ((i + 1) / count) * Math.PI * 2;
+                const shape = new THREE.Shape();
+                shape.moveTo(Math.cos(angleStart) * innerRadius, Math.sin(angleStart) * innerRadius);
+                shape.lineTo(Math.cos(angleStart) * outerRadius, Math.sin(angleStart) * outerRadius);
+                for(let s = 1; s <= 6; s++) {
+                    const a = angleStart + (angleEnd - angleStart) * (s / 6);
+                    shape.lineTo(Math.cos(a) * outerRadius, Math.sin(a) * outerRadius);
+                }
+                shape.lineTo(Math.cos(angleEnd) * innerRadius, Math.sin(angleEnd) * innerRadius);
+                shape.closePath();
+
+                const geometry = new THREE.ShapeGeometry(shape);
+                const mat = new THREE.MeshBasicMaterial({ color: segments[i].color, side: THREE.DoubleSide, transparent: true, opacity: 0.75 });
+                wheelGroup.add(new THREE.Mesh(geometry, mat));
             }
+        }
+        buildGeometryWheel('camelot');
+        document.getElementById('wheelSelect').onchange = (e) => buildGeometryWheel(e.target.value);
+
+        const vertexShader = `
+            precision mediump float;
+            uniform float u_time; uniform float u_note; uniform float u_velocity;
+            varying vec2 vUv; varying float vElevation;
+            void main() {
+                vUv = uv; vec2 pos = uv * 2.0 - 1.0;
+                float dist = length(pos);
+                float elevation = sin(dist * 8.0 - u_time * 3.0 + (u_note * 0.5)) * 0.2 * (0.5 + u_velocity);
+                if (u_note == 0.0) elevation = 0.0;
+                vElevation = elevation;
+                vec3 newPosition = position;
+                newPosition.z += elevation;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
+            }
+        `;
+
+        const fragmentShader = `
+            precision mediump float;
+            uniform float u_note; uniform vec3 u_color; uniform float u_velocity;
+            varying vec2 vUv; varying float vElevation;
+            void main() {
+                vec2 pos = vUv * 2.0 - 1.0;
+                if (length(pos) > 1.0) discard;
+                float line = smoothstep(0.0, 0.1, abs(sin(length(pos) * 12.0)));
+                vec3 ionColor = u_color + vec3(u_velocity * 0.5);
+                vec3 finalColor = mix(ionColor * 0.2, ionColor, line) + (ionColor * vElevation * 1.5);
+                gl_FragColor = vec4(finalColor, u_note > 0.0 ? 0.85 : 0.25);
+            }
+        `;
+
+        function createCERNLayer(colorHex) {
+            const material = new THREE.ShaderMaterial({
+                vertexShader, fragmentShader,
+                uniforms: { u_time: { value: 0.0 }, u_note: { value: 0.0 }, u_color: { value: new THREE.Color(colorHex) }, u_velocity: { value: 0.5 } },
+                transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide
+            });
+            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 3.5, 128, 128), material);
+            scene.add(mesh); return { mesh, material };
+        }
+
+        const layerR = createCERNLayer(0xff3333);
+        const layerG = createCERNLayer(0x00ff88);
+        const layerB = createCERNLayer(0x00aaff);
+
+        function animate(time) {
+            requestAnimationFrame(animate);
+            const t = time / 1000.0;
+            layerR.material.uniforms.u_time.value = t;
+            layerG.material.uniforms.u_time.value = t;
+            layerB.material.uniforms.u_time.value = t;
+
+            let audioLevel = 0.0;
+            if (analyser && dataArray) {
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                audioLevel = (sum / dataArray.length) / 255.0;
+            }
+
+            const spinSpeed = parseFloat(document.getElementById('wheelSpin').value);
+            const reactIntensity = parseFloat(document.getElementById('audioReactivity').value);
+            const feedbackVal = parseFloat(document.getElementById('feedbackGain').value);
+            
+            const pulse = 1.0 + (audioLevel * reactIntensity);
+            wheelGroup.scale.set(pulse, pulse, pulse);
+            wheelGroup.rotation.z = (t * spinSpeed * 0.5) + (audioLevel * reactIntensity * 0.2);
+
+            layerR.mesh.position.set(0, 0, 0.3);
+            layerG.mesh.position.set(0, 0, 0.0);
+            layerB.mesh.position.set(0, 0, -0.3);
+
+            controls.update();
+
+            renderer.setRenderTarget(currentRT);
+            renderer.render(scene, camera);
+            
+            feedbackMaterial.map = currentRT.texture;
+            feedbackMaterial.opacity = feedbackVal;
+            renderer.setRenderTarget(null);
+            renderer.render(feedbackScene, feedbackCamera);
+            renderer.render(scene, camera);
+
+            let temp = currentRT; currentRT = prevRT; prevRT = temp;
+        }
+        animate(0);
+
+        const nodes = ['Saturn', 'Jupiter', 'Mars', 'Sun', 'Venus', 'Mercury', 'Moon', 'Alpha', 'Beta', 'Gamma', 'Delta', 'Omega'];
+        const faderBank = document.getElementById('fader-bank');
+        nodes.forEach((name, idx) => {
+            const div = document.createElement('div');
+            div.className = 'fader';
+            div.innerHTML = `
+                <span style="color:#00e5ff" id="fader-val-${idx}">0dB</span>
+                <input type="range" min="-12" max="12" step="0.5" value="0" style="width:22px; height:40px;" class="vertical fader-input" id="fader-${idx}">
+                <span style="color:#94a3b8">${name}</span>
+            `;
+            faderBank.appendChild(div);
+            setTimeout(() => {
+                const inp = document.getElementById(`fader-${idx}`);
+                const lbl = document.getElementById(`fader-val-${idx}`);
+                inp.oninput = (e) => { lbl.innerText = e.target.value + 'dB'; };
+            }, 100);
         });
-        document.getElementById('turbulence-slider').addEventListener('input', (e) => {
-            if (window.arohaVisualizer) window.arohaVisualizer.setTurbulence(e.target.value);
+
+        const activeNotes = {};
+        const activeVisualNotes = [0, 0, 0];
+
+        document.getElementById('start-overlay').addEventListener('click', function() {
+            initAudioContext();
+            this.style.opacity = '0'; setTimeout(() => this.style.display = 'none', 500);
         });
+
+        function noteOn(note, velocity) {
+            initAudioContext();
+            if(activeNotes[note]) noteOff(note);
+            const baseFreq = 432 * Math.pow(2, (note - 69) / 12);
+            const normVel = velocity / 127.0;
+
+            layerR.material.uniforms.u_velocity.value = normVel;
+            layerG.material.uniforms.u_velocity.value = normVel;
+            layerB.material.uniforms.u_velocity.value = normVel;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.15 * normVel, audioCtx.currentTime + 0.05); 
+            osc.type = 'triangle'; 
+            osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+
+            osc.connect(gain);
+            gain.connect(analyser);
+            
+            osc.start();
+            activeNotes[note] = { osc, gain };
+
+            const keyEl = document.getElementById(`key-${note}`);
+            if (keyEl) keyEl.classList.add('active');
+            if (!activeVisualNotes.includes(note)) { activeVisualNotes.unshift(note); activeVisualNotes.pop(); }
+            updateShaderUniforms();
+        }
+
+        function noteOff(note) {
+            if (activeNotes[note]) {
+                const { osc, gain } = activeNotes[note];
+                gain.gain.cancelScheduledValues(audioCtx.currentTime);
+                gain.gain.setValueAtTime(gain.gain.value, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+                osc.stop(audioCtx.currentTime + 1.0);
+                delete activeNotes[note];
+            }
+            const keyEl = document.getElementById(`key-${note}`);
+            if (keyEl) keyEl.classList.remove('active');
+            const idx = activeVisualNotes.indexOf(note);
+            if (idx > -1) activeVisualNotes[idx] = 0;
+            updateShaderUniforms();
+        }
+
+        function updateShaderUniforms() {
+            const mapNode = (n) => n > 0 ? (n % 12) + 1 : 0.0;
+            layerR.material.uniforms.u_note.value = mapNode(activeVisualNotes[0]);
+            layerG.material.uniforms.u_note.value = mapNode(activeVisualNotes[1]);
+            layerB.material.uniforms.u_note.value = mapNode(activeVisualNotes[2]);
+            document.getElementById('last-note').innerText = Object.keys(activeNotes).join(', ') || 'None';
+        }
+
+        const keyboard = document.getElementById('keyboard');
+        let offset = 0;
+        for (let i = 0; i < 36; i++) {
+            const noteNum = 48 + i;
+            const isBlack = [1, 3, 6, 8, 10].includes(noteNum % 12);
+            const key = document.createElement('div');
+            key.id = `key-${noteNum}`;
+            key.className = 'key ' + (isBlack ? 'black' : 'white');
+            if (isBlack) key.style.left = `${offset - 3.5}px`; else offset += 12;
+            key.onmousedown = () => noteOn(noteNum, 100); key.onmouseup = () => noteOff(noteNum); key.onmouseleave = () => noteOff(noteNum);
+            keyboard.appendChild(key);
+        }
+
+        if (navigator.requestMIDIAccess) {
+            navigator.requestMIDIAccess().then(access => {
+                const midiStatus = document.getElementById('midi-status');
+                for (let input of access.inputs.values()) {
+                    midiStatus.innerText = 'MIDI: ' + input.name;
+                    input.onmidimessage = (event) => {
+                        const [status, data1, data2] = event.data;
+                        const cmd = status >> 4;
+                        if (cmd === 9 && data2 > 0) noteOn(data1, data2);
+                        if (cmd === 8 || (cmd === 9 && data2 === 0)) noteOff(data1);
+                    };
+                }
+            });
+        }
+
+        refreshPatchList();
     </script>
 </body>
 </html>

@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AROHA Chladni MIDI Interface</title>
+    <style>body { margin: 0; overflow: hidden; background: #000; }</style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <script type="module">
+        import { initializeMIDI } from './aroha-midi.js';
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const fragResponse = await fetch('./chladni.frag');
+        const fragShader = await fragResponse.text();
+
+        const chladniMaterial = new THREE.ShaderMaterial({
+            fragmentShader: fragShader,
+            uniforms: {
+                u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+                u_time: { value: 0.0 },
+                u_modeN: { value: 4.0 },
+                u_modeM: { value: 4.0 },
+                u_amplitude: { value: 1.0 }
+            }
+        });
+
+        const plane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), chladniMaterial);
+        scene.add(plane);
+
+        initializeMIDI(chladniMaterial);
+
+        function animate(time) {
+            requestAnimationFrame(animate);
+            chladniMaterial.uniforms.u_time.value = time / 1000.0;
+            renderer.render(scene, camera);
+        }
+        animate(0);
+    </script>
+</body>
+</html>

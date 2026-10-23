@@ -1,0 +1,252 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AROHA MASTER MATRIX: RGB POLYPHONIC</title>
+    <style>
+        body { margin: 0; background: #07090f; color: #d0d8e8; font-family: 'Segoe UI', Tahoma, sans-serif; padding: 20px; display: flex; flex-direction: column; gap: 20px; min-height: 100vh; user-select: none; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(8, 12, 20, 0.95); border: 1px solid #2a3f5f; border-radius: 8px; }
+        .grid { display: grid; grid-template-columns: 1fr 1.8fr 1fr; gap: 15px; }
+        .panel { background: rgba(12, 18, 30, 0.92); border: 1px solid #2a3f5f; border-radius: 8px; padding: 15px; }
+        .center-panel { display: flex; flex-direction: column; align-items: center; background: radial-gradient(circle, rgba(0,229,255,0.08) 0%, rgba(10,14,24,0.95) 80%); border: 1px solid #2a3f5f; border-radius: 8px; padding: 15px; }
+        .fader-bank { display: flex; gap: 25px; justify-content: center; padding-top: 10px; }
+        .fader { display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; gap: 5px; }
+        input[type=range] { writing-mode: vertical-lr; direction: rtl; appearance: slider-vertical; width: 40px; height: 120px; accent-color: #00e5ff; cursor: pointer; }
+        .keyboard { display: flex; justify-content: center; height: 65px; background: #020617; border-radius: 6px; overflow: hidden; position: relative; margin-top: 10px; }
+        .key { border: 1px solid #020617; cursor: pointer; border-radius: 0 0 3px 3px; }
+        .key.white { background: #f8fafc; width: 16px; height: 100%; position: relative; z-index: 1; }
+        .key.black { background: #0f172a; width: 10px; height: 55%; position: absolute; z-index: 2; margin-left: -5px; }
+        .key.active { background: #00e5ff !important; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1 style="margin: 0; font-size: 1.2rem; color: #00e5ff; letter-spacing: 1px;">AROHA MASTER MATRIX: POLYPHONIC RGB v2.0</h1>
+        </div>
+        <div style="font-size: 0.8rem; color: #00ff88;">ONLINE // STATUS: ACTIVE</div>
+    </div>
+    <div class="grid">
+        <div class="panel">
+            <div style="font-size: 0.8rem; font-weight: bold; color: #00e5ff;">FLOWER OF LIFE & PLATONIC SOLIDS</div>
+        </div>
+        <div class="center-panel">
+            <div style="font-size: 0.8rem; font-weight: bold; color: #00e5ff; margin-bottom: 10px;">3-LAYER CYMATIC MATRIX (RGB)</div>
+            <div id="chladni-container" style="width: 250px; height: 250px; border-radius: 50%; overflow: hidden; border: 2px solid #00aaff; box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);"></div>
+        </div>
+        <div class="panel">
+            <div style="font-size: 0.8rem; font-weight: bold; color: #00e5ff;">ESOTERIC CARTOGRAPHY</div>
+        </div>
+    </div>
+    
+    <div class="panel">
+        <div style="display: flex; justify-content: space-between;">
+            <div style="font-size: 0.8rem; font-weight: bold; color: #00e5ff;">RESONANCE CONTROL OVERRIDE</div>
+            <div style="font-size: 0.8rem; color: #ffb000; background: #1e293b; padding: 2px 8px; border-radius: 4px;" id="midi-cc-debug">Hardware CC: None</div>
+        </div>
+        <div class="fader-bank" id="fader-bank">
+            <div class="fader"><span style="color:#ff3333">Layer 1</span><input type="range" min="1" max="15" step="0.1" value="0" id="sliderR"><span style="color:#94a3b8">Red Freq</span></div>
+            <div class="fader"><span style="color:#33ff33">Layer 2</span><input type="range" min="1" max="15" step="0.1" value="0" id="sliderG"><span style="color:#94a3b8">Green Freq</span></div>
+            <div class="fader"><span style="color:#3333ff">Layer 3</span><input type="range" min="1" max="15" step="0.1" value="0" id="sliderB"><span style="color:#94a3b8">Blue Freq</span></div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #94a3b8;">
+            <span>OXYGEN 61 // <span id="midi-status" style="color: #00ff88;">Waiting...</span></span>
+            <span>ACTIVE CHORDS: <span id="last-note" style="color: #ffb000;">None</span></span>
+        </div>
+        <div class="keyboard" id="keyboard"></div>
+    </div>
+
+    <script>
+        // --- WebGL Setup ---
+        const container = document.getElementById('chladni-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(250, 250);
+        container.appendChild(renderer.domElement);
+
+        const fragmentShader = `
+            precision mediump float;
+            uniform vec2 u_resolution;
+            uniform float u_time;
+            uniform float u_noteR;
+            uniform float u_noteG;
+            uniform float u_noteB;
+            const float PI = 3.14159265359;
+            
+            float chladni(float n, float m, vec2 pos) {
+                if (n == 0.0) return 0.0;
+                if (n == m) m += 1.0; 
+                float w1 = sin(n * PI * pos.x) * sin(m * PI * pos.y);
+                float w2 = sin(m * PI * pos.x) * sin(n * PI * pos.y);
+                return w1 - w2;
+            }
+
+            void main() {
+                vec2 st = gl_FragCoord.xy / u_resolution.xy;
+                vec2 pos = st * 2.0 - 1.0;
+                
+                float thick = 0.08;
+                
+                // Red Layer
+                float valR = chladni(u_noteR, u_noteR + 3.0, pos);
+                float r = u_noteR > 0.0 ? 1.0 - smoothstep(0.0, thick, abs(valR)) : 0.0;
+                
+                // Green Layer
+                float valG = chladni(u_noteG, u_noteG + 4.0, pos);
+                float g = u_noteG > 0.0 ? 1.0 - smoothstep(0.0, thick, abs(valG)) : 0.0;
+                
+                // Blue Layer
+                float valB = chladni(u_noteB, u_noteB + 5.0, pos);
+                float b = u_noteB > 0.0 ? 1.0 - smoothstep(0.0, thick, abs(valB)) : 0.0;
+                
+                gl_FragColor = vec4(r, g, b, 1.0);
+            }
+        `;
+
+        const uniforms = {
+            u_resolution: { value: new THREE.Vector2(250, 250) },
+            u_time: { value: 0.0 },
+            u_noteR: { value: 0.0 }, 
+            u_noteG: { value: 0.0 }, 
+            u_noteB: { value: 0.0 }
+        };
+
+        const material = new THREE.ShaderMaterial({ fragmentShader, uniforms });
+        scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material));
+
+        function animate(time) {
+            requestAnimationFrame(animate);
+            uniforms.u_time.value = time / 1000.0;
+            renderer.render(scene, camera);
+        }
+        animate(0);
+
+        // --- Audio & Polyphony State ---
+        let audioCtx = null;
+        const activeNotes = {};
+        const activeVisualNotes = [0, 0, 0];
+
+        function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        document.body.addEventListener('click', initAudio);
+
+        function noteOn(note, velocity) {
+            initAudio();
+            if (!audioCtx) return;
+            
+            // Stop existing if re-triggered
+            if(activeNotes[note]) noteOff(note);
+
+            const freq = 440 * Math.pow(2, (note - 69) / 12);
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.15 * (velocity/127), audioCtx.currentTime + 0.1); 
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            
+            activeNotes[note] = { osc, gain };
+
+            // Update DOM key visual
+            const keyEl = document.getElementById(`key-${note}`);
+            if (keyEl) keyEl.classList.add('active');
+
+            // Shift into RGB Visual Array
+            if (!activeVisualNotes.includes(note)) {
+                activeVisualNotes.unshift(note);
+                activeVisualNotes.pop();
+            }
+            updateShaderUniforms();
+        }
+
+        function noteOff(note) {
+            if (activeNotes[note]) {
+                const { osc, gain } = activeNotes[note];
+                gain.gain.cancelScheduledValues(audioCtx.currentTime);
+                gain.gain.setValueAtTime(gain.gain.value, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+                osc.stop(audioCtx.currentTime + 1.0);
+                delete activeNotes[note];
+            }
+            
+            const keyEl = document.getElementById(`key-${note}`);
+            if (keyEl) keyEl.classList.remove('active');
+
+            const idx = activeVisualNotes.indexOf(note);
+            if (idx > -1) {
+                activeVisualNotes[idx] = 0;
+            }
+            updateShaderUniforms();
+        }
+
+        function updateShaderUniforms() {
+            // Map the 12 notes to base geometry modes (1-12)
+            const mapNode = (n) => n > 0 ? (n % 12) + 1 : 0.0;
+            uniforms.u_noteR.value = mapNode(activeVisualNotes[0]);
+            uniforms.u_noteG.value = mapNode(activeVisualNotes[1]);
+            uniforms.u_noteB.value = mapNode(activeVisualNotes[2]);
+            
+            document.getElementById('sliderR').value = uniforms.u_noteR.value;
+            document.getElementById('sliderG').value = uniforms.u_noteG.value;
+            document.getElementById('sliderB').value = uniforms.u_noteB.value;
+            
+            const activeKeys = Object.keys(activeNotes).join(', ');
+            document.getElementById('last-note').innerText = activeKeys || 'None';
+        }
+
+        // --- Build On-Screen Keyboard ---
+        const keyboard = document.getElementById('keyboard');
+        let offset = 0;
+        for (let i = 0; i < 36; i++) {
+            const noteNum = 48 + i;
+            const isBlack = [1, 3, 6, 8, 10].includes(noteNum % 12);
+            const key = document.createElement('div');
+            key.id = `key-${noteNum}`;
+            key.className = 'key ' + (isBlack ? 'black' : 'white');
+            if (isBlack) key.style.left = `${offset - 5}px`; else offset += 16;
+            
+            key.onmousedown = () => noteOn(noteNum, 100);
+            key.onmouseup = () => noteOff(noteNum);
+            key.onmouseleave = () => noteOff(noteNum);
+            
+            keyboard.appendChild(key);
+        }
+
+        // --- MIDI Hardware Routing ---
+        if (navigator.requestMIDIAccess) {
+            navigator.requestMIDIAccess().then(access => {
+                for (let input of access.inputs.values()) {
+                    document.getElementById('midi-status').innerText = 'Connected: ' + input.name;
+                    input.onmidimessage = (event) => {
+                        const [status, data1, data2] = event.data;
+                        const cmd = status >> 4;
+                        
+                        // Note On
+                        if (cmd === 9 && data2 > 0) noteOn(data1, data2);
+                        // Note Off
+                        if (cmd === 8 || (cmd === 9 && data2 === 0)) noteOff(data1);
+                        
+                        // Sliders (Override)
+                        if (status === 176) { 
+                            document.getElementById('midi-cc-debug').innerText = `Hardware CC: Channel ${data1} | Value ${data2}`;
+                            const norm = data2 / 127.0;
+                            if (data1 === 73) uniforms.u_noteR.value = (norm * 14.0);
+                            if (data1 === 74) uniforms.u_noteG.value = (norm * 14.0);
+                            if (data1 === 1) uniforms.u_noteB.value = (norm * 14.0);
+                        }
+                    };
+                }
+            });
+        }
+    </script>
+</body>
+</html>
