@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AROHA OMNI-MATRIX // v38.0 FULLY UNIFIED MASTER MATRIX</title>
+    <title>AROHA OMNI-MATRIX // v38.2 MASTER MATRIX</title>
     <style>
         body { margin: 0; background: #000; color: #0ff; font-family: 'Segoe UI', Tahoma, sans-serif; overflow: hidden; user-select: none; }
         #canvas-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; pointer-events: auto; }
@@ -92,7 +92,7 @@
         <div class="window-body">
             <div class="emergence-box">
                 <div class="metric-row"><span>Active Vertebra:</span><span class="metric-val" id="m-vert">Atlas (C1)</span></div>
-                <div class="metric-row"><span>Resonant Gate:</span><span class="metric-val" id="m-elem" style="color:#ff0;">Iron (Fe)[span_4](start_span)[span_4](end_span)</span></div>
+                <div class="metric-row"><span>Resonant Gate:</span><span class="metric-val" id="m-elem" style="color:#ff0;">Iron (Fe)</span></div>
             </div>
             <div style="display: flex; gap: 4px; align-items: center;">
                 <span style="font-size:0.6rem; color:#8aa;">Sweep:</span>
@@ -126,7 +126,7 @@
         </div>
         <div class="window-body">
             <div class="chat-box" id="chatBox">
-                <div class="chat-msg ai">v38.0 Master Matrix online. All zones unified.</div>
+                <div class="chat-msg ai">v38.2 Master Matrix online. All zones unified.</div>
             </div>
             <div style="display: flex; gap: 6px;">
                 <input type="text" id="aiInput" placeholder="Ask or reflect..." style="flex:1;" onkeypress="if(event.key==='Enter') sendAIPrompt()">
@@ -198,8 +198,8 @@
     <script>
         const API_URL = 'http://localhost:3013/api';
         let masterTuningHz = 432;
-        let audioCtx = null, analyser = null, dataArray = null;
-        let sequencerRunning = true;
+        let audioCtx = null, analyser = null, dataArray = new Uint8Array(64);
+        let sequencerRunning = false;
 
         window.addEventListener('DOMContentLoaded', () => {
             initAudioEngine();
@@ -209,12 +209,11 @@
         function initAudioEngine() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                analyser = audioCtx.createAnalyser(); analyser.fftSize = 64;
+                analyser = audioCtx.createAnalyser(); 
+                analyser.fftSize = 64;
                 dataArray = new Uint8Array(analyser.frequencyBinCount);
                 startSequencer();
             }
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            initMIDI();
         }
 
         function initMaramatakaUI() {
@@ -245,6 +244,7 @@
         }
 
         function toggleSequencerState() {
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
             sequencerRunning = !sequencerRunning;
             const btn = document.getElementById('seqToggleBtn');
             if(sequencerRunning) {
@@ -423,7 +423,6 @@
 
         let currentStep = 0, sequencerInterval = null;
         const seqSteps = Array(16).fill(false);
-        [0, 4, 8, 12, 14].forEach(i => seqSteps[i] = true);
 
         function startSequencer() {
             if (sequencerInterval) clearInterval(sequencerInterval);
@@ -439,12 +438,13 @@
                 currentStep = (currentStep + 1) % 16;
             }, 125);
         }
+        startSequencer();
 
         const seqRow = document.getElementById('seq-row-0');
         for(let i=0; i<16; i++) {
             const stepDiv = document.createElement('div');
             stepDiv.id = `step-${i}`;
-            stepDiv.className = 'seq-step' + (seqSteps[i] ? ' active' : '');
+            stepDiv.className = 'seq-step';
             stepDiv.onclick = () => { seqSteps[i] = !seqSteps[i]; stepDiv.classList.toggle('active', seqSteps[i]); };
             seqRow.appendChild(stepDiv);
         }
@@ -456,6 +456,7 @@
                 }, () => {});
             }
         }
+        initMIDI();
 
         function handleMIDIMessage(event) {
             const [status, note, velocity] = event.data;
@@ -509,7 +510,7 @@
             const key = document.createElement('div');
             key.id = `key-${noteNum}`; key.className = 'key ' + (isBlack ? 'black' : 'white');
             if (isBlack) key.style.left = `${offset - 3.2}px`; else offset += 11;
-            key.onmousedown = () => { initAudioEngine(); noteOn(noteNum, 100); };
+            key.onmousedown = () => { initAudioEngine(); if(audioCtx.state==='suspended') audioCtx.resume(); noteOn(noteNum, 100); };
             key.onmouseup = () => noteOff(noteNum);
             key.onmouseleave = () => noteOff(noteNum);
             keyboard.appendChild(key);
