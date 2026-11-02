@@ -1,0 +1,141 @@
+{
+  "generated_at": "2026-10-31T07:41:56.456285",
+  "architecture": "15-Step pH (0-14) Mirror & 3x5 Triadic Split",
+  "steps": [
+    {
+      "step": 1,
+      "ph_value": 0,
+      "mirror_offset": -7,
+      "triad_zone": "ZONE_1_ACIDIC_COMPRESSION",
+      "phonetic_operator": "P + H -> PH (F)",
+      "rotation_deg": 270,
+      "compression": 0.7
+    },
+    {
+      "step": 2,
+      "ph_value": 1,
+      "mirror_offset": -6,
+      "triad_zone": "ZONE_1_ACIDIC_COMPRESSION",
+      "phonetic_operator": "P + H -> PH (F)",
+      "rotation_deg": 180,
+      "compression": 0.671
+    },
+    {
+      "step": 3,
+      "ph_value": 2,
+      "mirror_offset": -5,
+      "triad_zone": "ZONE_1_ACIDIC_COMPRESSION",
+      "phonetic_operator": "P + H -> PH (F)",
+      "rotation_deg": 90,
+      "compression": 0.643
+    },
+    {
+      "step": 4,
+      "ph_value": 3,
+      "mirror_offset": -4,
+      "triad_zone": "ZONE_1_ACIDIC_COMPRESSION",
+      "phonetic_operator": "P + H -> PH (F)",
+      "rotation_deg": 0,
+      "compression": 0.614
+    },
+    {
+      "step": 5,
+      "ph_value": 4,
+      "mirror_offset": -3,
+      "triad_zone": "ZONE_1_ACIDIC_COMPRESSION",
+      "phonetic_operator": "P + H -> PH (F)",
+      "rotation_deg": 270,
+      "compression": 0.586
+    },
+    {
+      "step": 6,
+      "ph_value": 5,
+      "mirror_offset": -2,
+      "triad_zone": "ZONE_2_NEUTRAL_MIRROR_H",
+      "phonetic_operator": "W + H -> WHOLE",
+      "rotation_deg": 180,
+      "compression": 0.557
+    },
+    {
+      "step": 7,
+      "ph_value": 6,
+      "mirror_offset": -1,
+      "triad_zone": "ZONE_2_NEUTRAL_MIRROR_H",
+      "phonetic_operator": "W + H -> WHOLE",
+      "rotation_deg": 90,
+      "compression": 0.529
+    },
+    {
+      "step": 8,
+      "ph_value": 7,
+      "mirror_offset": 0,
+      "triad_zone": "ZONE_2_NEUTRAL_MIRROR_H",
+      "phonetic_operator": "H (CENTRAL_BRIDGE)",
+      "rotation_deg": 0,
+      "compression": 0.5
+    },
+    {
+      "step": 9,
+      "ph_value": 8,
+      "mirror_offset": 1,
+      "triad_zone": "ZONE_2_NEUTRAL_MIRROR_H",
+      "phonetic_operator": "W + H -> WHOLE",
+      "rotation_deg": 90,
+      "compression": 0.471
+    },
+    {
+      "step": 10,
+      "ph_value": 9,
+      "mirror_offset": 2,
+      "triad_zone": "ZONE_2_NEUTRAL_MIRROR_H",
+      "phonetic_operator": "W + H -> WHOLE",
+      "rotation_deg": 180,
+      "compression": 0.443
+    },
+    {
+      "step": 11,
+      "ph_value": 10,
+      "mirror_offset": 3,
+      "triad_zone": "ZONE_3_ALKALINE_EXPANSION",
+      "phonetic_operator": "F -> E (3_PLANES)",
+      "rotation_deg": 270,
+      "compression": 0.414
+    },
+    {
+      "step": 12,
+      "ph_value": 11,
+      "mirror_offset": 4,
+      "triad_zone": "ZONE_3_ALKALINE_EXPANSION",
+      "phonetic_operator": "F -> E (3_PLANES)",
+      "rotation_deg": 0,
+      "compression": 0.386
+    },
+    {
+      "step": 13,
+      "ph_value": 12,
+      "mirror_offset": 5,
+      "triad_zone": "ZONE_3_ALKALINE_EXPANSION",
+      "phonetic_operator": "F -> E (3_PLANES)",
+      "rotation_deg": 90,
+      "compression": 0.357
+    },
+    {
+      "step": 14,
+      "ph_value": 13,
+      "mirror_offset": 6,
+      "triad_zone": "ZONE_3_ALKALINE_EXPANSION",
+      "phonetic_operator": "F -> E (3_PLANES)",
+      "rotation_deg": 180,
+      "compression": 0.329
+    },
+    {
+      "step": 15,
+      "ph_value": 14,
+      "mirror_offset": 7,
+      "triad_zone": "ZONE_3_ALKALINE_EXPANSION",
+      "phonetic_operator": "F -> E (3_PLANES)",
+      "rotation_deg": 270,
+      "compression": 0.3
+    }
+  ]
+}

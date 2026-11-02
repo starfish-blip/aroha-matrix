@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AROHA // 64-Byte UBO + Oxygen 61 Binaural Bridge</title>
+<style>
+  :root { --bg:#08090f; --panel:#11131f; --border:#252a42; --cyan:#6ef7ff; --amber:#ffb86a; --green:#4df097; --violet:#a78bfa; --text:#e8ecf7; --dim:#8892b0; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:Consolas,'JetBrains Mono',monospace; min-height:100vh; padding:12px; }
+  header { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:10px 16px; margin-bottom:12px; }
+  .badges { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .badge { font-size:11px; padding:4px 10px; border-radius:20px; border:1px solid var(--border); color:var(--dim); }
+  .badge.ok { color:var(--green); border-color:var(--green); }
+  .badge.warn { color:var(--amber); border-color:var(--amber); }
+  .badge.lock { color:#000; background:var(--cyan); border-color:var(--cyan); font-weight:bold; }
+  .grid { display:grid; grid-template-columns:340px 1fr 340px; gap:12px; }
+  @media (max-width:1150px) { .grid { grid-template-columns:1fr; } }
+  .panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px; }
+  h3 { margin:0 0 10px 0; font-size:12px; text-transform:uppercase; letter-spacing:0.12em; color:var(--cyan); }
+  .btn-row { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px; }
+  button { background:#181c2e; color:var(--text); border:1px solid var(--border); border-radius:6px; padding:8px 10px; font-family:inherit; font-size:11px; cursor:pointer; }
+  button:hover { border-color:var(--cyan); color:var(--cyan); }
+  button.primary { background:var(--amber); color:#000; border-color:var(--amber); font-weight:bold; }
+  button.active { border-color:var(--green); color:var(--green); }
+  .fader-row { display:grid; grid-template-columns:92px 1fr 48px 54px; align-items:center; gap:6px; margin-bottom:8px; font-size:11px; }
+  .fader-row input[type=range] { width:100%; accent-color:var(--amber); }
+  .val { text-align:right; color:var(--amber); }
+  .learn-btn { padding:3px 5px; font-size:9px; }
+  .learn-btn.listening { border-color:var(--amber); color:var(--amber); }
+  .ubo-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; font-size:10px; margin-top:8px; }
+  .cell { background:#0b0d16; border:1px solid var(--border); border-radius:6px; padding:6px; }
+  .cell .lbl { color:var(--dim); font-size:9px; display:block; }
+  .cell .num { color:var(--cyan); font-size:12px; font-weight:bold; }
+  canvas#chladni { width:100%; height:250px; background:#05060b; border:1px solid var(--border); border-radius:8px; display:block; }
+  .piano { display:flex; gap:2px; overflow-x:auto; padding-top:8px; }
+  .key { flex:0 0 28px; height:74px; background:#dde2f0; color:#111; border-radius:0 0 4px 4px; font-size:9px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:5px; cursor:pointer; user-select:none; }
+  .key.on { background:var(--amber); font-weight:bold; }
+  .log { height:120px; overflow-y:auto; background:#070810; border:1px solid var(--border); border-radius:6px; padding:8px; font-size:10px; color:var(--dim); margin-top:8px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <strong>AROHA // 64-BYTE UBO + OXYGEN 61 BINAURAL BRIDGE</strong>
+    <div style="font-size:11px;color:var(--dim)">WebSocket Binary Float32Array(16) @ 60Hz -> Monroe FFR Stereo Synth + Web MIDI CC Learn</div>
+  </div>
+  <div class="badges">
+    <button id="audioBtn" class="primary">START BINAURAL AUDIO</button>
+    <span id="wsBadge" class="badge">WS: connecting...</span>
+    <span id="midiBadge" class="badge">MIDI: scanning...</span>
+    <span id="rxBadge" class="badge">64B RX: 0</span>
+    <span id="lockBadge" class="badge">UNLOCKED</span>
+  </div>
+</header>
+
+<div class="grid">
+  <div class="panel">
+    <h3>1. Oxygen 61 Faders & CC Learn</h3>
+    <div style="font-size:10px;color:var(--dim);margin-bottom:8px">Click [CC] then move any Oxygen 61 slider/knob to bind. Pads 36-41 trigger Markov gates.</div>
+    <div id="faderContainer"></div>
+    <div class="btn-row" style="margin-top:10px">
+      <button id="droneBtn">DRONE LATCH: OFF</button>
+      <button id="resetCcBtn">DEFAULT CCs (14-20)</button>
+    </div>
+    <h3> MIDI & Telemetry Log</h3>
+    <div id="logBox" class="log"></div>
+  </div>
+
+  <div class="panel">
+    <h3>2. Live Chladni J0(x) + RGB Harmonic Field</h3>
+    <canvas id="chladni" width="520" height="250"></canvas>
+    <h3 style="margin-top:12px">64-Byte std140 UBO Live Register (16 x Float32)</h3>
+    <div id="uboCells" class="ubo-grid"></div>
+    <div class="piano" id="pianoBar"></div>
+  </div>
+
+  <div class="panel">
+    <h3>3. 6x6 Markov Gate Controls (Pads 36-41)</h3>
+    <div class="btn-row">
+      <button onclick="sendCmd({cmd:'step',x:5.0,action:'hold'})">[Pad 36] Step x=5.0 Bridge</button>
+      <button onclick="sendCmd({cmd:'step',x:8.6537279,action:'hold'})">[Pad 37] Point 25 J0 Hold</button>
+      <button onclick="sendCmd({cmd:'step',x:8.6537279,action:'confirm'})">[Pad 38] Confirm Gate</button>
+      <button onclick="sendCmd({cmd:'deadbeat',flush:false})">[Pad 39] Deadbeat (p2=0.8)</button>
+      <button class="primary" onclick="sendCmd({cmd:'deadbeat',flush:true})">[Pad 40] Deadbeat FLUSH 1.0</button>
+      <button onclick="sendCmd({cmd:'reset'})">[Pad 41] Reset S3_Terra</button>
+    </div>
+    <h3>Live Binaural Readout (Headphones)</h3>
+    <div class="cell" style="margin-bottom:8px">
+      <span class="lbl">LEFT EAR (CARRIER) / RIGHT EAR (CARRIER + BEAT)</span>
+      <span class="num" id="earReadout">Audio Standby — Click START BINAURAL AUDIO</span>
+    </div>
+    <div class="cell">
+      <span class="lbl">TRIAD HARMONIC WEIGHTS (1x RED / 1.5x GREEN / 2x BLUE)</span>
+      <span class="num" id="triadReadout">R: 0.000 | G: 0.000 | B: 0.000</span>
+    </div>
+    <div style="margin-top:10px;font-size:10px;color:var(--dim);line-height:1.4">
+      <strong>Entrainment Law:</strong> As <code>r_zenith</code> rises from <code>0.0</code> to <code>1.0</code>, the stereo beat delta glides from <code>14.0 Hz</code> (Beta) into your locked Target Focus Hz, while <code>C26</code> opens the harmonic low-pass filter.
+    </div>
+  </div>
+</div>
+
+<script>
+const UBO_LABELS = [
+  "0: S3_Terra","1: S2_Bridge","2: S25_Hand","3: x_coord",
+  "4: E26_Red","5: E26_Green","6: E26_Blue","7: r_zenith",
+  "8: C26_Coher","9: J0(x)","10: time_sec","11: gate_code",
+  "12: vp_W","13: vp_H","14: ptr_X","15: ptr_Y"
+];
+
+const ubo = new Float32Array(16);
+ubo[0] = 1.0; ubo[9] = 1.0;
+let rxFrames = 0;
+let ws = null;
+let learningParam = null;
+let droneLatch = false;
+
+const PARAMS = [
+  { id:"x_coord", label:"Radial x", min:0, max:14.796, step:0.01, val:0.0, cc:14 },
+  { id:"kappa",   label:"Tilt kappa", min:0, max:0.50, step:0.005, val:0.25, cc:15 },
+  { id:"gamma_g", label:"Drain gamma", min:0, max:0.50, step:0.005, val:0.0, cc:16 },
+  { id:"beat_hz", label:"Lock Beat Hz", min:0.5, max:40, step:0.1, val:4.5, cc:17 },
+  { id:"root_hz", label:"Carrier Hz", min:55, max:528, step:1, val:216, cc:18 },
+  { id:"cutoff",  label:"LPF Base Hz", min:120, max:6000, step:10, val:900, cc:19 },
+  { id:"volume",  label:"Master Gain", min:0, max:0.9, step:0.01, val:0.35, cc:20 }
+];
+
+const savedCc = JSON.parse(localStorage.getItem("aroha_o61_cc") || "{}");
+PARAMS.forEach(p => { if (savedCc[p.id] !== undefined) p.cc = savedCc[p.id]; });
+
+function log(msg) {
+  const box = document.getElementById("logBox");
+  const line = document.createElement("div");
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  box.prepend(line);
+  while (box.children.length > 40) box.removeChild(box.lastChild);
+}
+
+// Build UBO Register UI
+const uboContainer = document.getElementById("uboCells");
+UBO_LABELS.forEach((lbl, idx) => {
+  const d = document.createElement("div");
+  d.className = "cell";
+  d.innerHTML = `<span class="lbl">${lbl}</span><span class="num" id="u_${idx}">0.0000</span>`;
+  uboContainer.appendChild(d);
+});
+
+// Build Faders
+const faderBox = document.getElementById("faderContainer");
+function renderFaders() {
+  faderBox.innerHTML = "";
+  PARAMS.forEach(p => {
+    const row = document.createElement("div");
+    row.className = "fader-row";
+    row.innerHTML = `
+      <label>${p.label}</label>
+      <input type="range" id="rng_${p.id}" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.val}"/>
+      <span class="val" id="val_${p.id}">${Number(p.val).toFixed(2)}</span>
+      <button class="learn-btn" id="lrn_${p.id}">CC ${p.cc}</button>
+    `;
+    faderBox.appendChild(row);
+    row.querySelector("input").addEventListener("input", e => setParam(p.id, parseFloat(e.target.value), true));
+    row.querySelector("button").addEventListener("click", () => {
+      learningParam = (learningParam === p.id) ? null : p.id;
+      document.querySelectorAll(".learn-btn").forEach(b => b.classList.remove("listening"));
+      if (learningParam) document.getElementById(`lrn_${p.id}`).classList.add("listening");
+    });
+  });
+}
+renderFaders();
+
+document.getElementById("resetCcBtn").onclick = () => {
+  localStorage.removeItem("aroha_o61_cc");
+  [14,15,16,17,18,19,20].forEach((cc, i) => PARAMS[i].cc = cc);
+  renderFaders();
+  log("Reset CC bindings to Oxygen 61 defaults (CC 14-20).");
+};
+
+let lastWsSend = 0;
+function setParam(id, value, fromUi = false) {
+  const p = PARAMS.find(x => x.id === id);
+  if (!p) return;
+  p.val = Math.min(p.max, Math.max(p.min, value));
+  const rng = document.getElementById(`rng_${id}`);
+  const valEl = document.getElementById(`val_${id}`);
+  if (rng && !fromUi) rng.value = p.val;
+  if (valEl) valEl.textContent = Number(p.val).toFixed(2);
+
+  const now = performance.now();
+  if (now - lastWsSend > 50) {
+    if (id === "x_coord") { sendCmd({ cmd:"step", x:p.val, action:"hold" }); lastWsSend = now; }
+    if (id === "kappa" || id === "gamma_g") {
+      const k = PARAMS.find(x => x.id === "kappa").val;
+      const g = Math.min(PARAMS.find(x => x.id === "gamma_g").val, Math.max(0, 1 - 2 * k));
+      sendCmd({ cmd:"tilt", kappa:k, gamma_g:g });
+      lastWsSend = now;
+    }
+  }
+  updateAudioGraph();
+}
+
+function getParam(id) { return PARAMS.find(x => x.id === id).val; }
+
+// WebSocket 64-byte Binary Client
+function connectWS() {
+  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  const host = location.host || "localhost:8000";
+  const url = location.protocol === "file:" ? "ws://localhost:8000/ws/ubo" : `${proto}//${host}/ws/ubo`;
+  ws = new WebSocket(url);
+  ws.binaryType = "arraybuffer";
+  const badge = document.getElementById("wsBadge");
+
+  ws.onopen = () => { badge.textContent = "WS: LIVE 60Hz"; badge.className = "badge ok"; log(`Connected to ${url}`); };
+  ws.onclose = () => { badge.textContent = "WS: RECONNECTING"; badge.className = "badge warn"; setTimeout(connectWS, 2000); };
+  ws.onmessage = (ev) => {
+    if (ev.data instanceof ArrayBuffer && ev.data.byteLength === 64) {
+      ubo.set(new Float32Array(ev.data));
+      rxFrames++;
+      if (rxFrames % 6 === 0) refreshUboHud();
+      updateAudioGraph();
+    } else if (typeof ev.data === "string") {
+      try {
+        const hud = JSON.parse(ev.data);
+        const lockEl = document.getElementById("lockBadge");
+        const locked = Boolean(hud.at_zenith_lock) || (hud.metrics && Math.abs(hud.metrics.r_zenith - 1) < 1e-4 && Math.abs(hud.metrics.coherence_c26 - 1) < 1e-4);
+        lockEl.textContent = locked ? "ZENITH WHITE LOCKED" : `STEP ${hud.step} (${hud.gate_action})`;
+        lockEl.className = locked ? "badge lock" : "badge";
+      } catch (_) {}
+    }
+  };
+}
+function sendCmd(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
+connectWS();
+
+function refreshUboHud() {
+  document.getElementById("rxBadge").textContent = `64B RX: ${rxFrames}`;
+  for (let i = 0; i < 16; i++) {
+    const el = document.getElementById(`u_${i}`);
+    if (el) el.textContent = ubo[i].toFixed(4);
+  }
+  document.getElementById("triadReadout").textContent =
+    `R: ${ubo[4].toFixed(3)} | G: ${ubo[5].toFixed(3)} | B: ${ubo[6].toFixed(3)} | r_z: ${ubo[7].toFixed(4)}`;
+}
+
+// Web Audio Monroe FFR Dichotic Binaural + RGB Triad Synth
+let actx = null, masterGain = null, lpf = null, merger = null;
+let leftOsc = null, rightOsc = null, triRed = null, triGreen = null, triBlue = null;
+let gRed = null, gGreen = null, gBlue = null, voiceGate = null;
+let activeNoteFreq = null;
+
+function initAudio() {
+  if (actx) { actx.resume(); return; }
+  actx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = actx.createGain();
+  voiceGate = actx.createGain();
+  voiceGate.gain.value = 1.0;
+  lpf = actx.createBiquadFilter();
+  lpf.type = "lowpass";
+  merger = actx.createChannelMerger(2);
+
+  // Dichotic Binaural Pair (Pure Left vs Pure Right)
+  leftOsc = actx.createOscillator(); leftOsc.type = "sine";
+  rightOsc = actx.createOscillator(); rightOsc.type = "sine";
+  const lGain = actx.createGain(); lGain.gain.value = 0.45;
+  const rGain = actx.createGain(); rGain.gain.value = 0.45;
+  leftOsc.connect(lGain); lGain.connect(merger, 0, 0);
+  rightOsc.connect(rGain); rGain.connect(merger, 0, 1);
+
+  // RGB Triadic Harmonic Voices (1x, 1.5x, 2x)
+  triRed = actx.createOscillator(); triRed.type = "triangle";
+  triGreen = actx.createOscillator(); triGreen.type = "triangle";
+  triBlue = actx.createOscillator(); triBlue.type = "sine";
+  gRed = actx.createGain(); gGreen = actx.createGain(); gBlue = actx.createGain();
+
+  triRed.connect(gRed); triGreen.connect(gGreen); triBlue.connect(gBlue);
+  gRed.connect(merger, 0, 0); gRed.connect(merger, 0, 1);
+  gGreen.connect(merger, 0, 0); gGreen.connect(merger, 0, 1);
+  gBlue.connect(merger, 0, 0); gBlue.connect(merger, 0, 1);
+
+  merger.connect(lpf);
+  lpf.connect(voiceGate);
+  voiceGate.connect(masterGain);
+  masterGain.connect(actx.destination);
+
+  [leftOsc, rightOsc, triRed, triGreen, triBlue].forEach(o => o.start());
+  document.getElementById("audioBtn").textContent = "BINAURAL AUDIO ACTIVE";
+  document.getElementById("audioBtn").className = "active";
+  log("Monroe FFR Stereo Merger + RGB Harmonic Triad online.");
+  updateAudioGraph();
+}
+
+document.getElementById("audioBtn").onclick = initAudio;
+document.getElementById("droneBtn").onclick = (e) => {
+  droneLatch = !droneLatch;
+  e.target.textContent = `DRONE LATCH: ${droneLatch ? "ON" : "OFF"}`;
+  e.target.classList.toggle("active", droneLatch);
+  if (!droneLatch) activeNoteFreq = null;
+  updateAudioGraph();
+};
+
+function updateAudioGraph() {
+  if (!actx) return;
+  const now = actx.currentTime;
+  const carrier = activeNoteFreq || getParam("root_hz");
+  const rZenith = Math.max(0, Math.min(1, ubo[7]));
+  const c26 = Math.max(0, Math.min(1, ubo[8]));
+  const targetBeat = getParam("beat_hz");
+  // Beta 14Hz when unlocked -> glides into Target Focus Hz at r_zenith = 1.0
+  const liveBeat = 14.0 + (targetBeat - 14.0) * rZenith;
+
+  leftOsc.frequency.setTargetAtTime(carrier, now, 0.03);
+  rightOsc.frequency.setTargetAtTime(carrier + liveBeat, now, 0.03);
+
+  triRed.frequency.setTargetAtTime(carrier, now, 0.03);
+  triGreen.frequency.setTargetAtTime(carrier * 1.5, now, 0.03);
+  triBlue.frequency.setTargetAtTime(carrier * 2.0, now, 0.03);
+
+  gRed.gain.setTargetAtTime(0.22 * ubo[4], now, 0.04);
+  gGreen.gain.setTargetAtTime(0.18 * ubo[5], now, 0.04);
+  gBlue.gain.setTargetAtTime(0.16 * ubo[6], now, 0.04);
+
+  const cutoff = getParam("cutoff") + c26 * 3200.0;
+  lpf.frequency.setTargetAtTime(cutoff, now, 0.04);
+  masterGain.gain.setTargetAtTime(getParam("volume"), now, 0.03);
+
+  document.getElementById("earReadout").textContent =
+    `L: ${carrier.toFixed(1)} Hz | R: ${(carrier + liveBeat).toFixed(2)} Hz | Beat: ${liveBeat.toFixed(2)} Hz`;
+}
+
+// Piano Bar + Computer Keyboard Fallback
+const NOTES = [
+  { n:60, lbl:"C4 (A)", key:"a" }, { n:62, lbl:"D4 (S)", key:"s" },
+  { n:64, lbl:"E4 (D)", key:"d" }, { n:65, lbl:"F4 (F)", key:"f" },
+  { n:67, lbl:"G4 (G)", key:"g" }, { n:69, lbl:"A4 (H)", key:"h" },
+  { n:71, lbl:"B4 (J)", key:"j" }, { n:72, lbl:"C5 (K)", key:"k" }
+];
+const pianoBar = document.getElementById("pianoBar");
+NOTES.forEach(item => {
+  const k = document.createElement("div");
+  k.className = "key"; k.id = `k_${item.n}`; k.textContent = item.lbl;
+  k.onmousedown = () => triggerNoteOn(item.n);
+  k.onmouseup = () => triggerNoteOff(item.n);
+  pianoBar.appendChild(k);
+});
+window.addEventListener("keydown", e => {
+  if (e.repeat) return;
+  const hit = NOTES.find(x => x.key === e.key.toLowerCase());
+  if (hit) triggerNoteOn(hit.n);
+});
+window.addEventListener("keyup", e => {
+  const hit = NOTES.find(x => x.key === e.key.toLowerCase());
+  if (hit) triggerNoteOff(hit.n);
+});
+
+function triggerNoteOn(midiNote) {
+  initAudio();
+  activeNoteFreq = 440.0 * Math.pow(2, (midiNote - 69) / 12);
+  const el = document.getElementById(`k_${midiNote}`);
+  if (el) el.classList.add("on");
+  updateAudioGraph();
+}
+function triggerNoteOff(midiNote) {
+  const el = document.getElementById(`k_${midiNote}`);
+  if (el) el.classList.remove("on");
+  if (!droneLatch) activeNoteFreq = null;
+  updateAudioGraph();
+}
+
+// Web MIDI M-Audio Oxygen 61 Integration
+if (navigator.requestMIDIAccess) {
+  navigator.requestMIDIAccess().then(midi => {
+    const bindInputs = () => {
+      const names = [];
+      for (const input of midi.inputs.values()) {
+        names.push(input.name);
+        input.onmidimessage = onMidiMessage;
+      }
+      const b = document.getElementById("midiBadge");
+      b.textContent = names.length ? `MIDI: ${names.join(", ")}` : "MIDI: No controller (keys A-K ready)";
+      b.className = names.length ? "badge ok" : "badge warn";
+    };
+    bindInputs();
+    midi.onstatechange = bindInputs;
+  }).catch(() => log("Web MIDI unavailable in this browser."));
+}
+
+function onMidiMessage(ev) {
+  const [status, d1, d2] = ev.data;
+  const cmd = status & 0xf0;
+  if (cmd === 0xb0) { // Control Change (Oxygen 61 faders/knobs)
+    if (learningParam) {
+      const p = PARAMS.find(x => x.id === learningParam);
+      p.cc = d1;
+      const map = {}; PARAMS.forEach(x => map[x.id] = x.cc);
+      localStorage.setItem("aroha_o61_cc", JSON.stringify(map));
+      log(`Bound ${p.label} -> CC ${d1}`);
+      learningParam = null;
+      renderFaders();
+      return;
+    }
+    const target = PARAMS.find(x => x.cc === d1) || (d1 === 7 ? PARAMS.find(x => x.id === "volume") : null) || (d1 === 1 ? PARAMS.find(x => x.id === "x_coord") : null);
+    if (target) {
+      const scaled = target.min + (d2 / 127.0) * (target.max - target.min);
+      setParam(target.id, scaled, false);
+    }
+  } else if (cmd === 0x90 && d2 > 0) { // Note On / Pads
+    if (d1 === 36) sendCmd({ cmd:"step", x:5.0, action:"hold" });
+    else if (d1 === 37) sendCmd({ cmd:"step", x:8.6537279, action:"hold" });
+    else if (d1 === 38) sendCmd({ cmd:"step", x:8.6537279, action:"confirm" });
+    else if (d1 === 39) sendCmd({ cmd:"deadbeat", flush:false });
+    else if (d1 === 40) sendCmd({ cmd:"deadbeat", flush:true });
+    else if (d1 === 41) sendCmd({ cmd:"reset" });
+    else triggerNoteOn(d1);
+  } else if (cmd === 0x80 || (cmd === 0x90 && d2 === 0)) {
+    if (d1 >= 42) triggerNoteOff(d1);
+  }
+}
+
+// Real-Time Chladni Canvas Driven by UBO J0(x), r_zenith, and RGB
+const cvs = document.getElementById("chladni");
+const ctx2d = cvs.getContext("2d");
+function drawChladni() {
+  const w = cvs.width, h = cvs.height;
+  const img = ctx2d.createImageData(w, h);
+  const d = img.data;
+  const xCoord = ubo[3] || 1.0;
+  const m = 2.0 + (xCoord * 0.45);
+  const n = 3.0 + (ubo[7] * 3.0);
+  const rC = Math.max(40, Math.min(255, Math.floor((ubo[4] * 3.0) * 255)));
+  const gC = Math.max(40, Math.min(255, Math.floor((ubo[5] * 3.0) * 255)));
+  const bC = Math.max(60, Math.min(255, Math.floor((ubo[6] * 3.0) * 255)));
+
+  for (let py = 0; py < h; py += 2) {
+    const ny = (py / h) * 2 - 1;
+    const cmY = Math.cos(m * Math.PI * ny), cnY = Math.cos(n * Math.PI * ny);
+    for (let px = 0; px < w; px += 2) {
+      const nx = (px / w) * 2 - 1;
+      const val = Math.abs(Math.cos(m * Math.PI * nx) * cnY - Math.cos(n * Math.PI * nx) * cmY);
+      const node = Math.max(0, 1.0 - val * 5.5);
+      const R = Math.floor(rC * node), G = Math.floor(gC * node), B = Math.floor(bC * node);
+      for (let dy = 0; dy < 2; dy++) {
+        for (let dx = 0; dx < 2; dx++) {
+          const idx = ((py + dy) * w + (px + dx)) * 4;
+          d[idx] = R; d[idx+1] = G; d[idx+2] = B; d[idx+3] = 255;
+        }
+      }
+    }
+  }
+  ctx2d.putImageData(img, 0, 0);
+  requestAnimationFrame(drawChladni);
+}
+requestAnimationFrame(drawChladni);
+</script>
+</body>
+</html>

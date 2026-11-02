@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AROHA MASTER ENGINE v11.2 // 6x6 Point 26 UBO</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      background: #05070b;
+      color: #e2e8f0;
+      font-family: "Segoe UI", system-ui, monospace;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Collapsible Left 6x6 Telemetry Drawer */
+    #panel {
+      width: 320px;
+      padding: 12px;
+      background: rgba(10, 15, 25, 0.94);
+      border-right: 1px solid #1e293b;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 20;
+      transition: margin-left 0.25s ease;
+    }
+    body.cinema-mode #panel { margin-left: -320px; }
+
+    h1 { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #38bdf8; }
+    .badge { font-size: 10px; padding: 4px 7px; border-radius: 4px; font-family: monospace; }
+    .ok { background: #064e3b; color: #6ee7b7; border: 1px solid #059669; }
+    .warn { background: #78350f; color: #fde68a; border: 1px solid #d97706; }
+    .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    button {
+      background: #111c2d;
+      color: #e2e8f0;
+      border: 1px solid #1e3a5f;
+      padding: 6px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-family: inherit;
+    }
+    button:hover, button.active { background: #0c4a6e; border-color: #38bdf8; color: #fff; }
+    label { font-size: 11px; display: flex; justify-content: space-between; color: #94a3b8; }
+    input[type="range"] { width: 100%; accent-color: #00f0ff; }
+    pre {
+      font-size: 10px;
+      background: #030508;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #1e293b;
+      color: #cbd5e1;
+      line-height: 1.38;
+      white-space: pre-wrap;
+      user-select: text;
+    }
+
+    /* Main Center Stage */
+    #stage {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 50% 42%, #0c121e 0%, #040609 75%);
+      overflow: hidden;
+    }
+    #glCanvas, #cymaticCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #cymaticCanvas { pointer-events: auto; }
+
+    /* Top-Left Drawer Toggle */
+    #btnToggleDrawer {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 30;
+      background: rgba(8, 18, 32, 0.85);
+      border: 1px solid #00d2ff;
+      color: #00f0ff;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      padding: 6px 10px;
+      text-transform: uppercase;
+    }
+
+    /* Top-Right v11.2 Overlays (RGB Spatial Mixing & Image-to-Cymatic Drop Zone) */
+    #topRightHud {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .hud-pill {
+      background: rgba(6, 16, 28, 0.82);
+      border: 1px solid rgba(0, 225, 255, 0.45);
+      color: #00f0ff;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.11em;
+      padding: 6px 12px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(0, 225, 255, 0.15);
+    }
+    .hud-pill:hover, .hud-pill.active {
+      background: rgba(0, 210, 255, 0.18);
+      border-color: #00f0ff;
+      color: #ffffff;
+    }
+    #dropZone {
+      border-style: dashed;
+      text-align: center;
+      min-width: 215px;
+    }
+    #dropZone.dragover {
+      background: rgba(0, 255, 170, 0.25);
+      border-color: #00ffaa;
+      color: #ffffff;
+    }
+
+    /* Bottom Dock: COSMOLOGICAL FADER BANK // CHORDS + Piano Keyboard */
+    #cosmologicalDock {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(740px, 94vw);
+      background: rgba(9, 16, 28, 0.88);
+      border: 1px solid rgba(0, 210, 255, 0.38);
+      border-radius: 6px;
+      padding: 10px 14px 12px;
+      z-index: 30;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75), 0 0 18px rgba(0, 210, 255, 0.12);
+      backdrop-filter: blur(8px);
+    }
+    .dock-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #00e5ff;
+      text-transform: uppercase;
+    }
+    .dock-controls {
+      display: flex;
+      gap: 6px;
+    }
+    .dock-controls button {
+      padding: 3px 8px;
+      font-size: 10px;
+      border-color: rgba(0, 225, 255, 0.4);
+      color: #7dd3fc;
+    }
+    .fader-bank {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      gap: 4px;
+      padding: 4px 2px 10px;
+    }
+    .fader-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .fader-val {
+      font-size: 9px;
+      color: #94a3b8;
+      font-family: monospace;
+    }
+    .fader-track-wrap {
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cosmo-slider {
+      -webkit-appearance: slider-vertical;
+      appearance: slider-vertical;
+      width: 14px;
+      height: 54px;
+      background: transparent;
+      accent-color: #00f0ff;
+      cursor: pointer;
+    }
+    .fader-lbl {
+      font-size: 9px;
+      color: #cbd5e1;
+      letter-spacing: 0.02em;
+    }
+
+    /* Piano Strip */
+    #pianoWrap {
+      position: relative;
+      height: 46px;
+      width: 78%;
+      margin: 0 auto;
+      display: flex;
+      background: #020408;
+      border: 1px solid #1e293b;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .white-key {
+      flex: 1;
+      height: 100%;
+      background: linear-gradient(to bottom, #e2e8f0 0%, #ffffff 100%);
+      border-right: 1px solid #475569;
+      position: relative;
+      cursor: pointer;
+      z-index: 1;
+    }
+    .white-key.active {
+      background: linear-gradient(to bottom, #10b981 0%, #6ee7b7 100%) !important;
+      box-shadow: inset 0 0 10px #059669;
+    }
+    .black-key {
+      position: absolute;
+      top: 0;
+      width: 3.4%;
+      height: 60%;
+      background: #0f172a;
+      border: 1px solid #020617;
+      border-radius: 0 0 2px 2px;
+      cursor: pointer;
+      z-index: 2;
+      transform: translateX(-50%);
+    }
+    .black-key.active {
+      background: #00f0ff !important;
+      box-shadow: 0 0 10px #00f0ff;
+    }
+  </style>
+</head>
+<body>
+  <aside id="panel">
+    <h1>AROHA 6x6 WebSocket UBO</h1>
+    <div id="gpuStatus" class="badge warn">Initializing WebGL2...</div>
+    <div id="wsStatus" class="badge warn">Connecting ws://.../ws/ubo...</div>
+    <div class="btns">
+      <button id="btnBridge">1. Propagate (x=5.0)</button>
+      <button id="btnHold">2. Lock P25 Hold</button>
+      <button id="btnConfirm">3. Confirm Handshake</button>
+      <button id="btnReject">Reject to Terra</button>
+      <button id="btnDeadbeat">Deadbeat (k=1/3)</button>
+      <button id="btnReset">Reset Terra</button>
+    </div>
+    <div>
+      <label><span>RGB Coupling (kappa)</span><span id="lblKappa">0.25</span></label>
+      <input id="rngKappa" type="range" min="0" max="0.35" step="0.01" value="0.25" />
+    </div>
+    <div>
+      <label><span>Green Terra Drain (gamma_G)</span><span id="lblGamma">0.00</span></label>
+      <input id="rngGamma" type="range" min="0" max="0.30" step="0.01" value="0.00" />
+    </div>
+    <pre id="uboHex">Waiting for 64-byte std140 frame...</pre>
+    <pre id="readout"></pre>
+  </aside>
+
+  <main id="stage">
+    <canvas id="glCanvas"></canvas>
+    <canvas id="cymaticCanvas"></canvas>
+
+    <button id="btnToggleDrawer" title="Toggle 6x6 Telemetry Sidebar">6x6 UBO Drawer</button>
+
+    <div id="topRightHud">
+      <div id="btnSpatialMode" class="hud-pill active" title="Click to toggle 90-degree 3D Spike Tilt">
+        RGB SPATIAL MIXING &amp; ROTATION
+      </div>
+      <div id="dropZone" class="hud-pill" title="Drag & drop an image or click to load cymatic bitmap">
+        IMAGE-TO-CYMATIC DROP ZONE
+        <input id="fileInput" type="file" accept="image/*" style="display:none" />
+      </div>
+      <div id="btnLayerMode" class="hud-pill" title="Cycle between Composite, v11.2 Lattice Only, or WebGL2 Dome Only">
+        LAYER: COMPOSITE (V11.2 + UBO DOME)
+      </div>
+    </div>
+
+    <section id="cosmologicalDock">
+      <div class="dock-header">
+        <span id="chordHeader">COSMOLOGICAL FADER BANK // CHORDS: None</span>
+        <div class="dock-controls">
+          <button id="btnChord60" title="Toggle C Major Triad (60, 64, 67)">Chord 60, 64, 67</button>
+          <button id="btnTiltProfile" title="Tilt 3D Mandala 90 degrees into side spike profile">Side Profile Tilt</button>
+          <button id="btnClearNotes">Silence</button>
+        </div>
+      </div>
+      <div id="faderBank" class="fader-bank"></div>
+      <div id="pianoWrap"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { ArohaTelemetryUBO, AROHA_UBO_BYTE_LENGTH } from "./src/webgl/arohaTelemetryUBO.js";
+
+    const wsStatusEl  = document.getElementById("wsStatus");
+    const readoutEl   = document.getElementById("readout");
+    const uboHexEl    = document.getElementById("uboHex");
+    const chordHeader = document.getElementById("chordHeader");
+
+    // 1. Cosmological Fader Bank Setup (Exact 11 channels from v11.2)
+    const FADER_NAMES = [
+      "Saturn", "Jupiter", "Mars", "Sun", "Venus",
+      "Mercury", "Moon", "Alpha", "Theta", "Delta", "Omega"
+    ];
+    const faderValues = new Float32Array(FADER_NAMES.length);
+    const faderBankEl = document.getElementById("faderBank");
+
+    FADER_NAMES.forEach((name, idx) => {
+      const col = document.createElement("div");
+      col.className = "fader-col";
+      col.innerHTML = `
+        <span class="fader-val" id="fval_${idx}">0.0</span>
+        <div class="fader-track-wrap">
+          <input class="cosmo-slider" type="range" min="0" max="1" step="0.05" value="0" data-idx="${idx}" />
+        </div>
+        <span class="fader-lbl">${name}</span>
+      `;
+      const slider = col.querySelector("input");
+      const valEl  = col.querySelector(".fader-val");
+      slider.addEventListener("input", (e) => {
+        const v = parseFloat(e.target.value);
+        faderValues[idx] = v;
+        valEl.textContent = v.toFixed(1);
+      });
+      faderBankEl.appendChild(col);
+    });
+
+    // 2. Web Audio Polyphonic Harmonic / Bell Synthesizer + Piano Strip
+    let audioCtx = null;
+    const activeOscillators = new Map();
+    const activeNotes = new Set();
+
+    function midiToFreq(midi) {
+      return 440.0 * Math.pow(2.0, (midi - 69) / 12.0);
+    }
+
+    function ensureAudio() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) audioCtx = new AC();
+      }
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+    }
+
+    function startNote(midi) {
+      if (activeNotes.has(midi)) return;
+      activeNotes.add(midi);
+      ensureAudio();
+      if (audioCtx) {
+        const now = audioCtx.currentTime;
+        const freq = midiToFreq(midi);
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc1.type = "sine";
+        osc2.type = "triangle";
+        osc1.frequency.setValueAtTime(freq, now);
+        osc2.frequency.setValueAtTime(freq * 2.0, now);
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.exponentialRampToValueAtTime(0.14, now + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.05, now + 0.6);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc1.start(now);
+        osc2.start(now);
+        activeOscillators.set(midi, { osc1, osc2, gain });
+      }
+      updateChordUI();
+    }
+
+    function stopNote(midi) {
+      if (!activeNotes.has(midi)) return;
+      activeNotes.delete(midi);
+      const voice = activeOscillators.get(midi);
+      if (voice && audioCtx) {
+        const now = audioCtx.currentTime;
+        voice.gain.gain.cancelScheduledValues(now);
+        voice.gain.gain.setValueAtTime(Math.max(voice.gain.gain.value, 0.001), now);
+        voice.gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+        setTimeout(() => {
+          try { voice.osc1.stop(); voice.osc2.stop(); } catch (_) {}
+        }, 200);
+        activeOscillators.delete(midi);
+      }
+      updateChordUI();
+    }
+
+    function toggleNote(midi) {
+      if (activeNotes.has(midi)) stopNote(midi);
+      else startNote(midi);
+    }
+
+    function clearAllNotes() {
+      Array.from(activeNotes).forEach(n => stopNote(n));
+      updateChordUI();
+    }
+
+    const pianoWrap = document.getElementById("pianoWrap");
+    const keyElements = new Map();
+    const START_MIDI = 48; // C3
+    const END_MIDI   = 83; // B5
+    const BLACK_OFFSETS = new Set([1, 3, 6, 8, 10]);
+
+    const whiteNotes = [];
+    for (let m = START_MIDI; m <= END_MIDI; m++) {
+      if (!BLACK_OFFSETS.has(m % 12)) whiteNotes.push(m);
+    }
+
+    whiteNotes.forEach((midi) => {
+      const wk = document.createElement("div");
+      wk.className = "white-key";
+      wk.dataset.midi = midi;
+      wk.addEventListener("pointerdown", (e) => { e.preventDefault(); toggleNote(midi); });
+      pianoWrap.appendChild(wk);
+      keyElements.set(midi, wk);
+    });
+
+    for (let m = START_MIDI; m <= END_MIDI; m++) {
+      if (BLACK_OFFSETS.has(m % 12)) {
+        const prevWhiteIdx = whiteNotes.findIndex(w => w > m) - 1;
+        if (prevWhiteIdx >= 0) {
+          const bk = document.createElement("div");
+          bk.className = "black-key";
+          bk.style.left = `${((prevWhiteIdx + 1) / whiteNotes.length) * 100}%`;
+          bk.dataset.midi = m;
+          bk.addEventListener("pointerdown", (e) => { e.preventDefault(); e.stopPropagation(); toggleNote(m); });
+          pianoWrap.appendChild(bk);
+          keyElements.set(m, bk);
+        }
+      }
+    }
+
+    function updateChordUI() {
+      const sorted = Array.from(activeNotes).sort((a, b) => a - b);
+      chordHeader.textContent =
+        `COSMOLOGICAL FADER BANK // CHORDS: ${sorted.length ? sorted.join(", ") : "None"}`;
+      keyElements.forEach((el, midi) => {
+        el.classList.toggle("active", activeNotes.has(midi));
+      });
+      sendCommand({ cmd: "chord", notes: sorted });
+    }
+
+    // Optional WebMIDI support (automatically binds M-Audio Oxygen 61 if connected)
+    if (navigator.requestMIDIAccess) {
+      navigator.requestMIDIAccess().then((midiAccess) => {
+        for (const input of midiAccess.inputs.values()) {
+          input.onmidimessage = (msg) => {
+            const [status, note, velocity] = msg.data;
+            const cmd = status & 0xf0;
+            if (cmd === 0x90 && velocity > 0) startNote(note);
+            else if (cmd === 0x80 || (cmd === 0x90 && velocity === 0)) stopNote(note);
+          };
+        }
+      }).catch(() => {});
+    }
+
+    document.getElementById("btnChord60").onclick = () => {
+      if (activeNotes.has(60) && activeNotes.has(64) && activeNotes.has(67)) {
+        clearAllNotes();
+      } else {
+        startNote(60); startNote(64); startNote(67);
+      }
+    };
+    document.getElementById("btnClearNotes").onclick = () => clearAllNotes();
+
+    // 3. Top-Right Controls & Image-to-Cymatic Drop Zone
+    let forceSideTilt = false;
+    let layerMode = 0; // 0 = Composite, 1 = v11.2 Cymatic Lattice Only, 2 = WebGL2 Dome Only
+    let imageLuminanceMap = null;
+
+    const btnSpatialMode = document.getElementById("btnSpatialMode");
+    const btnTiltProfile = document.getElementById("btnTiltProfile");
+    const btnLayerMode   = document.getElementById("btnLayerMode");
+    const glCanvas       = document.getElementById("glCanvas");
+    const cymaticCanvas  = document.getElementById("cymaticCanvas");
+
+    function toggleSideTilt() {
+      forceSideTilt = !forceSideTilt;
+      btnTiltProfile.classList.toggle("active", forceSideTilt);
+    }
+    btnSpatialMode.onclick = toggleSideTilt;
+    btnTiltProfile.onclick = toggleSideTilt;
+
+    btnLayerMode.onclick = () => {
+      layerMode = (layerMode + 1) % 3;
+      if (layerMode === 0) {
+        btnLayerMode.textContent = "LAYER: COMPOSITE (V11.2 + UBO DOME)";
+        glCanvas.style.opacity = "0.52";
+        cymaticCanvas.style.opacity = "1.0";
+      } else if (layerMode === 1) {
+        btnLayerMode.textContent = "LAYER: V11.2 3D CYMATIC LATTICE ONLY";
+        glCanvas.style.opacity = "0.0";
+        cymaticCanvas.style.opacity = "1.0";
+      } else {
+        btnLayerMode.textContent = "LAYER: WEBGL2 UBO CHLADNI DOME ONLY";
+        glCanvas.style.opacity = "1.0";
+        cymaticCanvas.style.opacity = "0.0";
+      }
+    };
+    glCanvas.style.opacity = "0.52";
+
+    document.getElementById("btnToggleDrawer").onclick = () => {
+      document.body.classList.toggle("cinema-mode");
+    };
+
+    const dropZone  = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    dropZone.onclick = () => fileInput.click();
+    dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("dragover");
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) loadCymaticImage(e.dataTransfer.files[0]);
+    });
+    fileInput.onchange = (e) => {
+      if (e.target.files && e.target.files[0]) loadCymaticImage(e.target.files[0]);
+    };
+
+    function loadCymaticImage(file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+          const off = document.createElement("canvas");
+          off.width = 64; off.height = 64;
+          const octx = off.getContext("2d");
+          octx.drawImage(img, 0, 0, 64, 64);
+          imageLuminanceMap = octx.getImageData(0, 0, 64, 64).data;
+          dropZone.textContent = `CYMATIC BITMAP: ${file.name.slice(0, 16)}`;
+          if (activeNotes.size === 0) { startNote(60); startNote(64); startNote(67); }
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // 4. Build v11.2 3D Sacred-Geometry Cymatic Mandala Mesh
+    const cymNodes = [];
+    const cymEdges = [];
+    const RINGS = 7;
+    const SPOKES = 24;
+
+    cymNodes.push({ x: 0, y: 0, rNorm: 0, angle: 0, ring: 0, spoke: 0 });
+    for (let r = 1; r <= RINGS; r++) {
+      const rNorm = r / RINGS;
+      for (let s = 0; s < SPOKES; s++) {
+        const angle = (s / SPOKES) * Math.PI * 2.0 + (r % 2 === 0 ? Math.PI / SPOKES : 0);
+        cymNodes.push({
+          x: Math.cos(angle) * rNorm,
+          y: Math.sin(angle) * rNorm,
+          rNorm,
+          angle,
+          ring: r,
+          spoke: s
+        });
+      }
+    }
+
+    // Connect concentric rings, radial spokes, and sacred-geometry star chords
+    for (let i = 1; i < cymNodes.length; i++) {
+      const a = cymNodes[i];
+      if (a.ring === 1) cymEdges.push([0, i]);
+      for (let j = i + 1; j < cymNodes.length; j++) {
+        const b = cymNodes[j];
+        const dRing = Math.abs(a.ring - b.ring);
+        if (dRing <= 1) {
+          const dx = a.x - b.x, dy = a.y - b.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < 0.24) cymEdges.push([i, j]);
+        } else if (a.ring === b.ring && (a.ring === 3 || a.ring === 5 || a.ring === 7)) {
+          const spokeDiff = Math.abs(a.spoke - b.spoke);
+          if (spokeDiff === 4 || spokeDiff === 8 || spokeDiff === 16 || spokeDiff === 20) {
+            cymEdges.push([i, j]);
+          }
+        }
+      }
+    }
+
+    // 5. 6x6 WebSocket UBO Receiver & Offline Fallback
+    const latestServerScalars = new Float32Array(16);
+    latestServerScalars[0] = 1.0;
+    let wsConnected = false;
+    let ws = null;
+    let rxFrames = 0;
+    let ptrX = 0.0, ptrY = 0.0;
+    let localState = [1, 0, 0, 0, 0, 0], localStep = 0, localX = 0.0, localAction = "hold";
+    let kappa = 0.25, gammaG = 0.0;
+
+    function besselJ0(x) {
+      const halfSq = 0.25 * x * x;
+      let term = 1.0, sum = 1.0;
+      for (let m = 1; m < 35; m++) {
+        term *= -halfSq / (m * m);
+        sum += term;
+        if (Math.abs(term) < 1e-15) break;
+      }
+      return sum;
+    }
+
+    function syncFallbackScalars() {
+      const [s3, s2, s25, eR, eG, eB] = localState;
+      const dome = eR + eG + eB;
+      const normSq = eR * eR + eG * eG + eB * eB;
+      const c26 = 27 * eR * eG * eB;
+      const rZ = normSq > 1e-15 ? (dome * dome) / Math.sqrt(3 * normSq) : 0;
+      const j0 = besselJ0(localX);
+      latestServerScalars.set([
+        s3, s2, s25, localX,
+        eR, eG, eB, rZ,
+        c26, j0, 0, localAction === "confirm" ? 1 : localAction === "reject" ? -1 : 0,
+        1920, 1080, ptrX, ptrY
+      ]);
+      readoutEl.textContent = JSON.stringify({
+        step: localStep, x: localX, j0,
+        at_point_25: Math.abs(j0) <= 1e-4 || Math.abs(localX - 8.6537279) <= 0.005,
+        gate_action: localAction,
+        states: { S3_Terra: s3, S2_Bridge: s2, S25_Handshake: s25, E26_Red: eR, E26_Green: eG, E26_Blue: eB },
+        metrics: { l1_mass: s3 + s2 + s25 + dome, dome_rgb_mass: dome, coherence_c26: c26, r_zenith: rZ }
+      }, null, 2);
+    }
+
+    function sendCommand(payload) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(payload));
+        return;
+      }
+      if (payload.cmd === "reset") {
+        localState = [1, 0, 0, 0, 0, 0]; localStep = 0; localX = 0; localAction = "hold";
+      } else if (payload.cmd === "deadbeat") {
+        kappa = 1 / 3; gammaG = 0; localX = 8.6537279; localAction = "confirm";
+        localState = [0, 0, 0, 1 / 3, 1 / 3, 1 / 3];
+        localStep += 4;
+      } else if (payload.cmd === "step") {
+        localX = payload.x; localAction = payload.action;
+        const delta = Math.abs(besselJ0(localX)) <= 1e-4 || Math.abs(localX - 8.6537279) <= 0.005 ? 1 : 0;
+        const etaP = localAction === "confirm" ? 1 : 0, etaM = localAction === "reject" ? 1 : 0;
+        const g = Math.min(gammaG, Math.max(0, 1 - 2 * kappa));
+        const [s3, s2, s25, eR, eG, eB] = localState;
+        localState = [
+          0.2 * s3 + etaM * delta * s25 + g * eG,
+          0.8 * s3 + (1 - delta) * s2,
+          delta * s2 + (1 - (etaP + etaM) * delta) * s25,
+          0.60 * etaP * delta * s25 + (1 - 2 * kappa) * eR + kappa * eG + kappa * eB,
+          0.25 * etaP * delta * s25 + kappa * eR + (1 - 2 * kappa - g) * eG + kappa * eB,
+          0.15 * etaP * delta * s25 + kappa * eR + kappa * eG + (1 - 2 * kappa) * eB
+        ];
+        localStep++;
+      }
+      syncFallbackScalars();
+    }
+
+    function connectWebSocket() {
+      const proto = location.protocol === "https:" ? "wss:" : "ws:";
+      const url = `${proto}//${location.host}/ws/ubo`;
+      ws = new WebSocket(url);
+      ws.binaryType = "arraybuffer";
+
+      ws.onopen = () => {
+        wsConnected = true;
+        wsStatusEl.className = "badge ok";
+        wsStatusEl.textContent = `LIVE Python WS: ${url}`;
+      };
+
+      ws.onmessage = (ev) => {
+        if (ev.data instanceof ArrayBuffer) {
+          if (ev.data.byteLength === AROHA_UBO_BYTE_LENGTH) {
+            const f32 = new Float32Array(ev.data);
+            latestServerScalars.set(f32);
+            rxFrames++;
+            if (rxFrames % 12 === 1) {
+              uboHexEl.textContent =
+                `RX #${rxFrames} (64B IEEE-754 std140)\n` +
+                `u_zone_lower  [0..3] : ${f32[0].toFixed(3)}, ${f32[1].toFixed(3)}, ${f32[2].toFixed(3)}, x=${f32[3].toFixed(4)}\n` +
+                `u_point26_rgb [4..7] : R=${f32[4].toFixed(3)}, G=${f32[5].toFixed(3)}, B=${f32[6].toFixed(3)}, rZ=${f32[7].toFixed(4)}\n` +
+                `u_dome_metrics[8..11]: C26=${f32[8].toFixed(4)}, J0=${f32[9].toExponential(2)}, gate=${f32[11].toFixed(0)}`;
+            }
+          }
+        } else if (typeof ev.data === "string") {
+          const snap = JSON.parse(ev.data);
+          readoutEl.textContent = JSON.stringify(snap, null, 2);
+          if (snap.params) {
+            document.getElementById("lblKappa").textContent = Number(snap.params.kappa).toFixed(3);
+            document.getElementById("lblGamma").textContent = Number(snap.params.gamma_g).toFixed(2);
+          }
+        }
+      };
+
+      ws.onclose = () => {
+        wsConnected = false;
+        wsStatusEl.className = "badge warn";
+        wsStatusEl.textContent = "WS Offline (local fallback active)";
+        setTimeout(connectWebSocket, 2000);
+      };
+    }
+
+    document.getElementById("btnBridge").onclick   = () => sendCommand({ cmd: "step", x: 5.0, action: "hold" });
+    document.getElementById("btnHold").onclick     = () => sendCommand({ cmd: "step", x: 8.6537279, action: "hold" });
+    document.getElementById("btnConfirm").onclick  = () => sendCommand({ cmd: "step", x: 8.6537279, action: "confirm" });
+    document.getElementById("btnReject").onclick   = () => sendCommand({ cmd: "step", x: 8.6537279, action: "reject" });
+    document.getElementById("btnDeadbeat").onclick = () => {
+      document.getElementById("rngKappa").value = "0.33";
+      document.getElementById("rngGamma").value = "0.00";
+      sendCommand({ cmd: "deadbeat" });
+    };
+    document.getElementById("btnReset").onclick = () => sendCommand({ cmd: "reset" });
+
+    document.getElementById("rngKappa").oninput = (e) => {
+      kappa = parseFloat(e.target.value);
+      document.getElementById("lblKappa").textContent = kappa.toFixed(2);
+      sendCommand({ cmd: "tilt", kappa, gamma_g: gammaG });
+    };
+    document.getElementById("rngGamma").oninput = (e) => {
+      gammaG = parseFloat(e.target.value);
+      document.getElementById("lblGamma").textContent = gammaG.toFixed(2);
+      sendCommand({ cmd: "tilt", kappa, gamma_g: gammaG });
+    };
+
+    cymaticCanvas.addEventListener("pointermove", (ev) => {
+      const r = cymaticCanvas.getBoundingClientRect();
+      ptrX = ((ev.clientX - r.left) / Math.max(r.width, 1)) * 2.0 - 1.0;
+      ptrY = -(((ev.clientY - r.top) / Math.max(r.height, 1)) * 2.0 - 1.0);
+    });
+
+    // 6. Render v11.2 3D RGB Cymatic Mandala + Dual-Plane Side-Elevation Spike View
+    const ctx2d = cymaticCanvas.getContext("2d");
+    let bloomEnergy = 0.0;
+
+    function renderCymaticMandala(nowSec, uboVec) {
+      const w = cymaticCanvas.width;
+      const h = cymaticCanvas.height;
+      ctx2d.clearRect(0, 0, w, h);
+
+      const eR = uboVec[4], eG = uboVec[5], eB = uboVec[6], rZ = uboVec[7];
+      const faderSum = faderValues.reduce((a, b) => a + b, 0);
+      const hasSignal = activeNotes.size > 0 || (eR + eG + eB) > 0.05 || faderSum > 0.05 || imageLuminanceMap !== null;
+
+      bloomEnergy += ((hasSignal ? 1.0 : 0.0) - bloomEnergy) * 0.08;
+      if (bloomEnergy < 0.005) return;
+
+      const cx = w * 0.5;
+      const cy = h * 0.41;
+      const radiusPx = Math.min(w, h) * 0.25;
+
+      // Auto-tilt to side spike profile periodically when chord is active (matching 00:05-00:06 in video) or when toggled
+      const autoCycle = activeNotes.size > 0 ? Math.max(0.0, Math.sin(nowSec * 0.85 - 1.2)) : 0.0;
+      const tiltPhase = forceSideTilt ? 1.0 : Math.pow(autoCycle, 3.0);
+      const pitchRad  = tiltPhase * (Math.PI * 0.46); // ~83 deg edge-on tilt
+      const rotZ      = nowSec * 0.22;
+
+      const cosZ = Math.cos(rotZ), sinZ = Math.sin(rotZ);
+      const cosP = Math.cos(pitchRad), sinP = Math.sin(pitchRad);
+
+      const noteArr = Array.from(activeNotes);
+      const m1 = noteArr[0] ? (noteArr[0] % 12) + 3 : 6;
+      const m2 = noteArr[1] ? (noteArr[1] % 12) + 4 : 9;
+
+      const projectedUpper = new Array(cymNodes.length);
+      const projectedLower = new Array(cymNodes.length);
+
+      for (let i = 0; i < cymNodes.length; i++) {
+        const n = cymNodes[i];
+        let wave =
+          Math.cos(m1 * n.angle + nowSec * 2.5) *
+          Math.sin(m2 * n.rNorm * Math.PI - nowSec * 1.8);
+
+        if (imageLuminanceMap) {
+          const ix = Math.min(63, Math.max(0, Math.floor((n.x * 0.5 + 0.5) * 63)));
+          const iy = Math.min(63, Math.max(0, Math.floor((n.y * 0.5 + 0.5) * 63)));
+          const pIdx = (iy * 64 + ix) * 4;
+          wave = (imageLuminanceMap[pIdx] + imageLuminanceMap[pIdx + 1] + imageLuminanceMap[pIdx + 2]) / (255 * 3);
+        }
+
+        const spikeAmp = (0.18 + 0.45 * Math.abs(wave) + faderSum * 0.04) * bloomEnergy;
+        const rx = n.x * cosZ - n.y * sinZ;
+        const ry = n.x * sinZ + n.y * cosZ;
+
+        // Upper Crown Plane (+Z spikes) and Lower Mirrored Plane (-Z reflection)
+        const planeGap = 0.20 * tiltPhase;
+        const zUp  = planeGap + spikeAmp;
+        const zLow = -planeGap - spikeAmp * 0.65;
+
+        const yUpScreen  = ry * cosP - zUp * sinP;
+        const yLowScreen = ry * cosP - zLow * sinP;
+
+        const rCh = Math.min(255, Math.floor(90 + 165 * Math.abs(Math.sin(n.angle * 3 + nowSec)) + eR * 120));
+        const gCh = Math.min(255, Math.floor(110 + 145 * Math.abs(Math.cos(n.rNorm * 6 - nowSec)) + eG * 120));
+        const bCh = Math.min(255, Math.floor(160 + 95 * Math.abs(wave) + eB * 120));
+
+        projectedUpper[i] = {
+          sx: cx + rx * radiusPx,
+          sy: cy + yUpScreen * radiusPx,
+          baseSy: cy + (ry * cosP - planeGap * sinP) * radiusPx,
+          r: rCh, g: gCh, b: bCh,
+          amp: Math.abs(wave)
+        };
+        projectedLower[i] = {
+          sx: cx + rx * radiusPx,
+          sy: cy + yLowScreen * radiusPx,
+          baseSy: cy + (ry * cosP + planeGap * sinP) * radiusPx
+        };
+      }
+
+      ctx2d.save();
+      ctx2d.globalCompositeOperation = "lighter";
+
+      // Draw sacred-geometry lattice edges
+      ctx2d.lineWidth = 0.85;
+      for (let e = 0; e < cymEdges.length; e++) {
+        const [i, j] = cymEdges[e];
+        const p1 = projectedUpper[i], p2 = projectedUpper[j];
+        ctx2d.strokeStyle = `rgba(${p1.r}, ${p1.g}, ${p1.b}, ${0.26 * bloomEnergy})`;
+        ctx2d.beginPath();
+        ctx2d.moveTo(p1.sx, p1.sy);
+        ctx2d.lineTo(p2.sx, p2.sy);
+        ctx2d.stroke();
+      }
+
+      // When tilted edge-on (00:05-00:06), draw vertical RGB cymatic frequency spikes on both planes
+      if (tiltPhase > 0.04) {
+        ctx2d.lineWidth = 1.35;
+        for (let i = 0; i < projectedUpper.length; i++) {
+          const u = projectedUpper[i];
+          const l = projectedLower[i];
+
+          ctx2d.strokeStyle = `rgba(${u.r}, ${Math.floor(u.g * 0.75)}, ${u.b}, ${0.72 * bloomEnergy * tiltPhase})`;
+          ctx2d.beginPath();
+          ctx2d.moveTo(u.sx, u.baseSy);
+          ctx2d.lineTo(u.sx, u.sy);
+          ctx2d.stroke();
+
+          ctx2d.strokeStyle = `rgba(0, 230, 200, ${0.58 * bloomEnergy * tiltPhase})`;
+          ctx2d.beginPath();
+          ctx2d.moveTo(l.sx, l.baseSy);
+          ctx2d.lineTo(l.sx, l.sy);
+          ctx2d.stroke();
+        }
+      }
+
+      // Draw glowing RGB Chladni / Cymatic vertices
+      for (let i = 0; i < projectedUpper.length; i++) {
+        const p = projectedUpper[i];
+        const dotR = 1.6 + p.amp * 2.2 + rZ * 0.8;
+        ctx2d.fillStyle = `rgba(${p.r}, ${p.g}, ${p.b}, ${0.88 * bloomEnergy})`;
+        ctx2d.beginPath();
+        ctx2d.arc(p.sx, p.sy, dotR, 0, Math.PI * 2);
+        ctx2d.fill();
+      }
+
+      ctx2d.restore();
+    }
+
+    // 7. Initialize WebGL2 UBO Pipeline + Composite Render Loop
+    async function initWebGL() {
+      const gl = glCanvas.getContext("webgl2");
+      if (!gl) throw new Error("WebGL2 not supported.");
+
+      const [vertSrc, fragSrc] = await Promise.all([
+        fetch("./shaders/aroha_dome.vert").then(r => r.text()),
+        fetch("./shaders/aroha_dome.frag").then(r => r.text())
+      ]);
+
+      const compile = (type, src) => {
+        const sh = gl.createShader(type);
+        gl.shaderSource(sh, src);
+        gl.compileShader(sh);
+        if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh));
+        return sh;
+      };
+
+      const prog = gl.createProgram();
+      gl.attachShader(prog, compile(gl.VERTEX_SHADER, vertSrc));
+      gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fragSrc));
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+
+      const ubo = new ArohaTelemetryUBO(gl, 0);
+      const byteSize = ubo.attachProgram(prog, "ArohaTelemetryBlock");
+      const gpuEl = document.getElementById("gpuStatus");
+      gpuEl.className = "badge ok";
+      gpuEl.textContent = `GPU UBO Bound: ${byteSize} bytes (std140 OK)`;
+
+      const vao = gl.createVertexArray();
+      gl.bindVertexArray(vao);
+
+      const gpuFrameBuffer = new Float32Array(16);
+      syncFallbackScalars();
+      connectWebSocket();
+
+      // Pre-latch C-major triad (60, 64, 67) so the 3D Cymatic Mandala blooms immediately on load
+      setTimeout(() => {
+        startNote(60); startNote(64); startNote(67);
+      }, 250);
+
+      function frame(nowMs) {
+        const nowSec = nowMs * 0.001;
+        const dpr = window.devicePixelRatio || 1;
+        const w = Math.floor(glCanvas.clientWidth * dpr);
+        const h = Math.floor(glCanvas.clientHeight * dpr);
+        if (glCanvas.width !== w || glCanvas.height !== h) {
+          glCanvas.width = w; glCanvas.height = h;
+          cymaticCanvas.width = w; cymaticCanvas.height = h;
+          if (wsConnected && ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ cmd: "viewport", width: w, height: h, ptr_x: ptrX, ptr_y: ptrY }));
+          }
+        }
+
+        gpuFrameBuffer.set(latestServerScalars);
+        gpuFrameBuffer[10] = nowSec;
+        gpuFrameBuffer[12] = glCanvas.width;
+        gpuFrameBuffer[13] = glCanvas.height;
+        gpuFrameBuffer[14] = ptrX;
+        gpuFrameBuffer[15] = ptrY;
+
+        gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+        gl.useProgram(prog);
+        ubo.uploadRawBuffer(gpuFrameBuffer);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+        renderCymaticMandala(nowSec, gpuFrameBuffer);
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    initWebGL().catch(err => {
+      const gpuEl = document.getElementById("gpuStatus");
+      gpuEl.style.background = "#7f1d1d";
+      gpuEl.style.color = "#fecaca";
+      gpuEl.textContent = err.message;
+      console.error(err);
+    });
+  </script>
+</body>
+</html>

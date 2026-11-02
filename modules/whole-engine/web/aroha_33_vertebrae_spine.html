@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AROHA-MATRIX // 33-Vertebrae SVG & 15-Step pH/ION Connector</title>
+<style>
+  body { margin: 0; background: #090b10; color: #e2e8f0; font-family: monospace; display: flex; height: 100vh; overflow: hidden; }
+  #vertebrae-sidebar { width: 250px; background: #0d111a; border-right: 1px solid #1e293b; height: 100vh; overflow-y: auto; padding: 8px; box-sizing: border-box; }
+  #main-stage { flex: 1; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
+  .top-bar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  button { padding: 10px 14px; background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; font-family: monospace; font-weight: bold; cursor: pointer; }
+  button.active { background: #10b981; color: #090b10; border-color: #10b981; }
+  #telemetry { background: #111622; border: 1px solid #263147; padding: 14px; font-size: 12px; line-height: 1.7; margin-bottom: 14px; }
+  canvas { flex: 1; background: #07090e; border: 1px solid #1e293b; width: 100%; }
+</style>
+</head>
+<body>
+  <div id="vertebrae-sidebar"></div>
+  <div id="main-stage">
+    <div class="top-bar">
+      <button id="btnAudio">START 11-22-33Hz SYNTH</button>
+      <button id="btnMirror">JUMP TO V17 (pH 7 MIRROR)</button>
+      <button id="btnTilt">90° TIKI_TILT (0°)</button>
+    </div>
+    <div id="telemetry">Select any vertebra (V1-V33) on the left SVG spine...</div>
+    <canvas id="stageCanvas"></canvas>
+  </div>
+
+<script>
+const spineMap = [];
+for (let v = 1; v <= 33; v++) {
+  const triadHz = v <= 11 ? 11 : (v <= 22 ? 22 : 33);
+  const zoneColor = v <= 11 ? "#f43f5e" : (v <= 22 ? "#10b981" : "#38bdf8");
+  let nodeType = "TOC_BUFFER_DISC", phValue = (v - 3) / 2, stepIndex = null, phoneme = "TOC Intervertebral Disc";
+  if (v <= 2) { nodeType = "ANCHOR_L_GROUND"; phoneme = "L (90° Ground Base)"; phValue = null; }
+  else if (v >= 32) { nodeType = "ANCHOR_O_CROWN"; phoneme = "O (33Hz Crown Boundary)"; phValue = null; }
+  else if (v % 2 === 1) {
+    nodeType = "TIK_PH_NODE";
+    stepIndex = phValue + 1;
+    phoneme = phValue < 5 ? "K (/k/ Plosive -> K-NOT)" : (phValue === 7 ? "H / ION (Central Mirror)" : (phValue <= 9 ? "WH = PH ([phi] Bilabial)" : "PH -> F (/f/ Fricative Wave)"));
+  }
+  const mirrorVertebra = 34 - v;
+  const kIonRatio = Number((0.50 + ((v - 17) / 32.0) * 0.40).toFixed(3));
+  spineMap.push({ vertebra: v, mirrorVertebra, triadHz, zoneColor, nodeType, stepIndex, phValue, phoneme, kIonRatio });
+}
+
+let activeMeta = spineMap[16], rotDeg = 0, actx = null, osc33, oscTriad, oscIon;
+const sidebar = document.getElementById("vertebrae-sidebar");
+const svgNS = "http://www.w3.org/2000/svg";
+const svg = document.createElementNS(svgNS, "svg");
+svg.setAttribute("viewBox", "0 0 220 770");
+svg.setAttribute("width", "100%");
+
+for (let i = 0; i < 33; i++) {
+  const v = 33 - i;
+  const m = spineMap[v - 1];
+  const y = 10 + i * 22.8;
+  const isTik = m.nodeType === "TIK_PH_NODE";
+  const g = document.createElementNS(svgNS, "g");
+  g.setAttribute("data-vertebra", v);
+  g.style.cursor = "pointer";
+
+  const w = v === 17 ? 195 : (isTik ? 165 : 115);
+  const rect = document.createElementNS(svgNS, "rect");
+  rect.setAttribute("x", 110 - w / 2);
+  rect.setAttribute("y", y);
+  rect.setAttribute("width", w);
+  rect.setAttribute("height", isTik ? 17 : 13);
+  rect.setAttribute("rx", 4);
+  rect.setAttribute("stroke", m.zoneColor);
+  rect.setAttribute("stroke-width", v === 17 ? 2.5 : 1.2);
+
+  const txt = document.createElementNS(svgNS, "text");
+  txt.setAttribute("x", 110);
+  txt.setAttribute("y", y + (isTik ? 12 : 9.5));
+  txt.setAttribute("text-anchor", "middle");
+  txt.setAttribute("font-size", isTik ? "9.5" : "8");
+  txt.setAttribute("font-family", "monospace");
+  txt.textContent = v === 17 ? "V17 ★ pH 7 [H-MIRROR]" : (isTik ? `V${v} | Step ${m.stepIndex} | pH ${m.phValue}` : `V${v} · TOC (${m.triadHz}Hz)`);
+
+  g.appendChild(rect);
+  g.appendChild(txt);
+  g.onclick = () => selectVertebra(v);
+  svg.appendChild(g);
+}
+sidebar.appendChild(svg);
+
+function selectVertebra(v) {
+  activeMeta = spineMap[v - 1];
+  svg.querySelectorAll("[data-vertebra]").forEach(el => {
+    const n = parseInt(el.getAttribute("data-vertebra"));
+    const r = el.querySelector("rect"), t = el.querySelector("text");
+    if (n === v) { r.setAttribute("fill", activeMeta.zoneColor); t.setAttribute("fill", "#090b10"); }
+    else if (n === activeMeta.mirrorVertebra) { r.setAttribute("fill", "rgba(251,191,36,0.28)"); t.setAttribute("fill", "#fbbf24"); }
+    else { r.setAttribute("fill", "#111622"); t.setAttribute("fill", "#e2e8f0"); }
+  });
+
+  document.getElementById("telemetry").innerHTML =
+    `<b>ACTIVE VERTEBRA: V${activeMeta.vertebra}</b> &nbsp;|&nbsp; <b>RECIPROCAL MIRROR: V${activeMeta.mirrorVertebra}</b> &nbsp;|&nbsp; <b>TRIAD TIER: ${activeMeta.triadHz} Hz</b><br>` +
+    `ROLE: ${activeMeta.nodeType} ${activeMeta.phValue !== null ? `(pH ${activeMeta.phValue})` : ""} &nbsp;|&nbsp; PHONEME: <span style="color:#38bdf8">${activeMeta.phoneme}</span><br>` +
+    `K+ / H+ ION RATIO: ${activeMeta.kIonRatio} &nbsp;|&nbsp; AXIS TILT: ${rotDeg}°`;
+
+  if (actx) {
+    const mod = 1 + (rotDeg / 360) * 0.125;
+    osc33.frequency.setTargetAtTime(33 * mod, actx.currentTime, 0.04);
+    oscTriad.frequency.setTargetAtTime(activeMeta.triadHz * 2 * mod, actx.currentTime, 0.04);
+    oscIon.frequency.setTargetAtTime(66 * (0.75 + activeMeta.kIonRatio), actx.currentTime, 0.04);
+  }
+}
+
+document.getElementById("btnAudio").onclick = (e) => {
+  if (!actx) {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    const g = actx.createGain(); g.gain.value = 0.22; g.connect(actx.destination);
+    osc33 = actx.createOscillator(); oscTriad = actx.createOscillator(); oscIon = actx.createOscillator();
+    oscIon.type = "triangle";
+    [osc33, oscTriad, oscIon].forEach(o => { o.connect(g); o.start(); });
+  }
+  actx.resume();
+  e.target.classList.add("active");
+  e.target.textContent = "11-22-33Hz SYNTH: ACTIVE";
+  selectVertebra(activeMeta.vertebra);
+};
+
+document.getElementById("btnMirror").onclick = () => selectVertebra(17);
+document.getElementById("btnTilt").onclick = (e) => {
+  rotDeg = (rotDeg + 90) % 360;
+  e.target.textContent = `90° TIKI_TILT (${rotDeg}°)`;
+  selectVertebra(activeMeta.vertebra);
+};
+
+const cv = document.getElementById("stageCanvas"), ctx = cv.getContext("2d");
+let phase = 0;
+function render() {
+  cv.width = cv.clientWidth; cv.height = cv.clientHeight;
+  phase += 0.03;
+  ctx.fillStyle = "#07090e"; ctx.fillRect(0, 0, cv.width, cv.height);
+  const cx = cv.width / 2, cy = cv.height / 2, R = Math.min(cx, cy) * 0.68;
+
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate((rotDeg * Math.PI) / 180);
+  ctx.strokeStyle = activeMeta.zoneColor; ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  const lobes = activeMeta.triadHz / 11 * 3;
+  for (let a = 0; a <= Math.PI * 2; a += 0.02) {
+    const r = R + Math.sin(a * lobes + phase) * Math.cos(a * lobes - phase) * 14;
+    const x = Math.cos(a) * r, y = Math.sin(a) * r;
+    if (a === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath(); ctx.stroke();
+
+  const s = R * 0.55;
+  ctx.strokeStyle = "#f8fafc"; ctx.lineWidth = 9; ctx.lineCap = "square";
+  ctx.beginPath(); ctx.moveTo(-s * 0.65, -s * 0.85); ctx.lineTo(-s * 0.65, s * 0.85); ctx.lineTo(s * 0.55, s * 0.85); ctx.stroke();
+  ctx.strokeStyle = "#fbbf24"; ctx.beginPath(); ctx.moveTo(-s * 0.35, 0); ctx.lineTo(s * (0.2 + activeMeta.kIonRatio * 0.5), 0); ctx.stroke();
+  ctx.strokeStyle = activeMeta.zoneColor; ctx.beginPath(); ctx.moveTo(-s * 0.35, -s * 0.85); ctx.lineTo(s * (1.1 - activeMeta.kIonRatio * 0.5), -s * 0.85); ctx.stroke();
+  ctx.restore();
+  requestAnimationFrame(render);
+}
+selectVertebra(17);
+render();
+</script>
+</body>
+</html>

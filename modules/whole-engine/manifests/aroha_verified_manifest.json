@@ -1,0 +1,157 @@
+{
+  "generated_at": "2026-10-31T07:41:55.048082",
+  "base_freq_hz": 33.0,
+  "tempo_bpm": 123.75,
+  "steps": [
+    {
+      "step": 1,
+      "role": "GENESIS_ON (TIK)",
+      "rotation_deg": 90,
+      "compression": 0.7,
+      "carrier_hz": 34.03,
+      "ground_L_hz": 68.06,
+      "mid_plane_hz": 89.1,
+      "top_plane_hz": 91.08
+    },
+    {
+      "step": 2,
+      "role": "TOC_RECIPROCAL",
+      "rotation_deg": 90,
+      "compression": 0.7,
+      "carrier_hz": 34.03,
+      "ground_L_hz": 68.06,
+      "mid_plane_hz": 89.1,
+      "top_plane_hz": 91.08
+    },
+    {
+      "step": 3,
+      "role": "TIK_ON",
+      "rotation_deg": 90,
+      "compression": 0.7,
+      "carrier_hz": 34.03,
+      "ground_L_hz": 68.06,
+      "mid_plane_hz": 89.1,
+      "top_plane_hz": 91.08
+    },
+    {
+      "step": 4,
+      "role": "TOC_RECIPROCAL",
+      "rotation_deg": 90,
+      "compression": 0.7,
+      "carrier_hz": 34.03,
+      "ground_L_hz": 68.06,
+      "mid_plane_hz": 89.1,
+      "top_plane_hz": 91.08
+    },
+    {
+      "step": 5,
+      "role": "TIK_ON",
+      "rotation_deg": 180,
+      "compression": 0.5,
+      "carrier_hz": 35.06,
+      "ground_L_hz": 70.12,
+      "mid_plane_hz": 82.5,
+      "top_plane_hz": 99.0
+    },
+    {
+      "step": 6,
+      "role": "TOC_RECIPROCAL",
+      "rotation_deg": 180,
+      "compression": 0.5,
+      "carrier_hz": 35.06,
+      "ground_L_hz": 70.12,
+      "mid_plane_hz": 82.5,
+      "top_plane_hz": 99.0
+    },
+    {
+      "step": 7,
+      "role": "TIK_ON",
+      "rotation_deg": 180,
+      "compression": 0.5,
+      "carrier_hz": 35.06,
+      "ground_L_hz": 70.12,
+      "mid_plane_hz": 82.5,
+      "top_plane_hz": 99.0
+    },
+    {
+      "step": 8,
+      "role": "MIDPOINT_MIRROR (BOTH_WAYS)",
+      "rotation_deg": 180,
+      "compression": 0.5,
+      "carrier_hz": 35.06,
+      "ground_L_hz": 70.12,
+      "mid_plane_hz": 82.5,
+      "top_plane_hz": 99.0
+    },
+    {
+      "step": 9,
+      "role": "TIK_ON",
+      "rotation_deg": 270,
+      "compression": 0.3,
+      "carrier_hz": 36.09,
+      "ground_L_hz": 72.19,
+      "mid_plane_hz": 75.9,
+      "top_plane_hz": 106.92
+    },
+    {
+      "step": 10,
+      "role": "TOC_RECIPROCAL",
+      "rotation_deg": 270,
+      "compression": 0.3,
+      "carrier_hz": 36.09,
+      "ground_L_hz": 72.19,
+      "mid_plane_hz": 75.9,
+      "top_plane_hz": 106.92
+    },
+    {
+      "step": 11,
+      "role": "TIK_ON",
+      "rotation_deg": 270,
+      "compression": 0.3,
+      "carrier_hz": 36.09,
+      "ground_L_hz": 72.19,
+      "mid_plane_hz": 75.9,
+      "top_plane_hz": 106.92
+    },
+    {
+      "step": 12,
+      "role": "TOC_RECIPROCAL",
+      "rotation_deg": 270,
+      "compression": 0.3,
+      "carrier_hz": 36.09,
+      "ground_L_hz": 72.19,
+      "mid_plane_hz": 75.9,
+      "top_plane_hz": 106.92
+    },
+    {
+      "step": 13,
+      "role": "TIK_ON",
+      "rotation_deg": 0,
+      "compression": 0.5,
+      "carrier_hz": 33.0,
+      "ground_L_hz": 66.0,
+      "mid_plane_hz": 82.5,
+      "top_plane_hz": 99.0
+    },
+    {
+      "step": 14,
+      "role": "TOC_RECIPROCAL",
+      "rotation_deg": 0,
+      "compression": 0.5,
+      "carrier_hz": 33.0,
+      "ground_L_hz": 66.0,
+      "mid_plane_hz": 82.5,
+      "top_plane_hz": 99.0
+    },
+    {
+      "step": 15,
+      "role": "THRESHOLD_BOOM (PHASE_SNAP)",
+      "rotation_deg": 90,
+      "compression": 0.7,
+      "carrier_hz": 34.03,
+      "ground_L_hz": 68.06,
+      "mid_plane_hz": 89.1,
+      "top_plane_hz": 91.08
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+    "vault_metadata": {
+        "entity_name": "AROHA HoldCo Vault",
+        "custodian_model": "Kaitiaki Immutable Trust",
+        "governance": "Natural Law & Zero-Debt Protocol"
+    },
+    "protected_assets": {
+        "domains": [
+            "starmaps13.com"
+        ],
+        "repositories": [
+            "aroha-matrix",
+            "AROHA-Core",
+            "aroha-suite",
+            "aroha-system",
+            "Consolidated-Master-Hub-for-all-AROHA-applications"
+        ]
+    },
+    "status": "SEALED_AND_PROTECTED"
+}

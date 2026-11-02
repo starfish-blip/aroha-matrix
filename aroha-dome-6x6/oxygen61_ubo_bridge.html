@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AROHA NEXUS // 64-Byte UBO + 3-Layer RGB Fulcrum (Port 8080)</title>
+<style>
+  :root { --bg:#07090f; --panel:#101422; --border:#242c4c; --cyan:#00f3ff; --amber:#ffb86a; --green:#39ff88; --red:#ff4d6d; --blue:#4da6ff; --text:#e8ecf7; --dim:#8892b0; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:Consolas,monospace; padding:12px; }
+  header { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:10px 16px; margin-bottom:12px; }
+  .badges { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .badge { font-size:11px; padding:4px 10px; border-radius:20px; border:1px solid var(--border); color:var(--dim); }
+  .badge.ok { color:var(--green); border-color:var(--green); }
+  .badge.lock { color:#000; background:var(--cyan); border-color:var(--cyan); font-weight:bold; }
+  .grid { display:grid; grid-template-columns:340px 1fr 340px; gap:12px; }
+  @media (max-width:1150px) { .grid { grid-template-columns:1fr; } }
+  .panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px; }
+  h3 { margin:0 0 10px 0; font-size:12px; text-transform:uppercase; letter-spacing:0.1em; color:var(--cyan); }
+  .btn-row { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px; }
+  button { background:#171c30; color:var(--text); border:1px solid var(--border); border-radius:6px; padding:8px 10px; font-family:inherit; font-size:11px; cursor:pointer; }
+  button:hover { border-color:var(--cyan); color:var(--cyan); }
+  button.primary { background:var(--amber); color:#000; border-color:var(--amber); font-weight:bold; }
+  .fader-row { display:grid; grid-template-columns:105px 1fr 52px; align-items:center; gap:6px; margin-bottom:8px; font-size:11px; }
+  input[type=range] { width:100%; accent-color:var(--cyan); }
+  .val { text-align:right; color:var(--amber); }
+  canvas#rgbField { width:100%; height:290px; background:#04060b; border:1px solid var(--border); border-radius:8px; display:block; cursor:grab; }
+  .ubo-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; font-size:10px; margin-top:8px; }
+  .cell { background:#0a0d17; border:1px solid var(--border); border-radius:6px; padding:6px; }
+  .cell .lbl { color:var(--dim); font-size:9px; display:block; }
+  .cell .num { color:var(--cyan); font-size:12px; font-weight:bold; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <strong>AROHA NEXUS // 3-LAYER RGB FULCRUM + 64-BYTE UBO + OXYGEN 61 BRIDGE (PORT 8080)</strong>
+    <div style="font-size:11px;color:var(--dim)">Red (Outer) + Blue (Inner) Coupling -> Green Middle Layer Fulcrum -> Zenith White Lock</div>
+  </div>
+  <div class="badges">
+    <button id="audioBtn" class="primary">START BINAURAL AUDIO</button>
+    <span id="wsBadge" class="badge">WS: connecting...</span>
+    <span id="midiBadge" class="badge">MIDI: scanning...</span>
+    <span id="rxBadge" class="badge">64B RX: 0</span>
+    <span id="lockBadge" class="badge">UNLOCKED</span>
+  </div>
+</header>
+
+<div class="grid">
+  <div class="panel">
+    <h3>1. 3-Layer Spin & Coupling Controls</h3>
+    <div class="fader-row">
+      <label style="color:var(--red)">Red Outer Spin</label>
+      <input type="range" id="spinR" min="-3" max="3" step="0.05" value="0.8"/>
+      <span class="val" id="v_spinR">0.80</span>
+    </div>
+    <div class="fader-row">
+      <label style="color:var(--green)">Green Mid Tilt</label>
+      <input type="range" id="tiltG" min="0" max="0.50" step="0.005" value="0.25"/>
+      <span class="val" id="v_tiltG">0.250</span>
+    </div>
+    <div class="fader-row">
+      <label style="color:var(--blue)">Blue Inner Spin</label>
+      <input type="range" id="spinB" min="-3" max="3" step="0.05" value="-0.8"/>
+      <span class="val" id="v_spinB">-0.80</span>
+    </div>
+    <div class="fader-row">
+      <label>Green Drain γ</label>
+      <input type="range" id="drainG" min="0" max="0.40" step="0.005" value="0.0"/>
+      <span class="val" id="v_drainG">0.000</span>
+    </div>
+    <div class="fader-row">
+      <label>Radial x (J0)</label>
+      <input type="range" id="radX" min="0" max="14.796" step="0.01" value="8.654"/>
+      <span class="val" id="v_radX">8.65</span>
+    </div>
+    <div class="fader-row">
+      <label>Carrier Hz (Au)</label>
+      <input type="range" id="carrHz" min="108" max="852" step="1" value="432"/>
+      <span class="val" id="v_carrHz">432</span>
+    </div>
+    <div class="fader-row">
+      <label>Focus Beat Hz</label>
+      <input type="range" id="beatHz" min="1.0" max="14.0" step="0.1" value="4.5"/>
+      <span class="val" id="v_beatHz">4.5</span>
+    </div>
+    <h3 style="margin-top:12px">Periodic Table Oro Presets</h3>
+    <div class="btn-row">
+      <button onclick="setCarrier(285)">Fe 285Hz (Spine)</button>
+      <button onclick="setCarrier(396)">C 396Hz (Bone)</button>
+      <button onclick="setCarrier(432)">Au 432Hz (Spirit)</button>
+      <button onclick="setCarrier(528)">Cu 528Hz (Pounamu)</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>2. 3-Layer RGB Geometry (Red Outer · Green Middle Fulcrum · Blue Inner)</h3>
+    <canvas id="rgbField" width="560" height="290"></canvas>
+    <div class="ubo-grid" id="uboCells"></div>
+  </div>
+
+  <div class="panel">
+    <h3>3. 6x6 Markov Gate & Deadbeat Lock</h3>
+    <div class="btn-row">
+      <button onclick="sendCmd({cmd:'step',x:5.0,action:'hold'})">[Pad 36] Step x=5.0 Bridge</button>
+      <button onclick="sendCmd({cmd:'step',x:8.6537279,action:'hold'})">[Pad 37] Point 25 J0 Hold</button>
+      <button onclick="sendCmd({cmd:'step',x:8.6537279,action:'confirm'})">[Pad 38] Confirm Gate</button>
+      <button onclick="sendCmd({cmd:'deadbeat',flush:false})">[Pad 39] Deadbeat Step</button>
+      <button class="primary" onclick="sendCmd({cmd:'deadbeat',flush:true})">[Pad 40] ZENITH LOCK 1.0</button>
+      <button onclick="sendCmd({cmd:'reset'})">[Pad 41] Zero-Point Reset</button>
+    </div>
+    <div class="cell" style="margin-bottom:8px">
+      <span class="lbl">GREEN MIDDLE BALANCE (RED vs GREEN vs BLUE)</span>
+      <span class="num" id="rgbBalance">R: 0.000 | G (MID): 0.000 | B: 0.000</span>
+    </div>
+    <div class="cell" style="margin-bottom:8px">
+      <span class="lbl">BINAURAL HEADPHONE OUTPUT (LEFT / RIGHT)</span>
+      <span class="num" id="audioReadout">Standby — Click START BINAURAL AUDIO</span>
+    </div>
+    <div class="cell">
+      <span class="lbl">ACTIVE NEXUS PORTS</span>
+      <span class="num" style="font-size:11px">8000: v38.2 Matrix | 8080: UBO Bridge | 3000: v34 WAV</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const UBO_LABELS = ["0:S3_Terra","1:S2_Bridge","2:S25_Hand","3:x_coord","4:E26_Red","5:E26_Green","6:E26_Blue","7:r_zenith","8:C26_Coher","9:J0(x)","10:time_s","11:gate","12:vp_W","13:vp_H","14:ptr_X","15:ptr_Y"];
+const ubo = new Float32Array(16); ubo[0] = 1.0; ubo[9] = 1.0;
+let rx = 0, ws = null, angleR = 0, angleG = 0, angleB = 0;
+
+const uboBox = document.getElementById("uboCells");
+UBO_LABELS.forEach((l, i) => {
+  const c = document.createElement("div"); c.className = "cell";
+  c.innerHTML = `<span class="lbl">${l}</span><span class="num" id="u_${i}">0.0000</span>`;
+  uboBox.appendChild(c);
+});
+
+function connectWS() {
+  const host = location.host || "localhost:8080";
+  ws = new WebSocket(`ws://${host}/ws/ubo`);
+  ws.binaryType = "arraybuffer";
+  const b = document.getElementById("wsBadge");
+  ws.onopen = () => { b.textContent = "WS: LIVE 60Hz"; b.className = "badge ok"; };
+  ws.onclose = () => { b.textContent = "WS: RECONNECTING"; b.className = "badge"; setTimeout(connectWS, 1500); };
+  ws.onmessage = (ev) => {
+    if (ev.data instanceof ArrayBuffer && ev.data.byteLength === 64) {
+      ubo.set(new Float32Array(ev.data)); rx++;
+      if (rx % 5 === 0) {
+        document.getElementById("rxBadge").textContent = `64B RX: ${rx}`;
+        for (let i = 0; i < 16; i++) document.getElementById(`u_${i}`).textContent = ubo[i].toFixed(4);
+        document.getElementById("rgbBalance").textContent =
+          `R: ${ubo[4].toFixed(4)} | G (MID): ${ubo[5].toFixed(4)} | B: ${ubo[6].toFixed(4)}`;
+        const locked = Math.abs(ubo[7] - 1.0) < 1e-4 && Math.abs(ubo[8] - 1.0) < 1e-4;
+        const lk = document.getElementById("lockBadge");
+        lk.textContent = locked ? "ZENITH WHITE LOCKED (1.0)" : `r_zenith: ${ubo[7].toFixed(4)}`;
+        lk.className = locked ? "badge lock" : "badge";
+      }
+      syncAudio();
+    }
+  };
+}
+connectWS();
+function sendCmd(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); }
+
+["spinR","tiltG","spinB","drainG","radX","carrHz","beatHz"].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener("input", () => {
+    document.getElementById(`v_${id}`).textContent = Number(el.value).toFixed(id==="tiltG"||id==="drainG"?3:2);
+    if (id === "tiltG" || id === "drainG") {
+      sendCmd({ cmd:"tilt", kappa:parseFloat(document.getElementById("tiltG").value), gamma_g:parseFloat(document.getElementById("drainG").value) });
+    }
+    if (id === "radX") {
+      sendCmd({ cmd:"step", x:parseFloat(el.value), action:"hold" });
+    }
+    syncAudio();
+  });
+});
+
+function setCarrier(hz) {
+  document.getElementById("carrHz").value = hz;
+  document.getElementById("v_carrHz").textContent = hz;
+  syncAudio();
+}
+
+// Web Audio Binaural + RGB Triad
+let actx = null, lOsc = null, rOsc = null, gOsc = null, gGain = null, lpf = null;
+function initAudio() {
+  if (actx) { actx.resume(); return; }
+  actx = new (window.AudioContext || window.webkitAudioContext)();
+  const merger = actx.createChannelMerger(2);
+  lpf = actx.createBiquadFilter(); lpf.type = "lowpass"; lpf.frequency.value = 1200;
+  const master = actx.createGain(); master.gain.value = 0.35;
+
+  lOsc = actx.createOscillator(); rOsc = actx.createOscillator();
+  gOsc = actx.createOscillator(); gOsc.type = "triangle";
+  gGain = actx.createGain(); gGain.gain.value = 0.15;
+
+  lOsc.connect(merger, 0, 0); rOsc.connect(merger, 0, 1);
+  gOsc.connect(gGain); gGain.connect(merger, 0, 0); gGain.connect(merger, 0, 1);
+  merger.connect(lpf); lpf.connect(master); master.connect(actx.destination);
+  lOsc.start(); rOsc.start(); gOsc.start();
+  document.getElementById("audioBtn").textContent = "BINAURAL AUDIO LIVE";
+  syncAudio();
+}
+document.getElementById("audioBtn").onclick = initAudio;
+
+function syncAudio() {
+  if (!actx) return;
+  const now = actx.currentTime;
+  const carr = parseFloat(document.getElementById("carrHz").value);
+  const targetBeat = parseFloat(document.getElementById("beatHz").value);
+  const rz = Math.max(0, Math.min(1, ubo[7]));
+  const beat = 14.0 + (targetBeat - 14.0) * rz;
+  lOsc.frequency.setTargetAtTime(carr, now, 0.03);
+  rOsc.frequency.setTargetAtTime(carr + beat, now, 0.03);
+  // Green middle harmonic (5:4 / 1.25x or 1.5x modulated by E26_Green)
+  gOsc.frequency.setTargetAtTime(carr * 1.5, now, 0.03);
+  gGain.gain.setTargetAtTime(0.25 * ubo[5], now, 0.04);
+  lpf.frequency.setTargetAtTime(800 + ubo[8] * 3200, now, 0.04);
+  document.getElementById("audioReadout").textContent = `L: ${carr}Hz | R: ${(carr+beat).toFixed(2)}Hz | Green Mid: ${(ubo[5]*100).toFixed(1)}%`;
+}
+
+// Web MIDI Oxygen 61
+if (navigator.requestMIDIAccess) {
+  navigator.requestMIDIAccess().then(m => {
+    const bind = () => {
+      const names = [];
+      for (const inp of m.inputs.values()) {
+        names.push(inp.name);
+        inp.onmidimessage = (e) => {
+          const [st, d1, d2] = e.data;
+          if ((st & 0xf0) === 0xb0) {
+            if (d1 === 14) { document.getElementById("spinR").value = -3 + (d2/127)*6; }
+            if (d1 === 15) { const k = (d2/127)*0.5; document.getElementById("tiltG").value = k; sendCmd({cmd:"tilt",kappa:k,gamma_g:0}); }
+            if (d1 === 16) { document.getElementById("spinB").value = -3 + (d2/127)*6; }
+          } else if ((st & 0xf0) === 0x90 && d2 > 0) {
+            if (d1 === 40) sendCmd({cmd:"deadbeat",flush:true});
+            else if (d1 === 39) sendCmd({cmd:"deadbeat",flush:false});
+            else if (d1 >= 48) setCarrier(Math.round(440 * Math.pow(2, (d1 - 69)/12)));
+          }
+        };
+      }
+      document.getElementById("midiBadge").textContent = names.length ? `MIDI: ${names[0]}` : "MIDI: Ready";
+    };
+    bind(); m.onstatechange = bind;
+  });
+}
+
+// 3-Layer RGB Interactive Renderer (Red Outer, Green Middle Fulcrum, Blue Inner)
+const cvs = document.getElementById("rgbField");
+const ctx = cvs.getContext("2d");
+function drawPolygon(cx, cy, radius, sides, rot, color, alpha, weight) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(rot);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.8 + weight * 6;
+  ctx.globalAlpha = Math.max(0.25, Math.min(1.0, alpha));
+  ctx.beginPath();
+  for (let i = 0; i <= sides; i++) {
+    const a = (i / sides) * Math.PI * 2;
+    const x = Math.cos(a) * radius, y = Math.sin(a) * radius;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  // Nodal spokes
+  for (let i = 0; i < sides; i++) {
+    const a = (i / sides) * Math.PI * 2;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a)*radius, Math.sin(a)*radius); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function renderLoop() {
+  ctx.fillStyle = "rgba(4, 6, 11, 0.28)";
+  ctx.fillRect(0, 0, cvs.width, cvs.height);
+  const cx = cvs.width / 2, cy = cvs.height / 2;
+
+  const sR = parseFloat(document.getElementById("spinR").value) * 0.02;
+  const sB = parseFloat(document.getElementById("spinB").value) * 0.02;
+  const kG = parseFloat(document.getElementById("tiltG").value);
+  angleR += sR;
+  angleB += sB;
+  // Green in the middle is pulled by both Red and Blue proportional to kappa coupling!
+  angleG += (sR + sB) * (0.5 + kG);
+
+  const eR = ubo[4] || 0.25, eG = ubo[5] || 0.25, eB = ubo[6] || 0.25, rz = ubo[7] || 0;
+
+  // Outer Layer: Red (Accepted / Terra Boundary)
+  drawPolygon(cx, cy, 118, 6, angleR, "#ff4d6d", 0.4 + eR * 1.5, eR);
+  // Middle Layer: Green (Fulcrum affected by Red & Blue)
+  drawPolygon(cx, cy, 82, 12, angleG, "#39ff88", 0.5 + eG * 1.8, eG);
+  // Inner Layer: Blue (Growth Vector)
+  drawPolygon(cx, cy, 48, 6, angleB, "#4da6ff", 0.4 + eB * 1.5, eB);
+
+  // Zenith White Core when r_zenith approaches 1.0
+  if (rz > 0.05) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, 14 * rz, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${rz})`;
+    ctx.fill();
+  }
+  requestAnimationFrame(renderLoop);
+}
+requestAnimationFrame(renderLoop);
+</script>
+</body>
+</html>

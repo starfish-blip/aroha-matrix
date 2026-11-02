@@ -1,0 +1,141 @@
+{
+  "generated_at": "2026-10-31T07:41:58.555295",
+  "system": "AROHA Phonetic-Ionic Matrix (I-O-N / pH / WH-PH-F / K)",
+  "steps": [
+    {
+      "step": 1,
+      "pH": 0,
+      "mirror_offset": -7,
+      "zone": "ZONE_1_K_PLOSIVE_STOP",
+      "phoneme_mechanics": "K (/k/ Stop -> K-OLE / K-NOT)",
+      "ion_state": "H+ INWARD_CHARGE",
+      "k_ion_potential": 0.3
+    },
+    {
+      "step": 2,
+      "pH": 1,
+      "mirror_offset": -6,
+      "zone": "ZONE_1_K_PLOSIVE_STOP",
+      "phoneme_mechanics": "K (/k/ Stop -> K-OLE / K-NOT)",
+      "ion_state": "H+ INWARD_CHARGE",
+      "k_ion_potential": 0.329
+    },
+    {
+      "step": 3,
+      "pH": 2,
+      "mirror_offset": -5,
+      "zone": "ZONE_1_K_PLOSIVE_STOP",
+      "phoneme_mechanics": "K (/k/ Stop -> K-OLE / K-NOT)",
+      "ion_state": "H+ INWARD_CHARGE",
+      "k_ion_potential": 0.357
+    },
+    {
+      "step": 4,
+      "pH": 3,
+      "mirror_offset": -4,
+      "zone": "ZONE_1_K_PLOSIVE_STOP",
+      "phoneme_mechanics": "K (/k/ Stop -> K-OLE / K-NOT)",
+      "ion_state": "H+ INWARD_CHARGE",
+      "k_ion_potential": 0.386
+    },
+    {
+      "step": 5,
+      "pH": 4,
+      "mirror_offset": -3,
+      "zone": "ZONE_1_K_PLOSIVE_STOP",
+      "phoneme_mechanics": "K (/k/ Stop -> K-OLE / K-NOT)",
+      "ion_state": "H+ INWARD_CHARGE",
+      "k_ion_potential": 0.414
+    },
+    {
+      "step": 6,
+      "pH": 5,
+      "mirror_offset": -2,
+      "zone": "ZONE_2_H_MIRROR_ION",
+      "phoneme_mechanics": "WH = PH ([phi] Bilabial)",
+      "ion_state": "K+ <-> H+ MIRROR_BALANCE",
+      "k_ion_potential": 0.443
+    },
+    {
+      "step": 7,
+      "pH": 6,
+      "mirror_offset": -1,
+      "zone": "ZONE_2_H_MIRROR_ION",
+      "phoneme_mechanics": "WH = PH ([phi] Bilabial)",
+      "ion_state": "K+ <-> H+ MIRROR_BALANCE",
+      "k_ion_potential": 0.471
+    },
+    {
+      "step": 8,
+      "pH": 7,
+      "mirror_offset": 0,
+      "zone": "ZONE_2_H_MIRROR_ION",
+      "phoneme_mechanics": "H / ION (I+O+N Equilibrium)",
+      "ion_state": "K+ <-> H+ MIRROR_BALANCE",
+      "k_ion_potential": 0.5
+    },
+    {
+      "step": 9,
+      "pH": 8,
+      "mirror_offset": 1,
+      "zone": "ZONE_2_H_MIRROR_ION",
+      "phoneme_mechanics": "WH = PH ([phi] Bilabial)",
+      "ion_state": "K+ <-> H+ MIRROR_BALANCE",
+      "k_ion_potential": 0.529
+    },
+    {
+      "step": 10,
+      "pH": 9,
+      "mirror_offset": 2,
+      "zone": "ZONE_2_H_MIRROR_ION",
+      "phoneme_mechanics": "WH = PH ([phi] Bilabial)",
+      "ion_state": "K+ <-> H+ MIRROR_BALANCE",
+      "k_ion_potential": 0.557
+    },
+    {
+      "step": 11,
+      "pH": 10,
+      "mirror_offset": 3,
+      "zone": "ZONE_3_F_FRICATIVE_WAVE",
+      "phoneme_mechanics": "PH -> F (/f/ Continuous Wave)",
+      "ion_state": "K+ INTRACELLULAR_CORE",
+      "k_ion_potential": 0.586
+    },
+    {
+      "step": 12,
+      "pH": 11,
+      "mirror_offset": 4,
+      "zone": "ZONE_3_F_FRICATIVE_WAVE",
+      "phoneme_mechanics": "PH -> F (/f/ Continuous Wave)",
+      "ion_state": "K+ INTRACELLULAR_CORE",
+      "k_ion_potential": 0.614
+    },
+    {
+      "step": 13,
+      "pH": 12,
+      "mirror_offset": 5,
+      "zone": "ZONE_3_F_FRICATIVE_WAVE",
+      "phoneme_mechanics": "PH -> F (/f/ Continuous Wave)",
+      "ion_state": "K+ INTRACELLULAR_CORE",
+      "k_ion_potential": 0.643
+    },
+    {
+      "step": 14,
+      "pH": 13,
+      "mirror_offset": 6,
+      "zone": "ZONE_3_F_FRICATIVE_WAVE",
+      "phoneme_mechanics": "PH -> F (/f/ Continuous Wave)",
+      "ion_state": "K+ INTRACELLULAR_CORE",
+      "k_ion_potential": 0.671
+    },
+    {
+      "step": 15,
+      "pH": 14,
+      "mirror_offset": 7,
+      "zone": "ZONE_3_F_FRICATIVE_WAVE",
+      "phoneme_mechanics": "PH -> F (/f/ Continuous Wave)",
+      "ion_state": "K+ INTRACELLULAR_CORE",
+      "k_ion_potential": 0.7
+    }
+  ]
+}

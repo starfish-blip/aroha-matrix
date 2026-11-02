@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AROHA // WHOLE-E 33Hz Reciprocal Field Engine</title>
+<style>
+  body { margin: 0; background: #0a0c10; color: #e0e6ed; font-family: monospace; overflow: hidden; display: flex; }
+  #sidebar { width: 320px; background: #12161f; padding: 18px; border-right: 1px solid #262f40; z-index: 10; height: 100vh; box-sizing: border-box; overflow-y: auto; }
+  h2 { margin: 0 0 10px 0; font-size: 15px; color: #4fd1c5; letter-spacing: 1px; }
+  .ctrl { margin-bottom: 14px; }
+  label { display: block; font-size: 12px; margin-bottom: 4px; color: #94a3b8; }
+  input[type=range] { width: 100%; accent-color: #4fd1c5; }
+  button { width: 100%; padding: 10px; margin-bottom: 8px; background: #1e293b; color: #4fd1c5; border: 1px solid #4fd1c5; cursor: pointer; font-family: monospace; font-weight: bold; }
+  button.active { background: #4fd1c5; color: #0a0c10; }
+  .readout { font-size: 11px; background: #0a0c10; padding: 10px; border: 1px solid #1e293b; line-height: 1.6; }
+  canvas { flex: 1; display: block; }
+</style>
+</head>
+<body>
+<div id="sidebar">
+  <h2>WHOLE // 33Hz ENGINE</h2>
+  <button id="audioBtn">I / O : AUDIO GATE [OFF]</button>
+  <button id="rotBtn">ROTATE 90° AXIS (0°)</button>
+  <div class="ctrl">
+    <label>Root Carrier (Circle Boundary): <span id="vRoot">33.0</span> Hz</label>
+    <input type="range" id="sRoot" min="20" max="66" step="0.5" value="33">
+  </div>
+  <div class="ctrl">
+    <label>Schumann Differential (Binaural): <span id="vBeat">7.83</span> Hz</label>
+    <input type="range" id="sBeat" min="1" max="15" step="0.01" value="7.83">
+  </div>
+  <div class="ctrl">
+    <label>In/Out Reciprocal Compression: <span id="vComp">0.50</span></label>
+    <input type="range" id="sComp" min="0.1" max="0.9" step="0.01" value="0.50">
+  </div>
+  <div class="ctrl">
+    <label>Gravity Drift Vector: <span id="vGrav">0.25</span></label>
+    <input type="range" id="sGrav" min="0" max="1" step="0.01" value="0.25">
+  </div>
+  <div class="ctrl">
+    <label>Top Plane Ratio (Detached): <span id="vP1">1.50</span>x</label>
+    <input type="range" id="sP1" min="1.1" max="3.0" step="0.05" value="1.50">
+  </div>
+  <div class="ctrl">
+    <label>Mid Plane Ratio (Detached): <span id="vP2">1.25</span>x</label>
+    <input type="range" id="sP2" min="1.05" max="2.5" step="0.05" value="1.25">
+  </div>
+  <div class="readout" id="telemetry">STATE: STANDBY<br>Click I/O Gate to initialize 33Hz standing wave.</div>
+</div>
+<canvas id="view"></canvas>
+<script>
+const canvas = document.getElementById('view');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize() { W = canvas.width = window.innerWidth - 320; H = canvas.height = window.innerHeight; }
+window.addEventListener('resize', resize);
+resize();
+
+let audioCtx = null, isOn = false;
+let oscL, oscR, oscTop, oscMid, oscBot, gainMaster;
+let rotDeg = 0;
+
+const bubbles = Array.from({length: 14}, (_, i) => ({
+  x: Math.random() * 800, y: Math.random() * 600,
+  vx: (Math.random() - 0.5) * 1.2, vy: (Math.random() - 0.5) * 1.2,
+  baseR: i === 0 ? 130 : 35 + Math.random() * 45, r: 50,
+  phase: Math.random() * Math.PI * 2, hue: (i * 28) % 360
+}));
+
+function updateAudio() {
+  if (!isOn || !audioCtx) return;
+  const root = parseFloat(document.getElementById('sRoot').value);
+  const beat = parseFloat(document.getElementById('sBeat').value);
+  const comp = parseFloat(document.getElementById('sComp').value);
+  const p1 = parseFloat(document.getElementById('sP1').value);
+  const p2 = parseFloat(document.getElementById('sP2').value);
+  const rotMod = 1 + (rotDeg / 360) * 0.125;
+
+  oscL.frequency.setTargetAtTime(root * rotMod, audioCtx.currentTime, 0.05);
+  oscR.frequency.setTargetAtTime((root + beat) * rotMod, audioCtx.currentTime, 0.05);
+  oscBot.frequency.setTargetAtTime(root * 2 * rotMod, audioCtx.currentTime, 0.05);
+  oscMid.frequency.setTargetAtTime(root * 2 * p2 * (0.8 + comp * 0.4), audioCtx.currentTime, 0.05);
+  oscTop.frequency.setTargetAtTime(root * 2 * p1 * (1.2 - comp * 0.4), audioCtx.currentTime, 0.05);
+
+  document.getElementById('telemetry').innerHTML =
+    `GATE: ON [I]<br>CARRIER L/R: ${(root*rotMod).toFixed(1)}Hz / ${((root+beat)*rotMod).toFixed(1)}Hz<br>` +
+    `L-GROUND: ${(root*2*rotMod).toFixed(1)}Hz<br>MID PLANE: ${(root*2*p2*(0.8+comp*0.4)).toFixed(1)}Hz<br>` +
+    `TOP PLANE: ${(root*2*p1*(1.2-comp*0.4)).toFixed(1)}Hz<br>AXIS: ${rotDeg}°`;
+}
+
+document.getElementById('audioBtn').onclick = () => {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    gainMaster = audioCtx.createGain(); gainMaster.gain.value = 0.25;
+    gainMaster.connect(audioCtx.destination);
+    const merger = audioCtx.createChannelMerger(2); merger.connect(gainMaster);
+    oscL = audioCtx.createOscillator(); oscR = audioCtx.createOscillator();
+    oscL.connect(merger, 0, 0); oscR.connect(merger, 0, 1);
+    const planeGain = audioCtx.createGain(); planeGain.gain.value = 0.22; planeGain.connect(gainMaster);
+    oscBot = audioCtx.createOscillator(); oscMid = audioCtx.createOscillator(); oscTop = audioCtx.createOscillator();
+    oscBot.type = 'triangle';
+    [oscBot, oscMid, oscTop].forEach(o => o.connect(planeGain));
+    [oscL, oscR, oscBot, oscMid, oscTop].forEach(o => o.start());
+  }
+  isOn = !isOn;
+  if (isOn) { audioCtx.resume(); document.getElementById('audioBtn').textContent = 'I / O : AUDIO GATE [ON]'; document.getElementById('audioBtn').classList.add('active'); updateAudio(); }
+  else { audioCtx.suspend(); document.getElementById('audioBtn').textContent = 'I / O : AUDIO GATE [OFF]'; document.getElementById('audioBtn').classList.remove('active'); }
+};
+
+document.getElementById('rotBtn').onclick = () => {
+  rotDeg = (rotDeg + 90) % 360;
+  document.getElementById('rotBtn').textContent = `ROTATE 90° AXIS (${rotDeg}°)`;
+  updateAudio();
+};
+
+['sRoot','sBeat','sComp','sGrav','sP1','sP2'].forEach(id => {
+  document.getElementById(id).oninput = (e) => {
+    document.getElementById('v' + id.slice(1)).textContent = parseFloat(e.target.value).toFixed(2);
+    updateAudio();
+  };
+});
+
+let t = 0;
+function loop() {
+  t += 0.025;
+  ctx.fillStyle = '#0a0c10'; ctx.fillRect(0, 0, W, H);
+  const comp = parseFloat(document.getElementById('sComp').value);
+  const grav = parseFloat(document.getElementById('sGrav').value);
+  const p1 = parseFloat(document.getElementById('sP1').value);
+  const p2 = parseFloat(document.getElementById('sP2').value);
+
+  bubbles[0].x = W / 2; bubbles[0].y = H / 2;
+  bubbles[0].r = bubbles[0].baseR * (0.75 + (1 - comp) * 0.5 + Math.sin(t * 2) * 0.04);
+
+  for (let i = 1; i < bubbles.length; i++) {
+    const b = bubbles[i];
+    b.x += b.vx + grav * 0.8; b.y += b.vy + Math.sin(t + b.phase) * 0.3;
+    if (b.x > W + b.baseR) b.x = -b.baseR; if (b.x < -b.baseR) b.x = W + b.baseR;
+    if (b.y > H + b.baseR) b.y = -b.baseR; if (b.y < -b.baseR) b.y = H + b.baseR;
+    b.r = b.baseR * (0.65 + comp * 0.7 + Math.cos(t * 1.5 + b.phase) * 0.08);
+    const dist = Math.hypot(b.x - bubbles[0].x, b.y - bubbles[0].y);
+    if (dist < 380) {
+      ctx.strokeStyle = `hsla(${b.hue}, 80%, 60%, ${(1 - dist / 380) * 0.35})`;
+      ctx.beginPath(); ctx.moveTo(bubbles[0].x, bubbles[0].y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    ctx.strokeStyle = `hsla(${b.hue}, 75%, 55%, 0.55)`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.stroke();
+  }
+
+  const core = bubbles[0];
+  ctx.save(); ctx.translate(core.x, core.y); ctx.rotate((rotDeg * Math.PI) / 180);
+  ctx.strokeStyle = '#4fd1c5'; ctx.lineWidth = 3; ctx.beginPath();
+  for (let a = 0; a <= Math.PI * 2; a += 0.05) {
+    const r = core.r + Math.sin(a * 6 + t * 4) * (isOn ? 4 : 1);
+    const px = Math.cos(a) * r, py = Math.sin(a) * r;
+    if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.closePath(); ctx.stroke();
+
+  const s = core.r * 0.55, gap = s * 0.28;
+  ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 8; ctx.lineCap = 'square';
+  ctx.beginPath(); ctx.moveTo(-s * 0.65, -s * 0.85); ctx.lineTo(-s * 0.65, s * 0.85); ctx.lineTo(s * 0.55, s * 0.85); ctx.stroke();
+  ctx.strokeStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(-s * 0.65 + gap, 0); ctx.lineTo(-s * 0.65 + gap + (s * 0.45 * (p2 / 1.5)), 0); ctx.stroke();
+  ctx.strokeStyle = '#38bdf8'; ctx.beginPath(); ctx.moveTo(-s * 0.65 + gap, -s * 0.85); ctx.lineTo(-s * 0.65 + gap + (s * 0.75 * (p1 / 1.5)), -s * 0.85); ctx.stroke();
+  ctx.restore();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>

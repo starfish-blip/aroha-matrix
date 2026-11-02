@@ -1,0 +1,224 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+import json
+import math
+import struct
+from typing import Literal
+import numpy as np
+
+try:
+    from scipy.special import j0 as _bessel_j0
+except ImportError:
+    def _bessel_j0(x: float) -> float:
+        """Machine-precision power-series fallback for J0(x) when SciPy is absent."""
+        half_x_sq = 0.25 * (x * x)
+        term = 1.0
+        total = 1.0
+        for m in range(1, 35):
+            term *= -half_x_sq / (m * m)
+            total += term
+            if abs(term) < 1e-16:
+                break
+        return total
+
+GateAction = Literal["hold", "confirm", "reject"]
+STATE_LABELS = (
+    "S3_Terra",
+    "S2_Bridge",
+    "S25_Handshake",
+    "E26_Red",
+    "E26_Green",
+    "E26_Blue",
+)
+
+
+@dataclass
+class ArohaState:
+    step_index: int
+    x_coord: float
+    j0_value: float
+    at_point_25: bool
+    gate_action: GateAction
+    vector: np.ndarray
+    audit_metrics: dict[str, float] = field(default_factory=dict)
+
+    def to_dict(self) -> dict:
+        return {
+            "step": self.step_index,
+            "x": round(self.x_coord, 7),
+            "j0": round(self.j0_value, 8),
+            "at_point_25": self.at_point_25,
+            "gate_action": self.gate_action,
+            "states": {
+                label: round(float(self.vector[i]), 6)
+                for i, label in enumerate(STATE_LABELS)
+            },
+            "metrics": {k: round(v, 6) for k, v in self.audit_metrics.items()},
+        }
+
+    def pack_std140_bytes(
+        self,
+        time_sec: float = 0.0,
+        width: float = 1920.0,
+        height: float = 1080.0,
+        ptr_x: float = 0.0,
+        ptr_y: float = 0.0,
+    ) -> bytes:
+        return pack_std140_bytes(self, time_sec, width, height, ptr_x, ptr_y)
+
+
+def pack_std140_bytes(
+    state: ArohaState,
+    time_sec: float = 0.0,
+    width: float = 1920.0,
+    height: float = 1080.0,
+    ptr_x: float = 0.0,
+    ptr_y: float = 0.0,
+) -> bytes:
+    """Packs ArohaState into a 64-byte little-endian IEEE-754 std140 UBO buffer (4 x vec4)."""
+    gate_code = (
+        1.0 if state.gate_action == "confirm"
+        else (-1.0 if state.gate_action == "reject" else 0.0)
+    )
+    v = state.vector
+    m = state.audit_metrics
+    return struct.pack(
+        "<16f",
+        float(v[0]), float(v[1]), float(v[2]), float(state.x_coord),            # u_zone_lower
+        float(v[3]), float(v[4]), float(v[5]), float(m["r_zenith"]),            # u_point26_rgb
+        float(m["coherence_c26"]), float(state.j0_value), time_sec, gate_code,  # u_dome_metrics
+        width, height, ptr_x, ptr_y,                                            # u_viewport
+    )
+
+
+class TransitionEngine6x6:
+    """6x6 Markov + non-linear coherence engine for Point 25 -> Point 26 RGB synthesis."""
+
+    def __init__(
+        self,
+        p2: float = 0.8,
+        rgb_weights: tuple[float, float, float] = (0.60, 0.25, 0.15),
+        kappa: float = 0.25,
+        gamma_g: float = 0.0,
+        target_root: float = 8.6537279,
+        tolerance: float = 1e-4,
+    ) -> None:
+        self.p2 = p2
+        self.weights = np.array(rgb_weights, dtype=float)
+        self.kappa = kappa
+        self.gamma_g = gamma_g
+        self.target_root = target_root
+        self.tolerance = tolerance
+
+        self.step_count = 0
+        self.state = np.array([1.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=float)
+        self.history: list[ArohaState] = []
+        self._validate_parameters()
+
+    def _validate_parameters(self) -> None:
+        if not (0.0 <= self.p2 <= 1.0):
+            raise ValueError(f"p2 must be in [0, 1], got {self.p2}")
+        if np.any(self.weights < 0.0) or not math.isclose(float(self.weights.sum()), 1.0, abs_tol=1e-9):
+            raise ValueError(f"rgb_weights must be non-negative and sum to 1.0, got {self.weights}")
+        if self.kappa < 0.0 or self.gamma_g < 0.0 or (2.0 * self.kappa + self.gamma_g) > 1.0 + 1e-12:
+            raise ValueError(
+                f"Invalid RGB parameters: require kappa >= 0, gamma_g >= 0, and 2*kappa + gamma_g <= 1 "
+                f"(got kappa={self.kappa}, gamma_g={self.gamma_g})"
+            )
+
+    def check_zero_crossing(self, x: float) -> bool:
+        val = abs(float(_bessel_j0(x)))
+        return val <= self.tolerance or abs(x - self.target_root) <= 0.005
+
+    def observe(self, x: float) -> ArohaState:
+        j0_val = float(_bessel_j0(x))
+        return ArohaState(
+            step_index=self.step_count,
+            x_coord=x,
+            j0_value=j0_val,
+            at_point_25=self.check_zero_crossing(x),
+            gate_action="hold",
+            vector=self.state.copy(),
+            audit_metrics=self.compare(),
+        )
+
+    def compare(self) -> dict[str, float]:
+        e_r, e_g, e_b = float(self.state[3]), float(self.state[4]), float(self.state[5])
+        dome_mass = e_r + e_g + e_b
+        norm_sq = e_r * e_r + e_g * e_g + e_b * e_b
+
+        coherence_c26 = 27.0 * e_r * e_g * e_b
+        r_zenith = (dome_mass * dome_mass) / math.sqrt(3.0 * norm_sq) if norm_sq > 1e-15 else 0.0
+
+        return {
+            "l1_total_mass": float(self.state.sum()),
+            "dome_rgb_mass": dome_mass,
+            "rg_contrast": e_r - e_g,
+            "coherence_c26": coherence_c26,
+            "r_zenith": r_zenith,
+        }
+
+    def tiki_tilt(self, kappa: float, gamma_g: float = 0.0) -> None:
+        self.kappa = kappa
+        self.gamma_g = gamma_g
+        self._validate_parameters()
+
+    def build_matrix(self, x: float, gate_action: GateAction = "hold") -> np.ndarray:
+        delta = 1.0 if self.check_zero_crossing(x) else 0.0
+        eta_plus = 1.0 if gate_action == "confirm" else 0.0
+        eta_minus = 1.0 if gate_action == "reject" else 0.0
+
+        w_r, w_g, w_b = self.weights
+        k = self.kappa
+        g_drain = self.gamma_g
+        p2 = self.p2
+
+        T = np.array([
+            [1.0 - p2, 0.0,         eta_minus * delta,                  0.0,         g_drain,               0.0        ],
+            [p2,       1.0 - delta, 0.0,                                0.0,         0.0,                   0.0        ],
+            [0.0,      delta,       1.0 - (eta_plus + eta_minus)*delta, 0.0,         0.0,                   0.0        ],
+            [0.0,      0.0,         w_r * eta_plus * delta,             1.0 - 2.0*k, k,                     k          ],
+            [0.0,      0.0,         w_g * eta_plus * delta,             k,           1.0 - 2.0*k - g_drain, k          ],
+            [0.0,      0.0,         w_b * eta_plus * delta,             k,           k,                     1.0 - 2.0*k],
+        ], dtype=float)
+
+        if not np.allclose(T.sum(axis=0), 1.0, atol=1e-9) or np.any(T < -1e-12):
+            raise RuntimeError("Transition matrix violated column-stochastic conservation.")
+        return T
+
+    def step(self, x: float, gate_action: GateAction = "hold") -> ArohaState:
+        T = self.build_matrix(x=x, gate_action=gate_action)
+        self.state = T @ self.state
+        self.step_count += 1
+
+        snapshot = ArohaState(
+            step_index=self.step_count,
+            x_coord=x,
+            j0_value=float(_bessel_j0(x)),
+            at_point_25=self.check_zero_crossing(x),
+            gate_action=gate_action,
+            vector=self.state.copy(),
+            audit_metrics=self.compare(),
+        )
+        self.history.append(snapshot)
+        return snapshot
+
+
+if __name__ == "__main__":
+    engine = TransitionEngine6x6(p2=1.0, rgb_weights=(0.60, 0.25, 0.15), kappa=1.0 / 3.0)
+    engine.step(x=5.0, gate_action="hold")
+    s_hold = engine.step(x=8.6537279, gate_action="hold")
+    engine.step(x=8.6537279, gate_action="confirm")
+    s_lock = engine.step(x=8.6537279, gate_action="confirm")
+
+    ubo_bytes = s_lock.pack_std140_bytes(time_sec=1.0, width=1920.0, height=1080.0)
+    unpacked = struct.unpack("<16f", ubo_bytes)
+    assert len(ubo_bytes) == 64
+    assert abs(unpacked[7] - 1.0) < 1e-6
+    print("[HOLD SNAPSHOT]", json.dumps(s_hold.to_dict()))
+    print(
+        f"[STD140 UBO VERIFIED] {len(ubo_bytes)} bytes | "
+        f"RGB=({unpacked[4]:.4f}, {unpacked[5]:.4f}, {unpacked[6]:.4f}) | "
+        f"r_zenith={unpacked[7]:.6f} | C26={unpacked[8]:.6f}"
+    )

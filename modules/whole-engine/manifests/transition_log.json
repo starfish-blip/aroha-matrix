@@ -1,0 +1,82 @@
+[
+  {
+    "previous_rotation": 0,
+    "current_rotation": 90,
+    "evaluation": {
+      "equilibrium": "AXIS_ROTATED_90",
+      "delta_compression": 0.2
+    },
+    "state": {
+      "timestamp": "2026-10-31T07:41:53.818466",
+      "gate": "ON",
+      "rotation_deg": 90,
+      "compression": 0.7,
+      "carrier_freq": 34.03,
+      "planes": {
+        "bottom_ground": 66.0,
+        "mid_plane": 89.1,
+        "top_plane": 91.08
+      }
+    }
+  },
+  {
+    "previous_rotation": 90,
+    "current_rotation": 180,
+    "evaluation": {
+      "equilibrium": "AXIS_ROTATED_90",
+      "delta_compression": 0.2
+    },
+    "state": {
+      "timestamp": "2026-10-31T07:41:53.818466",
+      "gate": "ON",
+      "rotation_deg": 180,
+      "compression": 0.5,
+      "carrier_freq": 35.06,
+      "planes": {
+        "bottom_ground": 66.0,
+        "mid_plane": 82.5,
+        "top_plane": 99.0
+      }
+    }
+  },
+  {
+    "previous_rotation": 180,
+    "current_rotation": 270,
+    "evaluation": {
+      "equilibrium": "AXIS_ROTATED_90",
+      "delta_compression": 0.2
+    },
+    "state": {
+      "timestamp": "2026-10-31T07:41:53.818466",
+      "gate": "ON",
+      "rotation_deg": 270,
+      "compression": 0.3,
+      "carrier_freq": 36.09,
+      "planes": {
+        "bottom_ground": 66.0,
+        "mid_plane": 75.9,
+        "top_plane": 106.92
+      }
+    }
+  },
+  {
+    "previous_rotation": 270,
+    "current_rotation": 0,
+    "evaluation": {
+      "equilibrium": "AXIS_ROTATED_90",
+      "delta_compression": 0.2
+    },
+    "state": {
+      "timestamp": "2026-10-31T07:41:53.818466",
+      "gate": "ON",
+      "rotation_deg": 0,
+      "compression": 0.5,
+      "carrier_freq": 33.0,
+      "planes": {
+        "bottom_ground": 66.0,
+        "mid_plane": 82.5,
+        "top_plane": 99.0
+      }
+    }
+  }
+]

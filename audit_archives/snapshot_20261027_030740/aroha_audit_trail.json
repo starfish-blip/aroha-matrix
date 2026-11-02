@@ -1,0 +1,110 @@
+[
+    {
+        "timestamp": "2026-10-26T09:38:14.275379",
+        "status": "PASSED",
+        "reason": "Chaldean Compound 35 Zero-Debt Verification Passed",
+        "royalty_released": 5000.0
+    },
+    {
+        "timestamp": "2026-10-26T09:38:59.661750",
+        "status": "PASSED",
+        "reason": "Fallback verification passed (Runway: 14.3 months, Zero Debt)",
+        "royalty_released": 5000.0
+    },
+    {
+        "timestamp": "2026-10-26T09:39:16.539642",
+        "status": "PASSED",
+        "reason": "Zero-debt compliance and minimal burn runway are met. Safe operational parameters are also in place.",
+        "royalty_released": 5000.0
+    },
+    {
+        "timestamp": "2026-10-26T09:39:35.274431",
+        "status": "FAILED_LOCKDOWN",
+        "reason": "OpCo State: Total Debt is $0.0, which does not meet the minimum burn runway requirement. The OpCo is already debt-free, thus not in compliance.",
+        "royalty_released": 0.0
+    },
+    {
+        "timestamp": "2026-10-26T09:46:46.809290",
+        "status": "PASSED",
+        "reason": "Fallback verification passed (Runway: 14.3 months, Zero Debt)",
+        "royalty_released": 5000.0
+    },
+    {
+        "timestamp": "2026-10-26T09:47:16.968450",
+        "status": "PASSED",
+        "reason": "Fallback verification passed (Runway: 14.3 months, Zero Debt)",
+        "royalty_released": 5000.0
+    },
+    {
+        "timestamp": "2026-10-26T09:47:45.310571",
+        "status": "PASSED",
+        "reason": "Fallback verification passed (Runway: 14.3 months, Zero Debt)",
+        "royalty_released": 5000.0
+    },
+    {
+        "timestamp": "2026-10-26T09:47:49.834236",
+        "status": "PASSED",
+        "reason": "Fallback verification passed (Runway: 14.3 months, Zero Debt)",
+        "royalty_released": 5000.0
+    },
+    {
+        "timestamp": "2026-10-26T09:48:12.170267",
+        "status": "FAILED_LOCKDOWN",
+        "reason": "Monthly Burn of $3500.0 exceeds the Runway Months of 14.3 months.",
+        "royalty_released": 0.0
+    },
+    {
+        "timestamp": "2026-10-26T09:48:16.003721",
+        "status": "FAILED_LOCKDOWN",
+        "reason": "Runway months is less than 14.3 months.",
+        "royalty_released": 0.0
+    },
+    {
+        "timestamp": "2026-10-26T13:52:48.502495",
+        "status": "PASSED",
+        "reason": "Fallback verification passed (Runway: 14.3 months, Zero Debt)",
+        "royalty_released": 5000.0
+    },
+    {
+        "timestamp": "2026-10-26T13:53:24.402033",
+        "status": "PASSED",
+        "reason": "Fallback verification passed (Runway: 14.3 months, Zero Debt)",
+        "royalty_released": 5000.0
+    },
+    {
+        "timestamp": "2026-10-26T13:53:53.806223",
+        "status": "PASSED",
+        "reason": "The company meets all the Chaldean Compound 35 principles: no debt, minimum burn runway, and safe operational parameters. The company has a positive cash liquidity of $50,000 and can comfortably operate for the remaining 14.3 months. The company has a Tailscale connection and is not engaged in active litigation. The company's financial structure meets all the criteria to be considered zero-debt, minimum-burn, and safe operational.",
+        "royalty_released": 5000.0
+    },
+    {
+        "timestamp": "2026-10-26T13:54:09.880915",
+        "status": "FAILED_LOCKDOWN",
+        "reason": "Monthly Burn is higher than the runway months (14.3), and there are active litigations.",
+        "royalty_released": 0.0
+    },
+    {
+        "timestamp": "2026-10-26T13:55:41.106879",
+        "status": "PASSED",
+        "reason": "OpCo State has zero debt, the monthly burn is within the minimum runway months, and Tailscale Connected is true. All operational parameters are within the recommended range.",
+        "royalty_released": 5000.0
+    },
+    {
+        "timestamp": "2026-10-26T13:55:56.743139",
+        "status": "FAILED_LOCKDOWN",
+        "reason": "Total debt should not be zero while still maintaining operational parameters and the runways of safety.",
+        "royalty_released": 0.0
+    },
+    {
+        "timestamp": "2026-10-26T14:05:36.549592",
+        "status": "PASSED",
+        "reason": "Fallback verification passed (Runway: 14.3 months, Zero Debt)",
+        "royalty_released": 5000.0
+    },
+    {
+        "timestamp": "2026-10-26T14:05:53.188481",
+        "status": "FAILED_LOCKDOWN",
+        "reason": "Runway months less than 12, Monthly burn exceeds runway months by 25%",
+        "royalty_released": 0.0
+    }
+]
