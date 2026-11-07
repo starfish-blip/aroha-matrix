@@ -516,5 +516,77 @@
             keyboard.appendChild(key);
         }
     </script>
+<!-- AROHA Field Waypoint Telemetry Bridge -->
+<script>
+(async function initFieldWaypoints() {
+  try {
+    const res = await fetch('/field_waypoints.json');
+    if (!res.ok) return;
+    const data = await res.json();
+    const container = document.createElement('div');
+    container.id = 'aroha-waypoint-bridge';
+    container.style.cssText = 'margin-top:8px;padding:8px;border:1px solid #00f0ff;background:rgba(0,20,30,0.85);color:#00f0ff;font-family:monospace;font-size:12px;border-radius:4px;';
+    
+    const select = document.createElement('select');
+    select.style.cssText = 'width:100%;background:#001520;color:#00f0ff;border:1px solid #00f0ff;padding:4px;margin-bottom:6px;font-family:monospace;';
+    data.waypoints.forEach(wp => {
+      const opt = document.createElement('option');
+      opt.value = JSON.stringify(wp);
+      opt.textContent = `${wp.id} | ${wp.zone}: ${wp.name} (${wp.acoustic_hz}Hz)`;
+      select.appendChild(opt);
+    });
+
+    const btn = document.createElement('button');
+    btn.textContent = 'LOCK WAYPOINT & COMMIT LEDGER';
+    btn.style.cssText = 'width:100%;background:#00f0ff;color:#001018;border:none;padding:6px;font-weight:bold;cursor:pointer;font-family:monospace;';
+    
+    const status = document.createElement('div');
+    status.style.cssText = 'margin-top:6px;font-size:11px;color:#7fffd4;';
+
+    btn.onclick = async () => {
+      const wp = JSON.parse(select.value);
+      status.textContent = `Locking ${wp.id} (${wp.lat}, ${wp.lon}) @ ${wp.acoustic_hz}Hz...`;
+      try {
+        const hs = await fetch(`http://${window.location.hostname}:8080/api/handshake`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            node_id: wp.id,
+            zone: wp.zone,
+            lat: wp.lat,
+            lon: wp.lon,
+            freq_hz: wp.acoustic_hz,
+            temp_c: 36.6,
+            tier: 6
+          })
+        });
+        const receipt = await hs.json();
+        status.textContent = `HASH LOCKED: ${receipt.hash} | ${receipt.status}`;
+      } catch (e) {
+        status.textContent = `Local Lock Active: ${wp.id} @ ${wp.acoustic_hz}Hz`;
+      }
+    };
+
+    container.appendChild(select);
+    container.appendChild(btn);
+    container.appendChild(status);
+
+    const target = Array.from(document.querySelectorAll('div, section')).find(el => el.textContent && el.textContent.includes('SPATIAL AR PORTAL'));
+    if (target && target.parentElement) {
+      target.parentElement.appendChild(container);
+    } else {
+      container.style.position = 'fixed';
+      container.style.bottom = '12px';
+      container.style.left = '12px';
+      container.style.zIndex = '9999';
+      container.style.width = '300px';
+      document.body.appendChild(container);
+    }
+  } catch (err) {
+    console.warn('Waypoint bridge init skipped:', err);
+  }
+})();
+</script>
 </body>
 </html>
+

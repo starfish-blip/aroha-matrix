@@ -37,5 +37,9 @@ app.post('/api/ai-reflect', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`[✓] AROHA Omni-Matrix running live at http://localhost:${PORT}`);
+    console.log(`[✓] AROHA Omni-Matrix running live at http://0.0.0.0:${PORT}`);
 });
+
+
+
+
