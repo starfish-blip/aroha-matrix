@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import json
 import math
 import time
@@ -9,7 +9,7 @@ import uvicorn
 app = FastAPI(title="AROHA FastAPI Backend - Maramataka & Telemetry Engine")
 
 SYNODIC_MONTH = 29.530588853
-KNOWN_NEW_MOON_EPOCH = 947182440.0  # 2000-01-06 18:14:00 UTC
+KNOWN_NEW_MOON_EPOCH = 1794207720.0  # 2026-11-09 07:02:00 UTC
 
 # 30 Traditional Maramataka Nights: (Name, Energy Index 0.0-1.0, Target Binaural Delta Hz, Description)
 MARAMATAKA_NIGHTS = [
@@ -63,7 +63,7 @@ def compute_maramataka_state(now_ts: float = None) -> dict:
         phase_ratio = (day_index + 0.5) / 30.0
         lunar_age = phase_ratio * SYNODIC_MONTH
     else:
-        elapsed = now_ts - KNOWN_NEW_MOON_EPOCH
+        elapsed = (now_ts - KNOWN_NEW_MOON_EPOCH) / 86400.0
         lunar_age = elapsed % SYNODIC_MONTH
         phase_ratio = lunar_age / SYNODIC_MONTH
         day_index = min(29, max(0, int(math.floor(phase_ratio * 30.0))))
