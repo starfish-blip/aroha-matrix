@@ -12,3 +12,13 @@ venv/
 *.bak
 test-results/
 playwright-report/
+
+venv/
+*.bak
+test-results/
+
+# Local environment & Playwright artifacts
+venv/
+*.bak
+test-results/
+playwright-report/
