@@ -1,97 +1,130 @@
 ﻿import asyncio
 import json
 import logging
+import io
+import wave
+import numpy as np
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 import ollama
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("AROHA-VoiceLoop")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger("AROHA-VoiceServer")
 
-app = FastAPI(title="AROHA Voice & Data Tailscale Streaming Loop")
+app = FastAPI(title="AROHA Voice & Telemetry Streaming Server")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+active_connections = set()
+
+class AudioStreamSession:
+    def __init__(self, websocket: WebSocket):
+        self.websocket = websocket
+        self.audio_buffer = bytearray()
+        self.current_task = None
+        self.is_generating = False
+
+    def add_pcm_chunk(self, data: bytes):
+        self.audio_buffer.extend(data)
+        # Fixed: Corrected len() parenthesis for buffer bounding
+        if len(self.audio_buffer) > 320000:
+            self.audio_buffer = self.audio_buffer[-320000:]
+
+    def clear_buffer(self):
+        self.audio_buffer.clear()
 
 @app.get("/health")
-def health_check():
-    return {"status": "healthy", "service": "aroha-voice-streaming", "tailscale_ip": "100.104.121.111"}
+async def health_check():
+    return {"status": "online", "service": "aroha-voice-server", "sample_rate": 16000}
 
 @app.websocket("/ws/voice")
 async def voice_websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    logger.info("[Tailscale WS] S24 Ultra voice client connected.")
-    
-    # Active task reference for ongoing TTS/LLM generation so we can cancel on barge-in
-    current_generation_task = None
-
-    async def simulate_tts_playback(prompt, reply_text):
-        try:
-            # Broadcast TTS Start
-            await websocket.send_text(json.dumps({
-                "type": "tts_start",
-                "prompt": prompt,
-                "response": reply_text
-            }))
-            logger.info(f"[TTS Stream Started] Speaking reply: '{reply_text[:40]}...'")
-            
-            # Simulate speech duration (e.g. 5 to 8 seconds depending on length)
-            speech_duration = min(10.0, max(3.0, len(reply_text) * 0.08))
-            await asyncio.sleep(speech_duration)
-            
-            # Broadcast TTS End
-            await websocket.send_text(json.dumps({
-                "type": "tts_end"
-            }))
-            logger.info("[TTS Stream Completed]")
-        except asyncio.CancelledError:
-            logger.info("[TTS Stream Cancelled] Interrupted by client barge-in.")
-            raise
+    active_connections.add(websocket)
+    session = AudioStreamSession(websocket)
+    logger.info(f"Client connected: {websocket.client}")
 
     try:
         while True:
             message = await websocket.receive()
             
-            if "text" in message:
-                data = json.loads(message["text"])
-                msg_type = data.get("type", "chat")
-                
-                if msg_type == "transcript":
-                    user_text = data.get("text", "Hello AROHA")
-                    logger.info(f"[Whisper STT Received]: {user_text}")
+            if "bytes" in message:
+                pcm_chunk = message["bytes"]
+                session.add_pcm_chunk(pcm_chunk)
+                if len(session.audio_buffer) >= 32000:
+                    logger.debug(f"Buffered {len(session.audio_buffer)} bytes of 16kHz PCM audio.")
                     
-                    # Route prompt to local Ollama model (Qwen 2.5)
-                    response = ollama.chat(model='qwen2.5-coder:latest', messages=[
-                        {'role': 'system', 'content': 'You are AROHA, an autonomous acoustic intelligence assistant running locally on Terry Stohr workstation.'},
-                        {'role': 'user', 'content': user_text},
-                    ])
-                    reply_text = response['message']['content']
-                    logger.info(f"[Ollama Response]: {reply_text}")
-                    
-                    # Start async TTS generation / playback simulation task
-                    if current_generation_task and not current_generation_task.done():
-                        current_generation_task.cancel()
-                    current_generation_task = asyncio.create_task(simulate_tts_playback(user_text, reply_text))
+            elif "text" in message:
+                try:
+                    data = json.loads(message["text"])
+                    msg_type = data.get("type")
+                    logger.info(f"Received control message: {msg_type}")
 
-                elif msg_type == "barge_in":
-                    logger.info("[Barge-In Interrupt Received] Halting current LLM/TTS generation.")
-                    if current_generation_task and not current_generation_task.done():
-                        current_generation_task.cancel()
-                    await websocket.send_text(json.dumps({"type": "interrupted", "status": "halted"}))
-                    
-            elif "bytes" in message:
-                audio_bytes = message["bytes"]
-                logger.debug(f"[Audio Stream]: Received {len(audio_bytes)} raw PCM bytes.")
-                
+                    if msg_type == "transcript":
+                        prompt_text = data.get("text")
+                        session.current_task = asyncio.create_task(
+                            process_llm_and_tts(session, prompt_text)
+                        )
+
+                    elif msg_type == "barge_in":
+                        logger.info("Barge-in interrupt received from client.")
+                        if session.current_task and not session.current_task.done():
+                            session.current_task.cancel()
+                        session.is_generating = False
+                        session.clear_buffer()
+                        await websocket.send_json({
+                            "type": "interrupted",
+                            "status": "halted"
+                        })
+
+                    elif msg_type == "client_ready":
+                        logger.info(f"Client ready handshake received: {data.get('device')}")
+                        await websocket.send_json({
+                            "type": "server_ack",
+                            "status": "ready"
+                        })
+
+                except json.JSONDecodeError:
+                    logger.error("Failed to parse incoming JSON text frame.")
+
     except WebSocketDisconnect:
-        logger.info("[Tailscale WS] S24 Ultra disconnected.")
+        logger.info("Client disconnected from voice WebSocket.")
     except Exception as e:
-        logger.error(f"[Tailscale WS Error]: {e}")
+        logger.error(f"Error in voice WebSocket session: {e}")
     finally:
-        if current_generation_task and not current_generation_task.done():
-            current_generation_task.cancel()
+        active_connections.remove(websocket)
+        if session.current_task and not session.current_task.done():
+            session.current_task.cancel()
+
+async def process_llm_and_tts(session: AudioStreamSession, prompt: str):
+    try:
+        session.is_generating = True
+        logger.info(f"Routing prompt to Ollama: '{prompt}'")
+        
+        response = await asyncio.to_thread(
+            ollama.chat,
+            model="qwen2.5:3b",
+            messages=[
+                {"role": "system", "content": "You are the AROHA spatial acoustic intelligence core. Be concise and direct."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        
+        llm_reply = response["message"]["content"]
+        logger.info(f"Ollama response generated: '{llm_reply}'")
+        
+        if not session.is_generating:
+            return
+
+        await session.websocket.send_json({
+            "type": "tts_start",
+            "prompt": prompt,
+            "response": llm_reply
+        })
+        
+        await asyncio.sleep(1.0) 
+        
+    except asyncio.CancelledError:
+        logger.info("LLM/TTS processing task was successfully cancelled by barge-in.")
+    except Exception as e:
+        logger.error(f"Error during LLM/TTS processing: {e}")
+    finally:
+        session.is_generating = False
