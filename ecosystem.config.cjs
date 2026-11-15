@@ -1,23 +1,23 @@
 ﻿module.exports = {
   apps: [
     {
-      name: 'aroha-matrix-app',
-      script: './server.cjs',
-      instances: 1,
-      exec_mode: 'fork',
-      max_memory_restart: '300M',
+      name: "aroha-fastapi",
+      script: "python",
+      args: "-m uvicorn app:app --host 127.0.0.1 --port 8000",
+      cwd: "C:\\Users\\terry\\aroha-matrix",
+      interpreter: "none",
       env: {
-        NODE_ENV: 'production',
-        PORT: 3013
+        PYTHONUNBUFFERED: "1"
       }
     },
     {
-      name: 'aroha-fastapi',
-      script: './app.py',
-      interpreter: 'python',
-      max_memory_restart: '300M',
+      name: "aroha-matrix-app",
+      script: "server.cjs",
+      cwd: "C:\\Users\\terry\\aroha-matrix",
+      interpreter: "node",
       env: {
-        PORT: 8000
+        PORT: 3013,
+        NODE_ENV: "production"
       }
     }
   ]
