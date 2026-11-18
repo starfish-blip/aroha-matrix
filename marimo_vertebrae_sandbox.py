@@ -74,15 +74,15 @@ def _(PORTAL_API_BASE, controls, get_last_submit_id, json, mo, set_last_submit_i
                 "harmonic_lock": bool(controls.value["harmonic_lock"]),
                 "focus_state": int(controls.value["focus_state"]),
             }
-            req = urllib.request.Request(
+            _req = urllib.request.Request(
                 f"{PORTAL_API_BASE}/unlock",
                 data=json.dumps(body).encode("utf-8"),
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
             try:
-                with urllib.request.urlopen(req, timeout=3) as resp:
-                    post_status = json.loads(resp.read().decode("utf-8"))
+                with urllib.request.urlopen(_req, timeout=3) as _resp:
+                    post_status = json.loads(_resp.read().decode("utf-8"))
             except Exception as exc:
                 post_status = {"status": "error", "detail": str(exc)}
 
@@ -102,13 +102,13 @@ def _(PORTAL_API_BASE, json, post_status, refresh, urllib):
     _ = (refresh.value, post_status)
 
     try:
-        req = urllib.request.Request(
+        _req = urllib.request.Request(
             f"{PORTAL_API_BASE}/state",
             headers={"Accept": "application/json", "Cache-Control": "no-cache"},
             method="GET",
         )
-        with urllib.request.urlopen(req, timeout=3) as resp:
-            live_state = json.loads(resp.read().decode("utf-8"))
+        with urllib.request.urlopen(_req, timeout=3) as _resp:
+            live_state = json.loads(_resp.read().decode("utf-8"))
             fetch_error = None
     except Exception as exc:
         live_state = {

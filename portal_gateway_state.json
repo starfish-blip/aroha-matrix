@@ -2,7 +2,8 @@
   "status": "unlocked",
   "gateway": "zenith_26",
   "token": "aroha-33-verified",
-  "last_unlocked_utc": "2026-11-18T01:37:19.906999+00:00",
+  "phase2_token": null,
+  "last_unlocked_utc": "2026-11-18T01:53:24.143282+00:00",
   "resonance": {
     "vertebrae_count": 33,
     "chladni_mode": [
@@ -13,6 +14,52 @@
     "focus_state": 12,
     "carrier_hz": 136.1,
     "binaural_offset_hz": 4.0
+  },
+  "phase2_progression": {
+    "target_sequence": [
+      [
+        5,
+        7
+      ],
+      [
+        6,
+        8
+      ],
+      [
+        7,
+        9
+      ],
+      [
+        4,
+        9
+      ]
+    ],
+    "step_index": 1,
+    "total_steps": 4,
+    "matched_modes": [
+      [
+        5,
+        7
+      ]
+    ],
+    "next_expected_mode": [
+      6,
+      8
+    ],
+    "phase2_status": "in_progress",
+    "phase2_token": null,
+    "zenith_unlocked_utc": null
+  },
+  "phase2_hint": {
+    "unlocked": true,
+    "cipher_id": "P2-F12",
+    "plaintext": "ZENITH 26 SPINE 33 NEXT 6 8",
+    "next_chladni": [
+      6,
+      8
+    ],
+    "harmonic_multiplier": 3,
+    "wpm": 14
   },
   "solvers": [
     {
@@ -129,6 +176,384 @@
       "focus_state": 12,
       "carrier_hz": 136.1,
       "binaural_offset_hz": 4.0
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:48:29.724790+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "1/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:48:31.704807+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "1/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:48:31.724910+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        6,
+        8
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "2/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:48:31.748556+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        7,
+        9
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "3/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:48:31.764847+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        4,
+        9
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "4/4",
+      "phase2_status": "zenith_unlocked"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:48:32.970163+00:00",
+      "gateway": "zenith_26",
+      "source": "playwright-s24-sim",
+      "chladni_mode": [
+        4,
+        9
+      ],
+      "focus_state": 21,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 1.5,
+      "phase2_step": "4/4",
+      "phase2_status": "zenith_unlocked"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:48:37.875009+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "1/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:51:33.685937+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "1/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:51:33.704316+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        6,
+        8
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "2/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:51:33.729369+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        7,
+        9
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "3/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:51:33.749432+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        4,
+        9
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "4/4",
+      "phase2_status": "zenith_unlocked"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:51:34.844926+00:00",
+      "gateway": "zenith_26",
+      "source": "playwright-s24-sim",
+      "chladni_mode": [
+        4,
+        9
+      ],
+      "focus_state": 21,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 1.5,
+      "phase2_step": "4/4",
+      "phase2_status": "zenith_unlocked"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:51:39.744207+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "1/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:52:43.154252+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "1/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:52:43.174248+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        6,
+        8
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "2/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:52:43.200095+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        7,
+        9
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "3/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:52:43.215785+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        4,
+        9
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "4/4",
+      "phase2_status": "zenith_unlocked"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:52:44.554597+00:00",
+      "gateway": "zenith_26",
+      "source": "playwright-s24-sim",
+      "chladni_mode": [
+        4,
+        9
+      ],
+      "focus_state": 21,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 1.5,
+      "phase2_step": "4/4",
+      "phase2_status": "zenith_unlocked"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:52:45.487935+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 15,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 2.5,
+      "phase2_step": "1/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:52:47.143397+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "1/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:53:20.363932+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "1/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:53:20.383967+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        6,
+        8
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "2/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:53:20.407398+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        7,
+        9
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "3/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:53:20.423905+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        4,
+        9
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "4/4",
+      "phase2_status": "zenith_unlocked"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:53:21.651548+00:00",
+      "gateway": "zenith_26",
+      "source": "playwright-s24-sim",
+      "chladni_mode": [
+        4,
+        9
+      ],
+      "focus_state": 21,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 1.5,
+      "phase2_step": "4/4",
+      "phase2_status": "zenith_unlocked"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:53:22.680159+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 15,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 2.5,
+      "phase2_step": "1/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:53:24.143282+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "1/4",
+      "phase2_status": "in_progress"
     }
   ]
 }

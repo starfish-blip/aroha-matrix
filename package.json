@@ -1,21 +1,22 @@
 {
-    "name": "aroha-matrix",
-    "version": "1.0.0",
-    "description": "AROHA Matrix spatial-acoustic & lunar ecosystem",
-    "main": "server.cjs",
-    "scripts": {
-        "start": "node server.cjs",
-        "build:frontend": "node esbuild.config.js",
-        "watch:frontend": "node esbuild.config.js --watch"
-    },
-    "dependencies": {
-        "express": "^4.19.2",
-        "http-proxy-middleware": "^4.2.2",
-        "ws": "^8.16.0"
-    },
-    "devDependencies": {
-        "@playwright/test": "^1.65.0",
-        "esbuild": "^0.28.2",
-        "three": "^0.187.0"
-    }
+  "name": "aroha-matrix",
+  "version": "1.0.0",
+  "description": "AROHA Matrix spatial-acoustic & lunar ecosystem",
+  "main": "server.cjs",
+  "scripts": {
+    "start": "node server.cjs",
+    "build:frontend": "node esbuild.config.js",
+    "watch:frontend": "node esbuild.config.js --watch",
+    "test:portal": "playwright test tests/portal_e2e.spec.mjs --reporter=list"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "http-proxy-middleware": "^4.2.2",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "esbuild": "^0.28.2",
+    "three": "^0.187.0"
+  }
 }

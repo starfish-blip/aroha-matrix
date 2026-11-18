@@ -40,7 +40,12 @@ export class PortalInputRouter {
       return [];
     }
 
-    this.midiAccess = await navigator.requestMIDIAccess({ sysex: false });
+    try {
+      this.midiAccess = await navigator.requestMIDIAccess({ sysex: false });
+    } catch (err) {
+      this.onEvent({ type: 'midi_unavailable', reason: err?.message || 'Web MIDI permission denied' });
+      return [];
+    }
     const bindInputs = () => {
       this.midiDevices = [];
       for (const input of this.midiAccess.inputs.values()) {

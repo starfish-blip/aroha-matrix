@@ -241,7 +241,8 @@ test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 
     page.on('pageerror', (err) => runtimeErrors.push(err.message));
 
     await page.goto(`${MARIMO_BASE}/`, { waitUntil: 'domcontentloaded' });
-    await expect(page.locator('#root, marimo-island, body')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#root')).toBeAttached({ timeout: 5000 });
+    await expect(page.locator('body')).toContainText('AROHA 33-Vertebrae', { timeout: 8000 });
     expect(runtimeErrors).toEqual([]);
   });
 });

@@ -26,3 +26,4 @@ playwright-report/
 .env*
 *.bak.*
 *.tmp
+__marimo__/

@@ -243,7 +243,7 @@ def persist_portal_unlock(
     progression = evaluate_phase2_progression(
         prev_prog=current.get("phase2_progression"),
         mode=normalized_mode,
-        reset=reset_sequence,
+        reset_sequence=reset_sequence,
         now_utc=now_utc,
     )
     phase2_token = progression.get("phase2_token")
