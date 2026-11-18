@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const http = require('http');
 const path = require('path');
@@ -8,11 +8,12 @@ const server = http.createServer(app);
 const PORT = process.env.PORT || 3013;
 const FASTAPI_URL = 'http://127.0.0.1:8000';
 
-// 1. Proxy REST API requests using single-options object syntax for HPM v3
-app.use('/api', createProxyMiddleware({
+// 1. Proxy /api/* requests without stripping the /api prefix (HPM v3 pathFilter)
+app.use(createProxyMiddleware({
     target: FASTAPI_URL,
     changeOrigin: true,
-    secure: false
+    secure: false,
+    pathFilter: '/api'
 }));
 
 // 2. Configure WebSocket proxy middleware for real-time telemetry

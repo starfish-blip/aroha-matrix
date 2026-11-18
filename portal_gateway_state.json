@@ -1,0 +1,98 @@
+{
+  "status": "unlocked",
+  "gateway": "zenith_26",
+  "token": "aroha-33-verified",
+  "last_unlocked_utc": "2026-11-18T01:30:24.558481+00:00",
+  "resonance": {
+    "vertebrae_count": 33,
+    "chladni_mode": [
+      5,
+      7
+    ],
+    "harmonic_lock": true,
+    "focus_state": 15,
+    "carrier_hz": 136.1,
+    "binaural_offset_hz": 2.5
+  },
+  "solvers": [
+    {
+      "unlocked_at_utc": "2026-11-18T01:24:48.713598+00:00",
+      "gateway": "zenith_26",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:26:46.407088+00:00",
+      "gateway": "zenith_26",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:29:15.178805+00:00",
+      "gateway": "zenith_26",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 21,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 1.5
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:29:16.224369+00:00",
+      "gateway": "zenith_26",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 21,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 1.5
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:29:36.578668+00:00",
+      "gateway": "zenith_26",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:30:10.625312+00:00",
+      "gateway": "zenith_26",
+      "source": "s24-ultra-tailscale",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 21,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 1.5
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:30:24.558481+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 15,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 2.5
+    }
+  ]
+}

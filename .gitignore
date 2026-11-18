@@ -24,3 +24,5 @@ test-results/
 playwright-report/
 .vercel
 .env*
+*.bak.*
+*.tmp
