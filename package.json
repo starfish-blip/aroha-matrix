@@ -1,23 +1,24 @@
 {
-  "name": "aroha-matrix",
-  "version": "1.0.0",
-  "description": "AROHA Matrix spatial-acoustic & lunar ecosystem",
-  "main": "server.cjs",
-  "scripts": {
-    "start": "node server.cjs",
-    "build:frontend": "node esbuild.config.js",
-    "watch:frontend": "node esbuild.config.js --watch",
-    "test:portal": "playwright test tests/portal_e2e.spec.mjs --reporter=list",
-    "deploy:starmaps": "npm run test:portal && vercel --prod --yes"
-  },
-  "dependencies": {
-    "express": "^4.19.2",
-    "http-proxy-middleware": "^4.2.2",
-    "ws": "^8.16.0"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.65.0",
-    "esbuild": "^0.28.2",
-    "three": "^0.187.0"
-  }
+    "name":  "aroha-matrix",
+    "version":  "1.0.0",
+    "description":  "AROHA Matrix spatial-acoustic \u0026 lunar ecosystem",
+    "main":  "server.cjs",
+    "scripts":  {
+                    "start":  "node server.cjs",
+                    "build:frontend":  "node esbuild.config.js",
+                    "watch:frontend":  "node esbuild.config.js --watch",
+                    "test:portal":  "playwright test tests/portal_e2e.spec.mjs --reporter=list",
+                    "deploy:starmaps":  "npm run test:portal \u0026\u0026 vercel --prod --yes"
+                },
+    "dependencies":  {
+                         "express":  "^4.19.2",
+                         "http-proxy-middleware":  "^4.2.2",
+                         "ws":  "^8.16.0"
+                     },
+    "devDependencies":  {
+                            "@playwright/test":  "^1.65.0",
+                            "esbuild":  "^0.28.2",
+                            "three":  "^0.187.0"
+                        },
+    "type":  "module"
 }
