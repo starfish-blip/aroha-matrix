@@ -295,3 +295,71 @@ export class PortalBinauralEngine {
     this.isRunning = false;
   }
 }
+if (!PortalBinauralEngine.prototype.applyCrownPreset) {
+  const _origStop = PortalBinauralEngine.prototype.stop;
+  PortalBinauralEngine.prototype.stop = function (...args) {
+    if (Array.isArray(this._crownOscillators)) {
+      for (const osc of this._crownOscillators) {
+        try { osc.stop(); osc.disconnect(); } catch {}
+      }
+      this._crownOscillators = [];
+    }
+    if (this._crownBus) {
+      try { this._crownBus.disconnect(); } catch {}
+      this._crownBus = null;
+    }
+    this.activeCrownPreset = null;
+    return _origStop.apply(this, args);
+  };
+
+  PortalBinauralEngine.prototype.applyCrownPreset = async function (crownPayload) {
+    const preset = crownPayload?.synth_preset;
+    if (!preset) return false;
+
+    if (!this.isRunning && typeof this.startFromPortal === 'function') {
+      await this.startFromPortal(0.22);
+    }
+    const audioCtx = this.ctx || this.audioCtx;
+    if (!audioCtx) return false;
+
+    if (Array.isArray(this._crownOscillators)) {
+      for (const osc of this._crownOscillators) {
+        try { osc.stop(); osc.disconnect(); } catch {}
+      }
+    }
+    if (this._crownBus) {
+      try { this._crownBus.disconnect(); } catch {}
+    }
+
+    const carrier = Number(preset.fundamental_carrier_hz || 136.1);
+    const ratios = Array.isArray(preset.harmonic_ratios)
+      ? preset.harmonic_ratios
+      : [1.0, 1.5, 2.0, 3.0, 4.5, 6.0];
+    const now = audioCtx.currentTime;
+
+    const bus = audioCtx.createGain();
+    bus.gain.setValueAtTime(0.0001, now);
+    bus.gain.exponentialRampToValueAtTime(0.055, now + 0.35);
+    bus.connect(this.analyser || this.masterGain || audioCtx.destination);
+
+    const oscs = [];
+    for (const ratio of ratios) {
+      const r = Number(ratio);
+      if (!Number.isFinite(r) || r <= 1.0) continue;
+      const osc = audioCtx.createOscillator();
+      const voiceGain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(carrier * r, now);
+      voiceGain.gain.setValueAtTime(0.22 / r, now);
+      osc.connect(voiceGain);
+      voiceGain.connect(bus);
+      osc.start(now);
+      oscs.push(osc);
+    }
+
+    this._crownBus = bus;
+    this._crownOscillators = oscs;
+    this.activeCrownPreset = preset.preset_name || 'AROHA Zenith-26 Crown Harmonic Matrix';
+    return true;
+  };
+}

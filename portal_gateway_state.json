@@ -4,7 +4,7 @@
   "token": "aroha-33-verified",
   "phase2_token": null,
   "phase3_token": null,
-  "last_unlocked_utc": "2026-11-18T02:12:51.036061+00:00",
+  "last_unlocked_utc": "2026-11-18T02:15:08.289752+00:00",
   "resonance": {
     "vertebrae_count": 33,
     "chladni_mode": [
@@ -643,6 +643,90 @@
     },
     {
       "unlocked_at_utc": "2026-11-18T02:12:51.036061+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "1/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T02:15:04.635359+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "1/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T02:15:04.649623+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        6,
+        8
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "2/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T02:15:04.669523+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        7,
+        9
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "3/4",
+      "phase2_status": "in_progress"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T02:15:04.689589+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        4,
+        9
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0,
+      "phase2_step": "4/4",
+      "phase2_status": "zenith_unlocked"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T02:15:05.884853+00:00",
+      "gateway": "zenith_26",
+      "source": "playwright-s24-sim",
+      "chladni_mode": [
+        4,
+        9
+      ],
+      "focus_state": 21,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 1.5,
+      "phase2_step": "4/4",
+      "phase2_status": "zenith_unlocked"
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T02:15:08.289752+00:00",
       "gateway": "zenith_26",
       "source": "http",
       "chladni_mode": [

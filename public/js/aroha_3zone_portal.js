@@ -270,7 +270,9 @@ export class ArohaPortalHud extends HTMLElement {
           `Phase 3 Token : ${state.phase3_token}\n` +
           `Star-Map      : ${sm.sector} (RA ${sm.ra_hours}h / Dec ${sm.dec_deg}°)\n` +
           `Maramataka    : ${sm.maramataka_phase}\n` +
-          `Synth Patch   : ${sp.dichotic_left_hz} / ${sp.dichotic_right_hz} Hz`;
+          `Synth Patch   : ${sp.dichotic_left_hz} / ${sp.dichotic_right_hz} Hz
+` +
+          `Overtone Bank : ${(sp.harmonic_ratios || []).join('x, ')}x`;
       } else {
         crownBox.textContent = 'Phase 3 Crown: locked behind aroha-zenith-26-master';
       }
@@ -323,6 +325,9 @@ export class ArohaPortalHud extends HTMLElement {
         } else if (ev.type === 'ws_disconnected') {
           wsLine = 'WS: reconnecting...';
         } else if (ev.type === 'ws_state') {
+          if (ev.state?.phase3_crown && ev.state?.phase3_token === 'aroha-crown-33-starmap' && this.engine.isRunning) {
+            this.engine.applyCrownPreset(ev.state.phase3_crown).catch(() => false);
+          }
           syncUI(ev.state);
           lastEv = `WS (${ev.state.source})`;
           if (this.engine.isRunning && this.engine.morseEnabled && ev.state?.phase2_hint) {
@@ -384,6 +389,7 @@ export class ArohaPortalHud extends HTMLElement {
         return;
       }
       this.engine.lastState = payload;
+      await this.engine.applyCrownPreset(payload.phase3_crown).catch(() => false);
       syncUI(payload);
     });
 

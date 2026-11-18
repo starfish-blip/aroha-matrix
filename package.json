@@ -7,7 +7,8 @@
     "start": "node server.cjs",
     "build:frontend": "node esbuild.config.js",
     "watch:frontend": "node esbuild.config.js --watch",
-    "test:portal": "playwright test tests/portal_e2e.spec.mjs --reporter=list"
+    "test:portal": "playwright test tests/portal_e2e.spec.mjs --reporter=list",
+    "deploy:starmaps": "npm run test:portal && vercel --prod --yes"
   },
   "dependencies": {
     "express": "^4.19.2",
