@@ -328,6 +328,9 @@ export class ArohaPortalHud extends HTMLElement {
           if (ev.state?.phase3_crown && ev.state?.phase3_token === 'aroha-crown-33-starmap' && this.engine.isRunning) {
             this.engine.applyCrownPreset(ev.state.phase3_crown).catch(() => false);
           }
+          if (ev.state?.phase3_crown && ev.state?.phase3_token === 'aroha-crown-33-starmap' && this.engine.isRunning) {
+            this.engine.applyCrownPreset(ev.state.phase3_crown).catch(() => false);
+          }
           syncUI(ev.state);
           lastEv = `WS (${ev.state.source})`;
           if (this.engine.isRunning && this.engine.morseEnabled && ev.state?.phase2_hint) {
