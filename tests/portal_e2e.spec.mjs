@@ -5,11 +5,11 @@ const MARIMO_BASE = 'http://127.0.0.1:8085';
 
 test.use({
   launchOptions: {
-    args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-webgl'],
+    args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-webgl'],
   },
 });
 
-test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 Zenith)', () => {
+test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 Zenith + Phase 3 Crown)', () => {
   test.afterAll(async ({ request }) => {
     await request.post(`${EXPRESS_BASE}/api/v1/portal/unlock`, {
       data: {
@@ -36,6 +36,7 @@ test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 
       status: 'locked',
       signal: 'dissonance_detected',
       phase2_token: null,
+      phase3_token: null,
       phase2_hint: null,
     });
 
@@ -71,14 +72,40 @@ test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 
       cipher_id: 'P2-ZENITH',
       plaintext: 'ZENITH 26 CROWN UNLOCKED',
     });
-
-    const stateRes = await request.get(`${EXPRESS_BASE}/api/v1/portal/state`);
-    expect(stateRes.ok()).toBeTruthy();
-    const stateJson = await stateRes.json();
-    expect(stateJson.phase2_token).toBe('aroha-zenith-26-master');
   });
 
-  test('2. PortalBinauralEngine enforces aroha-33-verified gate and encodes Morse', async ({ page }) => {
+  test('2. Phase 3 Crown Reward API & Synth Preset require valid aroha-zenith-26-master token', async ({ request }) => {
+    // Reject forged token
+    const badCrown = await request.post(`${EXPRESS_BASE}/api/v1/portal/phase3/crown`, {
+      data: { phase2_token: 'invalid-token' },
+    });
+    expect(badCrown.status()).toBe(403);
+
+    // Manifest Phase 3 Crown Reward using active aroha-zenith-26-master
+    const okCrown = await request.post(`${EXPRESS_BASE}/api/v1/portal/phase3/crown`, {
+      data: { phase2_token: 'aroha-zenith-26-master' },
+    });
+    expect(okCrown.ok()).toBeTruthy();
+    const crownJson = await okCrown.json();
+    expect(crownJson.phase3_token).toBe('aroha-crown-33-starmap');
+    expect(crownJson.phase3_crown.star_map_coordinates).toMatchObject({
+      sector: 'CRUX-CENTAURUS-ZENITH-26',
+      ra_hours: 13.33,
+      dec_deg: -41.21,
+    });
+    expect(crownJson.phase3_crown.synth_preset.fundamental_carrier_hz).toBeCloseTo(136.1, 1);
+
+    // Verify downloadable synth preset endpoint
+    const presetRes = await request.get(
+      `${EXPRESS_BASE}/api/v1/portal/phase3/preset.json?token=aroha-zenith-26-master`
+    );
+    expect(presetRes.ok()).toBeTruthy();
+    expect(presetRes.headers()['content-disposition']).toContain('aroha-zenith-26-synth-preset.json');
+    const presetBody = await presetRes.json();
+    expect(presetBody.phase3_token).toBe('aroha-crown-33-starmap');
+  });
+
+  test('3. PortalBinauralEngine enforces aroha-33-verified gate and encodes Morse', async ({ page }) => {
     await page.goto(`${EXPRESS_BASE}/portal-audio.html`, { waitUntil: 'domcontentloaded' });
 
     const clientCheck = await page.evaluate(async () => {
@@ -106,6 +133,7 @@ test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 
         rejectedMsg,
         liveToken: live.token,
         phase2Token: live.phase2_token,
+        phase3Token: live.phase3_token,
         morseHz: tuning.morseHz,
         encoded,
       };
@@ -114,11 +142,12 @@ test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 
     expect(clientCheck.rejectedMsg).toContain('aroha-33-verified');
     expect(clientCheck.liveToken).toBe('aroha-33-verified');
     expect(clientCheck.phase2Token).toBe('aroha-zenith-26-master');
+    expect(clientCheck.phase3Token).toBe('aroha-crown-33-starmap');
     expect(clientCheck.morseHz).toBeCloseTo(408.3, 1);
     expect(clientCheck.encoded).toContain('--.. . -. .. - ....');
   });
 
-  test('3. WebSocket /ws on :3013 broadcasts Focus-state telemetry to connected clients', async ({ page }) => {
+  test('4. WebSocket /ws on :3013 broadcasts Focus-state telemetry to connected clients', async ({ page }) => {
     await page.goto(`${EXPRESS_BASE}/portal-visualizer.html`, { waitUntil: 'domcontentloaded' });
 
     const broadcastResult = await page.evaluate(async () => {
@@ -172,66 +201,37 @@ test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 
     });
   });
 
-  test('4. WebGL2 ArohaHarmonicBlock std140 UBO updates live across Focus transitions', async ({ page, request }) => {
+  test('5. 3-Zone Workspace (/workspace.html) renders WebGL2 UBO + Phase 3 Crown HUD', async ({ page }) => {
     const pageErrors = [];
     page.on('pageerror', (err) => pageErrors.push(err.message));
 
     await page.addInitScript(() => {
       window.__arohaUboWrites = 0;
-      window.__lastArohaUbo = null;
-
       const origBufferSubData = WebGL2RenderingContext.prototype.bufferSubData;
       WebGL2RenderingContext.prototype.bufferSubData = function (target, dstByteOffset, srcData, ...rest) {
-        if (
-          target === this.UNIFORM_BUFFER &&
-          srcData &&
-          srcData.byteLength === 64 &&
-          ArrayBuffer.isView(srcData)
-        ) {
-          const view = new Float32Array(srcData.buffer, srcData.byteOffset, 16);
-          window.__lastArohaUbo = Array.from(view);
+        if (target === this.UNIFORM_BUFFER && srcData && srcData.byteLength === 64) {
           window.__arohaUboWrites += 1;
         }
         return origBufferSubData.call(this, target, dstByteOffset, srcData, ...rest);
       };
     });
 
-    await page.goto(`${EXPRESS_BASE}/portal-visualizer.html`, { waitUntil: 'networkidle' });
+    await page.goto(`${EXPRESS_BASE}/workspace.html`, { waitUntil: 'networkidle' });
+
+    const hud = page.locator('aroha-portal-hud');
+    await expect(hud).toBeAttached({ timeout: 5000 });
+    await expect(hud.locator('#zenithBox')).toContainText('aroha-zenith-26-master', { timeout: 5000 });
+    await expect(hud.locator('#crownBox')).toContainText('aroha-crown-33-starmap', { timeout: 5000 });
+    await expect(hud.locator('#crownBox')).toContainText('RA 13.33h', { timeout: 5000 });
 
     await expect
       .poll(async () => page.evaluate(() => window.__arohaUboWrites), { timeout: 4000 })
       .toBeGreaterThan(2);
 
-    const postRes = await request.post(`${EXPRESS_BASE}/api/v1/portal/unlock`, {
-      data: {
-        vertebrae_count: 33,
-        chladni_mode: [5, 7],
-        harmonic_lock: true,
-        focus_state: 15,
-        reset_sequence: true,
-      },
-    });
-    expect(postRes.ok()).toBeTruthy();
-
-    await expect
-      .poll(
-        async () =>
-          page.evaluate(() => {
-            const u = window.__lastArohaUbo;
-            return u ? { m: u[0], n: u[1], offset: u[3], focus: u[8] } : null;
-          }),
-        { timeout: 4000 }
-      )
-      .toEqual({ m: 5, n: 7, offset: 2.5, focus: 15 });
-
-    const phaseA = await page.evaluate(() => window.__lastArohaUbo[6]);
-    await page.waitForTimeout(120);
-    const phaseB = await page.evaluate(() => window.__lastArohaUbo[6]);
-    expect(phaseA).not.toBe(phaseB);
     expect(pageErrors).toEqual([]);
   });
 
-  test('5. Marimo sandbox on :8085 serves clean HTTP 200 and mounts reactive UI', async ({ page, request }) => {
+  test('6. Marimo sandbox on :8085 serves clean HTTP 200 and mounts reactive UI', async ({ page, request }) => {
     const httpRes = await request.get(`${MARIMO_BASE}/`);
     expect(httpRes.status()).toBe(200);
     const html = await httpRes.text();

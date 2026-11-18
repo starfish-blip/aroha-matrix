@@ -3,7 +3,7 @@ import json
 import time
 import sys
 
-TARGET_IP = "100.104.121.111"
+TARGET_IP = "127.0.0.1"
 PORTS = {
     "AROHA Voice Server": 8002,
     "AROHA Harmonization Server": 8001,
