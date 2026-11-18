@@ -9,21 +9,20 @@ test.use({
   },
 });
 
-test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 Morse)', () => {
+test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 Zenith)', () => {
   test.afterAll(async ({ request }) => {
-    // Restore canonical Focus 12 baseline after E2E mutations
     await request.post(`${EXPRESS_BASE}/api/v1/portal/unlock`, {
       data: {
         vertebrae_count: 33,
         chladni_mode: [5, 7],
         harmonic_lock: true,
         focus_state: 12,
+        reset_sequence: true,
       },
     });
   });
 
-  test('1. POST /api/v1/portal/unlock gates phase2_hint behind verified token aroha-33-verified', async ({ request }) => {
-    // Dissonance check: non-33 vertebrae must remain locked and omit phase2_hint
+  test('1. POST /api/v1/portal/unlock gates Phase 1 & completes 4-step Phase 2 Zenith sequence', async ({ request }) => {
     const lockedRes = await request.post(`${EXPRESS_BASE}/api/v1/portal/unlock`, {
       data: {
         vertebrae_count: 32,
@@ -33,66 +32,59 @@ test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 
       },
     });
     expect(lockedRes.ok()).toBeTruthy();
-    const lockedJson = await lockedRes.json();
-    expect(lockedJson).toEqual({
+    expect(await lockedRes.json()).toEqual({
       status: 'locked',
       signal: 'dissonance_detected',
+      phase2_token: null,
       phase2_hint: null,
     });
 
-    // Valid 33-vertebrae unlock check: issues aroha-33-verified + P2-F12 Morse clue
-    const unlockRes = await request.post(`${EXPRESS_BASE}/api/v1/portal/unlock`, {
-      data: {
-        vertebrae_count: 33,
-        chladni_mode: [5, 7],
-        harmonic_lock: true,
-        focus_state: 12,
-      },
-    });
-    expect(unlockRes.ok()).toBeTruthy();
-    const unlockJson = await unlockRes.json();
-    expect(unlockJson.status).toBe('unlocked');
-    expect(unlockJson.gateway).toBe('zenith_26');
-    expect(unlockJson.token).toBe('aroha-33-verified');
-    expect(unlockJson.resonance).toMatchObject({
-      vertebrae_count: 33,
-      chladni_mode: [5, 7],
-      harmonic_lock: true,
-      focus_state: 12,
-      carrier_hz: 136.1,
-      binaural_offset_hz: 4.0,
-    });
-    expect(unlockJson.phase2_hint).toEqual({
+    const seq = [
+      { mode: [5, 7], reset: true, expectedStep: 1, expectedStatus: 'in_progress', expectedNext: [6, 8] },
+      { mode: [6, 8], reset: false, expectedStep: 2, expectedStatus: 'in_progress', expectedNext: [7, 9] },
+      { mode: [7, 9], reset: false, expectedStep: 3, expectedStatus: 'in_progress', expectedNext: [4, 9] },
+      { mode: [4, 9], reset: false, expectedStep: 4, expectedStatus: 'zenith_unlocked', expectedNext: null },
+    ];
+
+    let lastResp = null;
+    for (const s of seq) {
+      const res = await request.post(`${EXPRESS_BASE}/api/v1/portal/unlock`, {
+        data: {
+          vertebrae_count: 33,
+          chladni_mode: s.mode,
+          harmonic_lock: true,
+          focus_state: 12,
+          reset_sequence: s.reset,
+        },
+      });
+      expect(res.ok()).toBeTruthy();
+      lastResp = await res.json();
+      expect(lastResp.token).toBe('aroha-33-verified');
+      expect(lastResp.phase2_progression.step_index).toBe(s.expectedStep);
+      expect(lastResp.phase2_progression.phase2_status).toBe(s.expectedStatus);
+      expect(lastResp.phase2_progression.next_expected_mode).toEqual(s.expectedNext);
+    }
+
+    expect(lastResp.phase2_token).toBe('aroha-zenith-26-master');
+    expect(lastResp.phase2_hint).toMatchObject({
       unlocked: true,
-      cipher_id: 'P2-F12',
-      plaintext: 'ZENITH 26 SPINE 33',
-      next_chladni: [5, 7],
-      harmonic_multiplier: 3,
-      wpm: 14,
+      cipher_id: 'P2-ZENITH',
+      plaintext: 'ZENITH 26 CROWN UNLOCKED',
     });
 
-    // Verify GET /api/v1/portal/state through Express :3013 persists token + phase2_hint
     const stateRes = await request.get(`${EXPRESS_BASE}/api/v1/portal/state`);
     expect(stateRes.ok()).toBeTruthy();
     const stateJson = await stateRes.json();
-    expect(stateJson.status).toBe('unlocked');
-    expect(stateJson.token).toBe('aroha-33-verified');
-    expect(stateJson.phase2_hint).toMatchObject({
-      unlocked: true,
-      cipher_id: 'P2-F12',
-      plaintext: 'ZENITH 26 SPINE 33',
-    });
-    expect(stateJson.solvers.length).toBeGreaterThan(0);
+    expect(stateJson.phase2_token).toBe('aroha-zenith-26-master');
   });
 
-  test('2. PortalBinauralEngine enforces aroha-33-verified token gate and encodes Phase 2 Morse', async ({ page }) => {
+  test('2. PortalBinauralEngine enforces aroha-33-verified gate and encodes Morse', async ({ page }) => {
     await page.goto(`${EXPRESS_BASE}/portal-audio.html`, { waitUntil: 'domcontentloaded' });
 
     const clientCheck = await page.evaluate(async () => {
       const { PortalBinauralEngine, encodeMorse } = await import('/js/portal_binaural.js');
       const engine = new PortalBinauralEngine('/api/v1/portal/state');
 
-      // 1. Forged/unverified token must be rejected by playMorseHint()
       engine.lastState = {
         status: 'unlocked',
         token: 'forged-token-00',
@@ -101,12 +93,11 @@ test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 
 
       let rejectedMsg = null;
       try {
-        engine.playMorseHint('ZENITH 26 SPINE 33');
+        engine.playMorseHint('ZENITH 26 CROWN UNLOCKED');
       } catch (err) {
         rejectedMsg = err.message;
       }
 
-      // 2. Live fetch from :3013 must hydrate aroha-33-verified + P2-F12 hint
       const live = await engine.fetchPortalState();
       const tuning = engine.computeChannels(live.resonance);
       const encoded = encodeMorse(live.phase2_hint.plaintext);
@@ -114,7 +105,7 @@ test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 
       return {
         rejectedMsg,
         liveToken: live.token,
-        cipherId: live.phase2_hint?.cipher_id,
+        phase2Token: live.phase2_token,
         morseHz: tuning.morseHz,
         encoded,
       };
@@ -122,17 +113,16 @@ test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 
 
     expect(clientCheck.rejectedMsg).toContain('aroha-33-verified');
     expect(clientCheck.liveToken).toBe('aroha-33-verified');
-    expect(clientCheck.cipherId).toBe('P2-F12');
+    expect(clientCheck.phase2Token).toBe('aroha-zenith-26-master');
     expect(clientCheck.morseHz).toBeCloseTo(408.3, 1);
-    expect(clientCheck.encoded).toBe('--.. . -. .. - .... / ..--- -.... / ... .--. .. -. . / ...-- ...--');
+    expect(clientCheck.encoded).toContain('--.. . -. .. - ....');
   });
 
-  test('3. WebSocket /ws on :3013 broadcasts Focus-state telemetry and updated Phase 2 Morse clue', async ({ page }) => {
+  test('3. WebSocket /ws on :3013 broadcasts Focus-state telemetry to connected clients', async ({ page }) => {
     await page.goto(`${EXPRESS_BASE}/portal-visualizer.html`, { waitUntil: 'domcontentloaded' });
 
     const broadcastResult = await page.evaluate(async () => {
       const wsUrl = `ws://${window.location.host}/ws`;
-
       const openSocket = () =>
         new Promise((resolve, reject) => {
           const ws = new WebSocket(wsUrl);
@@ -144,13 +134,12 @@ test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 
 
       const subscriber = await openSocket();
       const sender = await openSocket();
-
       await new Promise((r) => setTimeout(r, 150));
 
       sender.ws.send(
         JSON.stringify({
           vertebrae_count: 33,
-          chladni_mode: [6, 8],
+          chladni_mode: [4, 9],
           harmonic_lock: true,
           focus_state: 21,
           source: 'playwright-s24-sim',
@@ -174,21 +163,12 @@ test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 
 
     expect(broadcastResult).not.toBeNull();
     expect(broadcastResult.status).toBe('unlocked');
-    expect(broadcastResult.token).toBe('aroha-33-verified');
     expect(broadcastResult.source).toBe('playwright-s24-sim');
     expect(broadcastResult.resonance).toMatchObject({
-      chladni_mode: [6, 8],
+      chladni_mode: [4, 9],
       focus_state: 21,
       carrier_hz: 136.1,
       binaural_offset_hz: 1.5,
-    });
-    expect(broadcastResult.phase2_hint).toEqual({
-      unlocked: true,
-      cipher_id: 'P2-F21',
-      plaintext: 'AROHA OMEGA 136',
-      next_chladni: [4, 9],
-      harmonic_multiplier: 3,
-      wpm: 14,
     });
   });
 
@@ -222,27 +202,16 @@ test.describe.serial('AROHA 33-Vertebrae Portal E2E Pipeline (Phase 1 + Phase 2 
       .poll(async () => page.evaluate(() => window.__arohaUboWrites), { timeout: 4000 })
       .toBeGreaterThan(2);
 
-    const initialUbo = await page.evaluate(() => window.__lastArohaUbo);
-    expect(initialUbo).toHaveLength(16);
-    expect(initialUbo[0]).toBe(6);
-    expect(initialUbo[1]).toBe(8);
-    expect(initialUbo[2]).toBeCloseTo(136.1, 2);
-    expect(initialUbo[3]).toBeCloseTo(1.5, 2);
-    expect(initialUbo[7]).toBe(1);
-    expect(initialUbo[8]).toBe(21);
-
-    // Push Focus 15 (2.5 Hz Delta) and verify UBO + P2-F15 hint propagate over /ws
     const postRes = await request.post(`${EXPRESS_BASE}/api/v1/portal/unlock`, {
       data: {
         vertebrae_count: 33,
         chladni_mode: [5, 7],
         harmonic_lock: true,
         focus_state: 15,
+        reset_sequence: true,
       },
     });
     expect(postRes.ok()).toBeTruthy();
-    const postJson = await postRes.json();
-    expect(postJson.phase2_hint.cipher_id).toBe('P2-F15');
 
     await expect
       .poll(

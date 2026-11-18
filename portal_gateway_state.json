@@ -2,7 +2,7 @@
   "status": "unlocked",
   "gateway": "zenith_26",
   "token": "aroha-33-verified",
-  "last_unlocked_utc": "2026-11-18T01:30:24.558481+00:00",
+  "last_unlocked_utc": "2026-11-18T01:37:19.906999+00:00",
   "resonance": {
     "vertebrae_count": 33,
     "chladni_mode": [
@@ -10,9 +10,9 @@
       7
     ],
     "harmonic_lock": true,
-    "focus_state": 15,
+    "focus_state": 12,
     "carrier_hz": 136.1,
-    "binaural_offset_hz": 2.5
+    "binaural_offset_hz": 4.0
   },
   "solvers": [
     {
@@ -93,6 +93,42 @@
       "focus_state": 15,
       "carrier_hz": 136.1,
       "binaural_offset_hz": 2.5
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:37:11.427341+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:37:14.890526+00:00",
+      "gateway": "zenith_26",
+      "source": "playwright-s24-sim",
+      "chladni_mode": [
+        6,
+        8
+      ],
+      "focus_state": 21,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 1.5
+    },
+    {
+      "unlocked_at_utc": "2026-11-18T01:37:19.906999+00:00",
+      "gateway": "zenith_26",
+      "source": "http",
+      "chladni_mode": [
+        5,
+        7
+      ],
+      "focus_state": 12,
+      "carrier_hz": 136.1,
+      "binaural_offset_hz": 4.0
     }
   ]
 }

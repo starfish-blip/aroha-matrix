@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AROHA WebGL2 UBO + Dichotic Audio + Phase 2 Morse</title>
+  <title>AROHA WebGL2 UBO + Phase 2 Eigenmode Sequence</title>
   <style>
     body {
       margin: 0;
@@ -11,7 +11,7 @@
       color: #e2e8f0;
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       display: grid;
-      grid-template-columns: 1fr 370px;
+      grid-template-columns: 1fr 380px;
       height: 100vh;
     }
     canvas { width: 100%; height: 100%; display: block; }
@@ -21,7 +21,7 @@
       padding: 1rem;
       display: flex;
       flex-direction: column;
-      gap: 0.65rem;
+      gap: 0.6rem;
       overflow-y: auto;
     }
     button, select {
@@ -29,7 +29,7 @@
       color: #5eead4;
       border: 1px solid #334155;
       border-radius: 6px;
-      padding: 0.5rem 0.75rem;
+      padding: 0.48rem 0.7rem;
       font-family: inherit;
       cursor: pointer;
       width: 100%;
@@ -39,31 +39,39 @@
       background: #030712;
       border: 1px solid #1e293b;
       border-radius: 6px;
-      padding: 0.65rem;
-      font-size: 0.75rem;
+      padding: 0.6rem;
+      font-size: 0.74rem;
       line-height: 1.4;
       color: #94a3b8;
       margin: 0;
       white-space: pre-wrap;
     }
+    #zenithHud { color: #34d399; border-color: #065f46; }
     #morseHud { color: #fbbf24; border-color: #422006; }
   </style>
 </head>
 <body>
   <canvas id="glCanvas"></canvas>
   <aside>
-    <strong>AROHA UBO + Phase 2 Morse HUD</strong>
+    <strong>AROHA Phase 2 Zenith Sequence HUD</strong>
     <button id="btnStart">1. Sync State &amp; Start Dichotic + Morse</button>
-    <button id="btnReplayMorse">2. Replay Phase 2 Morse Hint</button>
-    <button id="btnMidiLearn">3. MIDI Learn (Move Oxygen 61 Fader/Knob)</button>
+    <button id="btnMidiLearn">2. MIDI Learn (Move Oxygen 61 Fader/Knob)</button>
     <select id="focusSelect">
       <option value="10">Focus 10 (7.5 Hz Theta | CC 0-31)</option>
       <option value="12" selected>Focus 12 (4.0 Hz Theta-Delta | CC 32-63)</option>
       <option value="15">Focus 15 (2.5 Hz Delta | CC 64-95)</option>
       <option value="21">Focus 21 (1.5 Hz Epsilon | CC 96-127)</option>
     </select>
-    <button id="btnFocus">4. Manual POST Focus State</button>
-    <button id="btnStop">5. Fade Out Audio</button>
+    <select id="modeSelect">
+      <option value="5,7" selected>Step 1: Chladni [5, 7]</option>
+      <option value="6,8">Step 2: Chladni [6, 8]</option>
+      <option value="7,9">Step 3: Chladni [7, 9]</option>
+      <option value="4,9">Step 4: Chladni [4, 9] (Zenith Lock)</option>
+    </select>
+    <button id="btnTransmit">3. Transmit Focus + Chladni Mode</button>
+    <button id="btnResetSeq">Reset Phase 2 Sequence</button>
+    <button id="btnStop">Fade Out Audio</button>
+    <pre id="zenithHud">Phase 2 Sequence: loading...</pre>
     <pre id="morseHud">Phase 2 Morse: awaiting start...</pre>
     <pre id="ioHud">MIDI: scanning... | WS: connecting...</pre>
     <pre id="uboHud">Initializing WebGL2 std140 UBO...</pre>
@@ -110,10 +118,21 @@
     gl.enableVertexAttribArray(posLoc);
     gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
+    const zenithHud = document.getElementById('zenithHud');
     const morseHud = document.getElementById('morseHud');
     const ioHud = document.getElementById('ioHud');
     const uboHud = document.getElementById('uboHud');
     const focusSelect = document.getElementById('focusSelect');
+    const modeSelect = document.getElementById('modeSelect');
+
+    function renderZenithHud(state) {
+      const prog = state?.phase2_progression || {};
+      const nextMode = Array.isArray(prog.next_expected_mode) ? `[${prog.next_expected_mode.join(', ')}]` : 'COMPLETE';
+      zenithHud.textContent =
+        `Phase 2 Status : ${prog.phase2_status || 'awaiting_sequence'} (${prog.step_index ?? 0}/${prog.total_steps ?? 4})\n` +
+        `Next Eigenmode : ${nextMode}\n` +
+        `Phase 2 Token  : ${state?.phase2_token || 'LOCKED'}`;
+    }
 
     const engine = new PortalBinauralEngine('/api/v1/portal/state', {
       morseEnabled: true,
@@ -122,13 +141,14 @@
         if (ev.type === 'morse_started') {
           morseHud.textContent = `Phase 2 [${ev.cipherId}] @ ${ev.beaconHz} Hz\n"${ev.plaintext}"\n${ev.encoded}`;
         } else if (ev.type === 'morse_char') {
-          morseHud.textContent = `Phase 2 [${ev.cipherId}] Keying '${ev.char}' (${ev.pattern})\n"${ev.plaintext}"\n${ev.encoded}`;
+          morseHud.textContent = `Phase 2 [${ev.cipherId}] Keying '${ev.char}' (${ev.pattern})\n"${ev.plaintext}"`;
         } else if (ev.type === 'morse_stopped') {
           morseHud.textContent = 'Phase 2 Morse: idle';
         }
       },
     });
-    await engine.fetchPortalState().catch(() => null);
+    const initState = await engine.fetchPortalState().catch(() => null);
+    if (initState) renderZenithHud(initState);
 
     const uboBridge = new PortalUBOBridge(gl, program, engine, {
       blockName: 'ArohaHarmonicBlock',
@@ -161,16 +181,17 @@
           wsLine = 'WS: reconnecting...';
         } else if (ev.type === 'ws_state') {
           const f = ev.state?.resonance?.focus_state;
+          const m = ev.state?.resonance?.chladni_mode;
           if (f) focusSelect.value = String(f);
-          lastEventLine = `WS sync (${ev.state.source}): Focus ${f}`;
+          if (Array.isArray(m)) modeSelect.value = m.join(',');
+          renderZenithHud(ev.state);
+          lastEventLine = `WS sync (${ev.state.source}): Focus ${f} | Mode [${m}]`;
           if (engine.isRunning && engine.morseEnabled && ev.state?.phase2_hint) {
             engine.playMorseHint(ev.state.phase2_hint);
           }
         } else if (ev.type === 'post_confirmed') {
+          renderZenithHud(ev.state);
           lastEventLine = `Persisted (${ev.source}) -> ledger #${ev.state.ledger_count}`;
-          if (engine.isRunning && engine.morseEnabled && ev.state?.phase2_hint) {
-            engine.playMorseHint(ev.state.phase2_hint);
-          }
         }
         updateIoHud();
       },
@@ -179,21 +200,39 @@
     await router.initMIDI();
     router.initWebSocket();
 
+    async function submitModeAndFocus(resetSequence = false) {
+      const focusState = Number(focusSelect.value);
+      const chladniMode = modeSelect.value.split(',').map(Number);
+      const res = await fetch('/api/v1/portal/unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vertebrae_count: 33,
+          chladni_mode: chladniMode,
+          harmonic_lock: true,
+          focus_state: focusState,
+          reset_sequence: resetSequence,
+        }),
+      });
+      const updated = await res.json();
+      engine.lastState = updated;
+      renderZenithHud(updated);
+      if (engine.isRunning) {
+        await engine.syncLive();
+      }
+    }
+
     document.getElementById('btnStart').addEventListener('click', async () => {
-      await engine.startFromPortal(0.22);
+      const { state } = await engine.startFromPortal(0.22);
+      renderZenithHud(state);
     });
-    document.getElementById('btnReplayMorse').addEventListener('click', () => {
-      engine.playMorseHint();
+    document.getElementById('btnTransmit').addEventListener('click', () => submitModeAndFocus(false));
+    document.getElementById('btnResetSeq').addEventListener('click', () => {
+      modeSelect.value = '5,7';
+      submitModeAndFocus(true);
     });
-    document.getElementById('btnStop').addEventListener('click', () => {
-      engine.stop();
-    });
-    document.getElementById('btnMidiLearn').addEventListener('click', () => {
-      router.armMidiLearn();
-    });
-    document.getElementById('btnFocus').addEventListener('click', () => {
-      router.commitFocusState(Number(focusSelect.value), 'ui');
-    });
+    document.getElementById('btnStop').addEventListener('click', () => engine.stop());
+    document.getElementById('btnMidiLearn').addEventListener('click', () => router.armMidiLearn());
 
     let lastHudUpdate = 0;
     function render(nowMs) {
