@@ -10,11 +10,20 @@ app = FastAPI(title="AROHA Matrix Engine", version="2.4.0")
 portal_router = APIRouter(prefix="/api/v1/portal", tags=["portal"])
 
 STATE_FILE = Path(__file__).resolve().parent / "portal_gateway_state.json"
+VERIFIED_TOKEN = "aroha-33-verified"
+
 FOCUS_OFFSETS = {
     10: 7.5,  # Theta boundary
     12: 4.0,  # Theta-Delta expanded awareness
     15: 2.5,  # Deep Delta no-time state
     21: 1.5,  # Epsilon-Delta edge threshold
+}
+
+PHASE2_MORSE_CLUES = {
+    10: {"cipher_id": "P2-F10", "plaintext": "GATEWAY 10 MODE 6 8", "next_chladni": [6, 8]},
+    12: {"cipher_id": "P2-F12", "plaintext": "ZENITH 26 SPINE 33", "next_chladni": [5, 7]},
+    15: {"cipher_id": "P2-F15", "plaintext": "VOID DELTA MODE 7 9", "next_chladni": [7, 9]},
+    21: {"cipher_id": "P2-F21", "plaintext": "AROHA OMEGA 136", "next_chladni": [4, 9]},
 }
 
 
@@ -61,6 +70,20 @@ def quantize_cc_to_focus(cc_val: int) -> int:
     return 21
 
 
+def build_phase2_hint(status: str | None, token: str | None, focus_state: int) -> dict | None:
+    if status != "unlocked" or token != VERIFIED_TOKEN:
+        return None
+    clue = PHASE2_MORSE_CLUES.get(focus_state, PHASE2_MORSE_CLUES[12])
+    return {
+        "unlocked": True,
+        "cipher_id": clue["cipher_id"],
+        "plaintext": clue["plaintext"],
+        "next_chladni": clue["next_chladni"],
+        "harmonic_multiplier": 3,
+        "wpm": 14,
+    }
+
+
 def read_portal_state() -> dict:
     if not STATE_FILE.exists():
         return {
@@ -68,9 +91,13 @@ def read_portal_state() -> dict:
             "gateway": "zenith_26",
             "token": None,
             "resonance": {},
+            "phase2_hint": None,
             "solvers": [],
         }
-    return json.loads(STATE_FILE.read_text(encoding="utf-8"))
+    data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+    focus = int((data.get("resonance") or {}).get("focus_state", 12))
+    data["phase2_hint"] = build_phase2_hint(data.get("status"), data.get("token"), focus)
+    return data
 
 
 def write_portal_state(data: dict) -> None:
@@ -87,11 +114,12 @@ def persist_portal_unlock(
     source: str = "http",
 ) -> dict:
     if vertebrae_count != 33 or not harmonic_lock:
-        return {"status": "locked", "signal": "dissonance_detected"}
+        return {"status": "locked", "signal": "dissonance_detected", "phase2_hint": None}
 
     carrier_hz = round(136.1 * (vertebrae_count / 33.0), 2)
     binaural_offset_hz = FOCUS_OFFSETS.get(focus_state, 4.0)
     now_utc = datetime.now(timezone.utc).isoformat()
+    phase2_hint = build_phase2_hint("unlocked", VERIFIED_TOKEN, focus_state)
 
     current = read_portal_state()
     resonance = {
@@ -119,9 +147,10 @@ def persist_portal_unlock(
     updated = {
         "status": "unlocked",
         "gateway": "zenith_26",
-        "token": "aroha-33-verified",
+        "token": VERIFIED_TOKEN,
         "last_unlocked_utc": now_utc,
         "resonance": resonance,
+        "phase2_hint": phase2_hint,
         "solvers": solvers[-50:],
     }
     write_portal_state(updated)
@@ -131,8 +160,9 @@ def persist_portal_unlock(
         "source": source,
         "status": "unlocked",
         "gateway": "zenith_26",
-        "token": "aroha-33-verified",
+        "token": VERIFIED_TOKEN,
         "resonance": resonance,
+        "phase2_hint": phase2_hint,
         "ledger_count": len(updated["solvers"]),
     }
 

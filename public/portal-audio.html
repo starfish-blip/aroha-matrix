@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AROHA 33-Vertebrae Dichotic Entrainment</title>
+  <title>AROHA 33-Vertebrae Dichotic Entrainment + Phase 2 Morse</title>
   <style>
     body {
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       background: #070b12;
       color: #e2e8f0;
-      max-width: 720px;
+      max-width: 760px;
       margin: 2rem auto;
       padding: 0 1rem;
     }
@@ -20,6 +20,7 @@
       padding: 1.25rem;
       margin-bottom: 1rem;
     }
+    .row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.65rem; }
     button, select {
       background: #1e293b;
       color: #5eead4;
@@ -28,9 +29,16 @@
       padding: 0.55rem 0.9rem;
       font-family: inherit;
       cursor: pointer;
-      margin-right: 0.5rem;
     }
     button:hover { border-color: #5eead4; }
+    .morse-banner {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 0.75rem;
+      color: #fbbf24;
+      margin-top: 0.75rem;
+    }
     pre {
       background: #020617;
       padding: 0.85rem;
@@ -42,11 +50,15 @@
 </head>
 <body>
   <div class="card">
-    <h2>AROHA Portal Dichotic Binaural Engine (:3013)</h2>
-    <p>Headphones required for dichotic StereoPannerNode isolation (L = -1.0, R = +1.0).</p>
-    <div>
-      <button id="btnStart">Engaged Sync &amp; Start Audio</button>
+    <h2>AROHA Portal Dichotic Engine + Phase 2 Morse Beacon (:3013)</h2>
+    <p>Dichotic L/R oscillators (-1.0 / +1.0 pan) + 408.3 Hz (3x harmonic) center-panned Phase 2 Morse clue.</p>
+    <div class="row">
+      <button id="btnStart">1. Unlock Sync &amp; Start Audio</button>
+      <button id="btnReplayMorse">2. Replay Phase 2 Morse Hint</button>
+      <button id="btnToggleMorse">Morse Loop: ON</button>
       <button id="btnStop">Fade Out</button>
+    </div>
+    <div class="row">
       <select id="focusSelect">
         <option value="10">Focus 10 (7.5 Hz Theta)</option>
         <option value="12" selected>Focus 12 (4.0 Hz Theta-Delta)</option>
@@ -55,24 +67,40 @@
       </select>
       <button id="btnPushFocus">POST Focus State</button>
     </div>
+    <div class="morse-banner" id="morseBanner">Phase 2 Beacon: awaiting aroha-33-verified unlock...</div>
   </div>
 
   <div class="card">
     <div id="readout">Status: Idle</div>
-    <pre id="jsonOut">Click "Engaged Sync &amp; Start Audio" to query /api/v1/portal/state...</pre>
+    <pre id="jsonOut">Click "Unlock Sync &amp; Start Audio" to query /api/v1/portal/state...</pre>
   </div>
 
   <script type="module">
     import { PortalBinauralEngine } from '/js/portal_binaural.js';
 
-    const engine = new PortalBinauralEngine('/api/v1/portal/state');
     const readout = document.getElementById('readout');
     const jsonOut = document.getElementById('jsonOut');
+    const morseBanner = document.getElementById('morseBanner');
+    const btnToggleMorse = document.getElementById('btnToggleMorse');
+
+    const engine = new PortalBinauralEngine('/api/v1/portal/state', {
+      morseEnabled: true,
+      morseLoop: true,
+      onMorseEvent: (ev) => {
+        if (ev.type === 'morse_started') {
+          morseBanner.textContent = `[${ev.cipherId} @ ${ev.beaconHz} Hz] TX: "${ev.plaintext}" (${ev.encoded})`;
+        } else if (ev.type === 'morse_char') {
+          morseBanner.textContent = `[${ev.cipherId} @ ${ev.beaconHz} Hz] Keying '${ev.char}' (${ev.pattern}) | ${ev.encoded}`;
+        } else if (ev.type === 'morse_stopped') {
+          morseBanner.textContent = 'Phase 2 Beacon: standby';
+        }
+      },
+    });
 
     function render(state, tuning) {
       readout.textContent =
-        `Gateway: ${state.gateway} | Focus ${tuning.focusState} | ` +
-        `L: ${tuning.leftHz} Hz | R: ${tuning.rightHz} Hz | Beat: ${tuning.offsetHz} Hz`;
+        `Gateway: ${state.gateway} | Token: ${state.token} | Focus ${tuning.focusState} | ` +
+        `L: ${tuning.leftHz} Hz | R: ${tuning.rightHz} Hz | Beacon: ${tuning.morseHz} Hz`;
       jsonOut.textContent = JSON.stringify(state, null, 2);
     }
 
@@ -82,6 +110,24 @@
         render(state, tuning);
       } catch (err) {
         readout.textContent = `Blocked: ${err.message}`;
+      }
+    });
+
+    document.getElementById('btnReplayMorse').addEventListener('click', () => {
+      try {
+        engine.playMorseHint();
+      } catch (err) {
+        morseBanner.textContent = `Blocked: ${err.message}`;
+      }
+    });
+
+    btnToggleMorse.addEventListener('click', () => {
+      engine.morseEnabled = !engine.morseEnabled;
+      btnToggleMorse.textContent = `Morse Loop: ${engine.morseEnabled ? 'ON' : 'OFF'}`;
+      if (!engine.morseEnabled) {
+        engine.stopMorseHint();
+      } else if (engine.isRunning) {
+        engine.playMorseHint();
       }
     });
 
