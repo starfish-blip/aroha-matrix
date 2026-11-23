@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('AROHA Matrix: 48-Byte std140 Maramataka + Web Audio FFT UBO Suite', () => {
 
@@ -83,7 +83,7 @@ test.describe('AROHA Matrix: 48-Byte std140 Maramataka + Web Audio FFT UBO Suite
 
     await page.waitForFunction(() => {
       const f = window.__AROHA_DEBUG__.readGPUUBO().floats;
-      return Math.round(f[7]) === 16 && Math.abs(f[8] - 0.85) < 0.01;
+      return Math.round(f[7]) === 16 && Math.abs(f[8] - 0.85) < 0.01 && Math.abs(f[6] - 523.26) < 0.5;
     }, { timeout: 10000 });
 
     const uboDump = await page.evaluate(() => window.__AROHA_DEBUG__.readGPUUBO());
