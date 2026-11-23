@@ -27,3 +27,7 @@ playwright-report/
 *.bak.*
 *.tmp
 __marimo__/
+# Local backups, prototype archives, and Playwright artifacts
+app.py.bak
+_archive_prototypes/
+blob-report/
