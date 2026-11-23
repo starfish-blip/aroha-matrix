@@ -1,10 +1,10 @@
-import fs from "node:fs";
+﻿import fs from "node:fs";
 import path from "node:path";
 import { test, expect } from "@playwright/test";
 
 const WORKSPACE_DIR = "C:/Users/terry/aroha-matrix";
-const HARNESS_ORIGIN = "http://127.0.0.1:8000/__harness__";
 const TELEMETRY_BASE = "http://100.64.150.117:8000";
+const HARNESS_ORIGIN = `${TELEMETRY_BASE}/__harness__`;
 const STREAM_ENDPOINT = `${TELEMETRY_BASE}/api/v1/portal/telemetry/stream`;
 const UNLOCK_ENDPOINT = `${TELEMETRY_BASE}/api/v1/portal/unlock`;
 
@@ -45,8 +45,8 @@ test("8 ES components receive live SSE frames, WebGL2 UBO upload, and POST unloc
       const poll = () => {
         const h = window.__AROHA_HARNESS__;
         const minUpdates = Math.min(...h.components.map((c) => c.updates));
-        if (minUpdates >= 1) resolve();
-        else if (Date.now() - started > 4000) reject(new Error("No initial SSE telemetry frame received"));
+        if (minUpdates >= 2) resolve();
+        else if (Date.now() - started > 5000) reject(new Error("No live SSE telemetry frame received (still on initial state)"));
         else setTimeout(poll, 50);
       };
       poll();
