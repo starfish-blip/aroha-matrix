@@ -31,6 +31,14 @@ PHASE2_MORSE_CLUES = {
 }
 
 
+
+LAST_MIDI = {"midi": 60, "velocity": 0.0, "kind": "off", "freq": 261.63}
+
+class MidiNoteRequest(BaseModel):
+    midi: int = 60
+    velocity: float = 0.8
+    kind: str = "on"
+
 class PortalUnlockRequest(BaseModel):
     vertebrae_count: int = 33
     chladni_mode: list[int] = [5, 7]
@@ -457,6 +465,9 @@ async def telemetry_ws(ws: WebSocket):
                     "maramataka_phase": "Rakaunui" if l_day == 16 else f"Night {l_day}",
                     "lunar_energy": 1.0 if l_day == 16 else 0.75,
                     "lunar_illumination": 1.0 if l_day == 16 else 0.5,
+                    "midi_note": LAST_MIDI["midi"],
+                    "midi_velocity": LAST_MIDI["velocity"],
+                    "midi_active": 1.0 if LAST_MIDI["kind"] == "on" else 0.0,
                     "wai_flux": 1.05 if l_day == 16 else 1.0,
                 })
             current = read_portal_state()
@@ -501,3 +512,10 @@ if __name__ == "__main__":
 # --- Mounted AROHA Portal SSE Router ---
 from portal_sse_routes import router as _portal_sse_router
 app.include_router(_portal_sse_router)
+
+
+@app.post("/api/midi-note")
+async def midi_note(req: MidiNoteRequest):
+    global LAST_MIDI
+    LAST_MIDI = {"midi": req.midi, "velocity": req.velocity, "kind": req.kind, "freq": 440 * (2 ** ((req.midi - 69) / 12))}
+    return {"ok": True, **LAST_MIDI}

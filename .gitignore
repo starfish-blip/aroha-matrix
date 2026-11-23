@@ -33,3 +33,5 @@ _archive_prototypes/
 blob-report/
 
 _backups/
+
+.venv-pitch/

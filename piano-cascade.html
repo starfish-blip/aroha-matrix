@@ -1,0 +1,1063 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AROHA // Piano Cascade MIDI Workstation</title>
+<style>
+  :root {
+    --bg: #050811;
+    --panel: #0b1224;
+    --panel-border: rgba(0, 240, 255, 0.22);
+    --cyan: #00f0ff;
+    --violet: #b565ff;
+    --gold: #f5b700;
+    --rose: #ff3b6b;
+    --text: #e6f1ff;
+    --muted: #7a8ba8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: radial-gradient(circle at 50% 0%, #0e1830 0%, var(--bg) 65%);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+  }
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 16px;
+    background: rgba(11, 18, 36, 0.92);
+    border-bottom: 1px solid var(--panel-border);
+    z-index: 10;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    font-size: 0.95rem;
+    color: var(--cyan);
+    text-shadow: 0 0 12px rgba(0, 240, 255, 0.45);
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--muted);
+  }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--rose);
+    box-shadow: 0 0 8px var(--rose);
+  }
+  .dot.ok {
+    background: #00ff9d;
+    box-shadow: 0 0 8px #00ff9d;
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  button, select, label.file-btn {
+    background: rgba(15, 25, 48, 0.9);
+    color: var(--text);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 6px 11px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  button:hover, select:hover, label.file-btn:hover {
+    border-color: var(--cyan);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+  }
+  button.primary {
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(181, 101, 255, 0.2));
+    border-color: var(--cyan);
+    font-weight: 600;
+  }
+  button.active {
+    background: rgba(245, 183, 0, 0.22);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+  input[type="file"] { display: none; }
+  .toolbar-sub {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 16px;
+    background: rgba(8, 13, 27, 0.85);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.78rem;
+  }
+  .group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .slider-wrap { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+  input[type="range"] { accent-color: var(--cyan); width: 82px; }
+  .hud {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-variant-numeric: tabular-nums;
+  }
+  .hud span b { color: var(--cyan); font-size: 0.92rem; }
+  .hud .streak b { color: var(--gold); }
+  #stage-wrap {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  #feedback {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    text-shadow: 0 0 18px currentColor;
+  }
+  #progress-bar {
+    height: 4px;
+    width: 100%;
+    background: rgba(255,255,255,0.07);
+    cursor: pointer;
+  }
+  #progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--violet), var(--cyan), var(--gold));
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span>AROHA // PIANO CASCADE</span>
+    <a href="checkin.html" style="color:var(--cyan);text-decoration:none;font-size:0.78rem;letter-spacing:0.08em;">HUB</a><span class="pill"><span id="midi-dot" class="dot"></span><span id="midi-status">NO MIDI DEVICE</span></span>
+  </div>
+  <div class="controls">
+    <select id="song-select" title="Built-in Songs">
+      <option value="police">Song: Every Breath Arpeggio (Ab / Fm)</option>
+      <option value="dire">Song: Romeo & Juliet Progression (F / C / Dm)</option>
+      <option value="cosmic">Song: Cosmic A-Minor Cascade</option>
+    </select>
+    <label class="file-btn" title="Load Standard MIDI File (.mid)">
+      + Load .MID
+      <input id="midi-file" type="file" accept=".mid,.midi" />
+    </label>
+    <label class="file-btn" title="Load WAV/MP3 Backing Track">
+      + Load .WAV / .MP3
+      <input id="audio-file" type="file" accept="audio/*" />
+    </label>
+    <button id="btn-play" class="primary">PLAY</button>
+    <button id="btn-restart">RESTART</button>
+    <button id="btn-wait" title="Pause cascade until you press the right key">WAIT MODE: OFF</button>
+    <button id="btn-guide" class="active" title="Play guide piano audio for falling notes">GUIDE PIANO: ON</button>
+  </div>
+</header>
+
+<div class="toolbar-sub">
+  <div class="group">
+    <select id="voice-select" title="Synthesizer Voice">
+      <option value="piano">Voice: Acoustic Piano</option>
+      <option value="epiano">Voice: Electric Piano</option>
+      <option value="pad">Voice: Cosmic Pad</option>
+      <option value="saw">Voice: Synth Lead</option>
+    </select>
+    <div class="slider-wrap">
+      <span>Speed</span>
+      <input id="speed-slider" type="range" min="0.5" max="1.25" step="0.05" value="1.0" />
+      <span id="speed-val">1.00x</span>
+    </div>
+    <div class="slider-wrap">
+      <span>WAV Sync</span>
+      <input id="offset-slider" type="range" min="-500" max="500" step="10" value="0" />
+      <span id="offset-val">0ms</span>
+    </div>
+    <div class="slider-wrap">
+      <span>Vol</span>
+      <input id="vol-slider" type="range" min="0" max="1" step="0.05" value="0.75" />
+    </div>
+  </div>
+  <div class="hud">
+    <span id="wav-label" style="color:var(--violet)">No WAV loaded</span>
+    <span>TIME <b id="hud-time">0:00</b></span>
+    <span>SCORE <b id="hud-score">0</b></span>
+    <span class="streak">STREAK <b id="hud-streak">0</b></span>
+  </div>
+</div>
+
+<div id="progress-bar"><div id="progress-fill"></div></div>
+
+<div id="stage-wrap">
+  <canvas id="stage"></canvas>
+  <div id="feedback"></div>
+</div>
+
+<script>
+(() => {
+  // === 61-KEY RANGE: C2 (36) to C7 (96) ===
+  const MIN_MIDI = 36;
+  const MAX_MIDI = 96;
+  const WHITE_PCS = new Set([0, 2, 4, 5, 7, 9, 11]);
+  const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d');
+  const feedbackEl = document.getElementById('feedback');
+
+  let keys = []; // { midi, isBlack, x, w, h, name }
+  let hitLineY = 0;
+  let keyHeight = 150;
+  const FALL_SECONDS = 3.0; // visible lookahead window
+
+  // === AUDIO ENGINE (Web Audio API) ===
+  let audioCtx = null;
+  let masterGain = null;
+  const activeVoices = new Map();
+  let sustainPedal = false;
+  const sustainedNotes = new Set();
+
+  function ensureAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = parseFloat(document.getElementById('vol-slider').value);
+      masterGain.connect(audioCtx.destination);
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function midiToFreq(m) {
+    return 440 * Math.pow(2, (m - 69) / 12);
+  }
+
+  function triggerVoice(midi, velocity = 0.8, isGuide = false) {
+    ensureAudio();
+    const keyId = (isGuide ? 'g_' : 'u_') + midi;
+    stopVoice(midi, isGuide, true);
+
+    const now = audioCtx.currentTime;
+    const freq = midiToFreq(midi);
+    const voiceType = document.getElementById('voice-select').value;
+    const gain = audioCtx.createGain();
+    const peak = Math.max(0.05, velocity) * (isGuide ? 0.28 : 0.42);
+    const oscs = [];
+
+    if (voiceType === 'piano') {
+      // Multi-harmonic acoustic piano approximation
+      const harmonics = [
+        { mult: 1, type: 'triangle', amp: 1.0 },
+        { mult: 2, type: 'sine', amp: 0.42 },
+        { mult: 3, type: 'sine', amp: 0.16 },
+        { mult: 4, type: 'sine', amp: 0.06 }
+      ];
+      harmonics.forEach(h => {
+        const o = audioCtx.createOscillator();
+        const hg = audioCtx.createGain();
+        o.type = h.type;
+        o.frequency.setValueAtTime(freq * h.mult, now);
+        hg.gain.setValueAtTime(h.amp, now);
+        o.connect(hg);
+        hg.connect(gain);
+        o.start(now);
+        oscs.push(o);
+      });
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(peak, now + 0.008);
+      gain.gain.exponentialRampToValueAtTime(peak * 0.25, now + 0.35);
+      gain.gain.exponentialRampToValueAtTime(0.0008, now + 2.4);
+    } else if (voiceType === 'epiano') {
+      const o1 = audioCtx.createOscillator();
+      const o2 = audioCtx.createOscillator();
+      o1.type = 'sine'; o1.frequency.setValueAtTime(freq, now);
+      o2.type = 'triangle'; o2.frequency.setValueAtTime(freq * 2, now);
+      const g2 = audioCtx.createGain(); g2.gain.value = 0.2;
+      o1.connect(gain); o2.connect(g2); g2.connect(gain);
+      o1.start(now); o2.start(now);
+      oscs.push(o1, o2);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(peak, now + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+    } else if (voiceType === 'pad') {
+      const o1 = audioCtx.createOscillator();
+      const o2 = audioCtx.createOscillator();
+      o1.type = 'triangle'; o1.frequency.setValueAtTime(freq, now);
+      o2.type = 'sine'; o2.frequency.setValueAtTime(freq * 1.003, now);
+      o1.connect(gain); o2.connect(gain);
+      o1.start(now); o2.start(now);
+      oscs.push(o1, o2);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(peak * 0.7, now + 0.14);
+      gain.gain.exponentialRampToValueAtTime(peak * 0.45, now + 1.0);
+    } else {
+      const o = audioCtx.createOscillator();
+      const flt = audioCtx.createBiquadFilter();
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(freq, now);
+      flt.type = 'lowpass'; flt.frequency.setValueAtTime(freq * 4, now);
+      o.connect(flt); flt.connect(gain);
+      o.start(now); oscs.push(o);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(peak * 0.65, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(peak * 0.35, now + 0.3);
+    }
+
+    gain.connect(masterGain);
+    activeVoices.set(keyId, { oscs, gain });
+  }
+
+  function stopVoice(midi, isGuide = false, immediate = false) {
+    if (!audioCtx) return;
+    if (!isGuide && sustainPedal && !immediate) {
+      sustainedNotes.add(midi);
+      return;
+    }
+    const keyId = (isGuide ? 'g_' : 'u_') + midi;
+    const v = activeVoices.get(keyId);
+    if (!v) return;
+    const now = audioCtx.currentTime;
+    const rel = immediate ? 0.02 : 0.16;
+    try {
+      v.gain.gain.cancelScheduledValues(now);
+      v.gain.gain.setValueAtTime(Math.max(v.gain.gain.value, 0.001), now);
+      v.gain.gain.exponentialRampToValueAtTime(0.0001, now + rel);
+      v.oscs.forEach(o => o.stop(now + rel + 0.02));
+    } catch {}
+    activeVoices.delete(keyId);
+  }
+
+  // === BUILT-IN SONGS ===
+  function buildBuiltInSongs() {
+    const mk = (notes, bpm) => {
+      const beat = 60 / bpm;
+      return notes.map(n => ({
+        midi: n[0],
+        time: n[1] * beat,
+        duration: n[2] * beat,
+        hand: n[3] || (n[0] >= 60 ? 'R' : 'L'),
+        hit: false,
+        missed: false,
+        guideStarted: false,
+        guideStopped: false
+      }));
+    };
+
+    // 1. Every Breath Arpeggio (add9 pattern in Ab / Fm / Db / Eb)
+    const police = [];
+    const prog1 = [
+      { bass: 44, arp: [56, 63, 68, 70, 68, 63, 60, 63] }, // Ab add9
+      { bass: 44, arp: [56, 63, 68, 70, 68, 63, 60, 63] },
+      { bass: 41, arp: [53, 60, 65, 67, 65, 60, 56, 60] }, // Fm add9
+      { bass: 41, arp: [53, 60, 65, 67, 65, 60, 56, 60] },
+      { bass: 49, arp: [61, 65, 68, 72, 68, 65, 61, 65] }, // Db
+      { bass: 51, arp: [63, 67, 70, 75, 70, 67, 63, 67] }, // Eb
+      { bass: 44, arp: [56, 63, 68, 70, 68, 63, 60, 63] },
+      { bass: 44, arp: [56, 63, 68, 70, 68, 63, 60, 63] }
+    ];
+    let b = 2;
+    prog1.forEach(bar => {
+      police.push([bar.bass, b, 3.8, 'L']);
+      bar.arp.forEach((m, i) => police.push([m, b + i * 0.5, 0.45, 'R']));
+      b += 4;
+    });
+
+    // 2. Romeo & Juliet inspired open progression (F - C - Dm - Bb)
+    const dire = [];
+    const prog2 = [
+      { bass: 41, chord: [53, 57, 60, 65, 60, 57] },
+      { bass: 48, chord: [55, 60, 64, 67, 64, 60] },
+      { bass: 50, chord: [53, 57, 62, 65, 62, 57] },
+      { bass: 46, chord: [53, 58, 62, 65, 62, 58] }
+    ];
+    b = 2;
+    for (let rep = 0; rep < 2; rep++) {
+      prog2.forEach(bar => {
+        dire.push([bar.bass, b, 3.5, 'L']);
+        bar.chord.forEach((m, i) => dire.push([m, b + i * 0.65, 0.55, 'R']));
+        b += 4;
+      });
+    }
+
+    // 3. Cosmic A-Minor Cascade
+    const cosmic = [];
+    const scale = [57, 60, 64, 67, 69, 72, 76, 72, 69, 67, 64, 60];
+    const basses = [45, 41, 48, 43];
+    b = 2;
+    basses.forEach(bass => {
+      cosmic.push([bass, b, 5.5, 'L']);
+      scale.forEach((m, i) => cosmic.push([m, b + i * 0.5, 0.45, 'R']));
+      b += 6;
+    });
+
+    return {
+      police: mk(police, 114),
+      dire: mk(dire, 102),
+      cosmic: mk(cosmic, 108)
+    };
+  }
+
+  // === STANDARD MIDI FILE (.mid) PARSER ===
+  function parseMidiFile(arrayBuffer) {
+    const d = new DataView(arrayBuffer);
+    let pos = 0;
+    const readStr = (n) => {
+      let s = '';
+      for (let i = 0; i < n; i++) s += String.fromCharCode(d.getUint8(pos++));
+      return s;
+    };
+    const readVLQ = () => {
+      let v = 0, byte;
+      do {
+        byte = d.getUint8(pos++);
+        v = (v << 7) | (byte & 0x7f);
+      } while (byte & 0x80);
+      return v;
+    };
+
+    if (readStr(4) !== 'MThd') throw new Error('Invalid MIDI header');
+    const hdrLen = d.getUint32(pos); pos += 4;
+    const format = d.getUint16(pos); pos += 2;
+    const ntrks = d.getUint16(pos); pos += 2;
+    const division = d.getUint16(pos); pos += 2;
+    pos += hdrLen - 6;
+
+    const tempoEvents = [{ tick: 0, usPerBeat: 500000 }];
+    const rawNotes = [];
+
+    for (let t = 0; t < ntrks; t++) {
+      if (pos + 8 > d.byteLength) break;
+      const chunkId = readStr(4);
+      const chunkLen = d.getUint32(pos); pos += 4;
+      const endPos = pos + chunkLen;
+      if (chunkId !== 'MTrk') { pos = endPos; continue; }
+
+      let tick = 0;
+      let runningStatus = 0;
+      const openNotes = new Map();
+
+      while (pos < endPos) {
+        tick += readVLQ();
+        let status = d.getUint8(pos++);
+        if (status < 0x80) {
+          pos--;
+          status = runningStatus;
+        } else if (status < 0xF0) {
+          runningStatus = status;
+        }
+
+        if (status === 0xFF) {
+          const metaType = d.getUint8(pos++);
+          const len = readVLQ();
+          if (metaType === 0x51 && len === 3) {
+            const us = (d.getUint8(pos) << 16) | (d.getUint8(pos + 1) << 8) | d.getUint8(pos + 2);
+            tempoEvents.push({ tick, usPerBeat: us });
+          }
+          pos += len;
+        } else if (status === 0xF0 || status === 0xF7) {
+          const len = readVLQ();
+          pos += len;
+        } else {
+          const cmd = status & 0xF0;
+          if (cmd === 0x90) {
+            const note = d.getUint8(pos++);
+            const vel = d.getUint8(pos++);
+            if (vel > 0) {
+              if (!openNotes.has(note)) openNotes.set(note, []);
+              openNotes.get(note).push({ startTick: tick, vel, track: t });
+            } else {
+              const stack = openNotes.get(note);
+              if (stack && stack.length) {
+                const start = stack.shift();
+                rawNotes.push({ midi: note, startTick: start.startTick, endTick: tick, track: t });
+              }
+            }
+          } else if (cmd === 0x80) {
+            const note = d.getUint8(pos++);
+            pos++; // vel
+            const stack = openNotes.get(note);
+            if (stack && stack.length) {
+              const start = stack.shift();
+              rawNotes.push({ midi: note, startTick: start.startTick, endTick: tick, track: t });
+            }
+          } else if (cmd === 0xC0 || cmd === 0xD0) {
+            pos += 1;
+          } else {
+            pos += 2;
+          }
+        }
+      }
+      pos = endPos;
+    }
+
+    tempoEvents.sort((a, b) => a.tick - b.tick);
+    const tickToSec = (targetTick) => {
+      let sec = 0, lastTick = 0, us = 500000;
+      for (const te of tempoEvents) {
+        if (te.tick >= targetTick) break;
+        sec += ((te.tick - lastTick) / division) * (us / 1e6);
+        lastTick = te.tick;
+        us = te.usPerBeat;
+      }
+      sec += ((targetTick - lastTick) / division) * (us / 1e6);
+      return sec;
+    };
+
+    const parsed = rawNotes
+      .filter(n => n.midi >= MIN_MIDI && n.midi <= MAX_MIDI)
+      .map(n => {
+        const start = tickToSec(n.startTick) + 1.5; // 1.5s lead-in
+        const dur = Math.max(0.08, tickToSec(n.endTick) - tickToSec(n.startTick));
+        return {
+          midi: n.midi,
+          time: start,
+          duration: dur,
+          hand: n.midi >= 60 ? 'R' : 'L',
+          hit: false,
+          missed: false,
+          guideStarted: false,
+          guideStopped: false
+        };
+      })
+      .sort((a, b) => a.time - b.time);
+
+    return parsed;
+  }
+
+  // === STATE ===
+  const builtIns = buildBuiltInSongs();
+  let songNotes = builtIns.police.map(n => ({ ...n }));
+  let songDuration = 20;
+  let playing = false;
+  let waitMode = false;
+  let guidePiano = true;
+  let speed = 1.0;
+  let wavOffsetSec = 0;
+  let songTime = 0;
+  let lastFrameTs = 0;
+  let score = 0;
+  let streak = 0;
+
+
+  // === AROHA TELEMETRY BRIDGE ===
+  const arohaChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('aroha-telemetry') : null;
+  function publishMidiToAroha(midi, velocity, kind) {
+    const evt = { type: 'aroha-midi', midi, velocity, kind, freq: midiToFreq(midi), ts: Date.now() };
+    window.__AROHA_LAST_MIDI__ = evt;
+    window.dispatchEvent(new CustomEvent('aroha-midi', { detail: evt }));
+    try { if (arohaChannel) arohaChannel.postMessage(evt); } catch (e) {}
+    try {
+      fetch('http://127.0.0.1:8000/api/midi-note', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ midi, velocity, kind }),
+        keepalive: true
+      }).catch(() => {});
+    } catch (e) {}
+  }
+
+  const pressedKeys = new Set(); // live user MIDI/mouse keys
+  const sparks = [];
+  let backingAudio = null;
+
+  function recalcDuration() {
+    songDuration = songNotes.reduce((mx, n) => Math.max(mx, n.time + n.duration), 5) + 1.5;
+  }
+  recalcDuration();
+
+  function loadSongArray(arr) {
+    stopAllGuide();
+    songNotes = arr.map(n => ({
+      ...n, hit: false, missed: false, guideStarted: false, guideStopped: false
+    }));
+    recalcDuration();
+    restartSong();
+  }
+
+  function stopAllGuide() {
+    for (let m = MIN_MIDI; m <= MAX_MIDI; m++) stopVoice(m, true, true);
+  }
+
+  function restartSong() {
+    playing = false;
+    songTime = 0;
+    score = 0;
+    streak = 0;
+    stopAllGuide();
+    songNotes.forEach(n => {
+      n.hit = false; n.missed = false; n.guideStarted = false; n.guideStopped = false;
+    });
+    if (backingAudio) {
+      backingAudio.pause();
+      backingAudio.currentTime = 0;
+    }
+    document.getElementById('btn-play').textContent = 'PLAY';
+    updateHUD();
+  }
+
+  function showFeedback(text, color) {
+    feedbackEl.textContent = text;
+    feedbackEl.style.color = color;
+    feedbackEl.style.opacity = '1';
+    clearTimeout(feedbackEl._t);
+    feedbackEl._t = setTimeout(() => { feedbackEl.style.opacity = '0'; }, 450);
+  }
+
+  function spawnSpark(x, y, color) {
+    for (let i = 0; i < 10; i++) {
+      sparks.push({
+        x, y,
+        vx: (Math.random() - 0.5) * 220,
+        vy: -40 - Math.random() * 140,
+        life: 1.0,
+        color
+      });
+    }
+  }
+
+  // === USER NOTE INPUT (MIDI / MOUSE / QWERTY) ===
+  function handleUserNoteOn(midi, vel = 0.85) {
+    if (midi < MIN_MIDI || midi > MAX_MIDI) return;
+    pressedKeys.add(midi);
+    triggerVoice(midi, vel, false);
+    publishMidiToAroha(midi, vel, 'on');
+
+    // Check hit window against falling notes
+    const HIT_WIN = 0.16;
+    let best = null, bestDiff = Infinity;
+    for (const n of songNotes) {
+      if (n.hit || n.midi !== midi) continue;
+      const diff = Math.abs(n.time - songTime);
+      if (diff <= HIT_WIN && diff < bestDiff) {
+        best = n; bestDiff = diff;
+      }
+    }
+    if (best) {
+      best.hit = true;
+      streak++;
+      const pts = bestDiff < 0.065 ? 100 : 60;
+      score += pts + Math.min(streak * 5, 100);
+      showFeedback(bestDiff < 0.065 ? 'PERFECT' : 'GOOD', bestDiff < 0.065 ? '#f5b700' : '#00f0ff');
+      const k = keys.find(x => x.midi === midi);
+      if (k) spawnSpark(k.x + k.w / 2, hitLineY, '#f5b700');
+      updateHUD();
+    }
+  }
+
+  function handleUserNoteOff(midi) {
+    pressedKeys.delete(midi);
+    publishMidiToAroha(midi, 0, 'off');
+    stopVoice(midi, false, false);
+  }
+
+  // === WEB MIDI API ===
+  async function initMIDI() {
+    const dot = document.getElementById('midi-dot');
+    const lbl = document.getElementById('midi-status');
+    if (!navigator.requestMIDIAccess) {
+      lbl.textContent = 'WEB MIDI UNSUPPORTED';
+      return;
+    }
+    try {
+      const access = await navigator.requestMIDIAccess();
+      const bindInputs = () => {
+        const names = [];
+        for (const input of access.inputs.values()) {
+          names.push(input.name);
+          input.onmidimessage = (e) => {
+            const [status, d1, d2] = e.data;
+            const cmd = status & 0xF0;
+            if (cmd === 0x90 && d2 > 0) handleUserNoteOn(d1, d2 / 127);
+            else if (cmd === 0x80 || (cmd === 0x90 && d2 === 0)) handleUserNoteOff(d1);
+            else if (cmd === 0xB0 && d1 === 64) {
+              sustainPedal = d2 >= 64;
+              if (!sustainPedal) {
+                sustainedNotes.forEach(m => { if (!pressedKeys.has(m)) stopVoice(m, false, false); });
+                sustainedNotes.clear();
+              }
+            }
+          };
+        }
+        if (names.length) {
+          dot.classList.add('ok');
+          lbl.textContent = names[0].toUpperCase();
+        } else {
+          dot.classList.remove('ok');
+          lbl.textContent = 'NO MIDI DEVICE';
+        }
+      };
+      bindInputs();
+      access.onstatechange = bindInputs;
+    } catch {
+      lbl.textContent = 'MIDI PERMISSION DENIED';
+    }
+  }
+  initMIDI();
+
+  // === KEYBOARD GEOMETRY (PIXEL-PERFECT ALIGNMENT) ===
+  function buildGeometry() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.floor(rect.width * dpr);
+    canvas.height = Math.floor(rect.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const W = rect.width;
+    const H = rect.height;
+    keyHeight = Math.max(110, Math.min(180, H * 0.27));
+    hitLineY = H - keyHeight;
+
+    const whiteCount = 36; // C2 to C7
+    const whiteW = W / whiteCount;
+    const blackW = whiteW * 0.62;
+    const blackH = keyHeight * 0.62;
+
+    keys = [];
+    let wi = 0;
+    for (let m = MIN_MIDI; m <= MAX_MIDI; m++) {
+      const pc = m % 12;
+      const oct = Math.floor(m / 12) - 1;
+      const isBlack = !WHITE_PCS.has(pc);
+      if (!isBlack) {
+        keys.push({ midi: m, isBlack: false, x: wi * whiteW, w: whiteW, h: keyHeight, name: NOTE_NAMES[pc] + oct });
+        wi++;
+      } else {
+        keys.push({ midi: m, isBlack: true, x: wi * whiteW - blackW / 2, w: blackW, h: blackH, name: NOTE_NAMES[pc] + oct });
+      }
+    }
+  }
+  window.addEventListener('resize', buildGeometry);
+  buildGeometry();
+
+  // === MOUSE / TOUCH KEYBOARD PLAY ===
+  let mouseMidi = null;
+  function hitTestKey(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    if (y < hitLineY) return null;
+    const ky = y - hitLineY;
+    for (const k of keys) {
+      if (k.isBlack && x >= k.x && x <= k.x + k.w && ky <= k.h) return k.midi;
+    }
+    for (const k of keys) {
+      if (!k.isBlack && x >= k.x && x <= k.x + k.w && ky <= k.h) return k.midi;
+    }
+    return null;
+  }
+  canvas.addEventListener('pointerdown', (e) => {
+    const m = hitTestKey(e.clientX, e.clientY);
+    if (m !== null) { mouseMidi = m; handleUserNoteOn(m, 0.85); }
+  });
+  window.addEventListener('pointerup', () => {
+    if (mouseMidi !== null) { handleUserNoteOff(mouseMidi); mouseMidi = null; }
+  });
+
+  // === QWERTY FALLBACK (C4–E5) ===
+  const qwertyMap = { a:60, w:61, s:62, e:63, d:64, f:65, t:66, g:67, y:68, h:69, u:70, j:71, k:72, o:73, l:74, p:75 };
+  window.addEventListener('keydown', (e) => {
+    if (e.repeat) return;
+    if (e.code === 'Space') { e.preventDefault(); togglePlay(); return; }
+    const m = qwertyMap[e.key.toLowerCase()];
+    if (m) handleUserNoteOn(m, 0.8);
+  });
+  window.addEventListener('keyup', (e) => {
+    const m = qwertyMap[e.key.toLowerCase()];
+    if (m) handleUserNoteOff(m);
+  });
+
+  // === UI CONTROLS ===
+  function togglePlay() {
+    ensureAudio();
+    playing = !playing;
+    document.getElementById('btn-play').textContent = playing ? 'PAUSE' : 'PLAY';
+    if (playing) {
+      lastFrameTs = performance.now();
+      if (backingAudio) {
+        backingAudio.playbackRate = speed;
+        backingAudio.currentTime = Math.max(0, songTime + wavOffsetSec);
+        backingAudio.play().catch(() => {});
+      }
+    } else {
+      stopAllGuide();
+      if (backingAudio) backingAudio.pause();
+    }
+  }
+
+  document.getElementById('btn-play').onclick = togglePlay;
+  document.getElementById('btn-restart').onclick = restartSong;
+  document.getElementById('btn-wait').onclick = (e) => {
+    waitMode = !waitMode;
+    e.target.textContent = `WAIT MODE: ${waitMode ? 'ON' : 'OFF'}`;
+    e.target.classList.toggle('active', waitMode);
+  };
+  document.getElementById('btn-guide').onclick = (e) => {
+    guidePiano = !guidePiano;
+    if (!guidePiano) stopAllGuide();
+    e.target.textContent = `GUIDE PIANO: ${guidePiano ? 'ON' : 'OFF'}`;
+    e.target.classList.toggle('active', guidePiano);
+  };
+  document.getElementById('song-select').onchange = (e) => {
+    loadSongArray(builtIns[e.target.value]);
+  };
+  document.getElementById('speed-slider').oninput = (e) => {
+    speed = parseFloat(e.target.value);
+    document.getElementById('speed-val').textContent = speed.toFixed(2) + 'x';
+    if (backingAudio) backingAudio.playbackRate = speed;
+  };
+  document.getElementById('offset-slider').oninput = (e) => {
+    wavOffsetSec = parseInt(e.target.value, 10) / 1000;
+    document.getElementById('offset-val').textContent = e.target.value + 'ms';
+  };
+  document.getElementById('vol-slider').oninput = (e) => {
+    if (masterGain) masterGain.gain.value = parseFloat(e.target.value);
+    if (backingAudio) backingAudio.volume = parseFloat(e.target.value);
+  };
+  document.getElementById('midi-file').onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const buf = await file.arrayBuffer();
+      const parsed = parseMidiFile(buf);
+      if (!parsed.length) throw new Error('No playable notes found in C2-C7');
+      loadSongArray(parsed);
+      showFeedback(`LOADED ${parsed.length} NOTES`, '#00f0ff');
+    } catch (err) {
+      showFeedback('MIDI PARSE ERROR', '#ff3b6b');
+    }
+  };
+  document.getElementById('audio-file').onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (backingAudio) backingAudio.pause();
+    backingAudio = new Audio(URL.createObjectURL(file));
+    backingAudio.volume = parseFloat(document.getElementById('vol-slider').value);
+    document.getElementById('wav-label').textContent = `WAV: ${file.name}`;
+    showFeedback('AUDIO TRACK READY', '#b565ff');
+  };
+  document.getElementById('progress-bar').onclick = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    songTime = ratio * songDuration;
+    stopAllGuide();
+    songNotes.forEach(n => {
+      n.hit = n.time < songTime;
+      n.missed = false;
+      n.guideStarted = n.time < songTime;
+      n.guideStopped = (n.time + n.duration) < songTime;
+    });
+    if (backingAudio) backingAudio.currentTime = Math.max(0, songTime + wavOffsetSec);
+    updateHUD();
+  };
+
+  function updateHUD() {
+    const mins = Math.floor(songTime / 60);
+    const secs = Math.floor(songTime % 60).toString().padStart(2, '0');
+    document.getElementById('hud-time').textContent = `${mins}:${secs}`;
+    document.getElementById('hud-score').textContent = score;
+    document.getElementById('hud-streak').textContent = streak;
+    document.getElementById('progress-fill').style.width = `${Math.min(100, (songTime / songDuration) * 100)}%`;
+  }
+
+  // === MAIN RENDER & CLOCK LOOP ===
+  function loop(ts) {
+    const dt = lastFrameTs ? Math.min(0.05, (ts - lastFrameTs) / 1000) : 0;
+    lastFrameTs = ts;
+
+    if (playing) {
+      let waiting = false;
+      if (waitMode) {
+        // Pause if any unhit note has reached the hit-line
+        for (const n of songNotes) {
+          if (!n.hit && n.time <= songTime + 0.03 && n.time >= songTime - 0.15) {
+            waiting = true;
+            break;
+          }
+        }
+      }
+
+      if (!waiting) {
+        if (backingAudio && !backingAudio.paused && !waitMode) {
+          songTime = Math.max(0, backingAudio.currentTime - wavOffsetSec);
+        } else {
+          songTime += dt * speed;
+        }
+      }
+
+      // Guide piano & miss detection
+      for (const n of songNotes) {
+        if (guidePiano && !n.guideStarted && songTime >= n.time) {
+          n.guideStarted = true;
+          triggerVoice(n.midi, 0.72, true);
+        }
+        if (n.guideStarted && !n.guideStopped && songTime >= n.time + n.duration) {
+          n.guideStopped = true;
+          stopVoice(n.midi, true, false);
+        }
+        if (!waitMode && !n.hit && !n.missed && songTime > n.time + 0.18) {
+          n.missed = true;
+          streak = 0;
+        }
+      }
+
+      if (songTime >= songDuration) {
+        playing = false;
+        document.getElementById('btn-play').textContent = 'PLAY';
+        stopAllGuide();
+      }
+      updateHUD();
+    }
+
+    draw(dt);
+    requestAnimationFrame(loop);
+  }
+
+  function draw(dt) {
+    const W = canvas.getBoundingClientRect().width;
+    const H = canvas.getBoundingClientRect().height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Subtle octave grid lines in cascade zone
+    ctx.fillStyle = '#060a16';
+    ctx.fillRect(0, 0, W, hitLineY);
+
+    const keyMap = new Map(keys.map(k => [k.midi, k]));
+    for (const k of keys) {
+      if (!k.isBlack && k.midi % 12 === 0) {
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.12)';
+        ctx.beginPath();
+        ctx.moveTo(k.x, 0);
+        ctx.lineTo(k.x, hitLineY);
+        ctx.stroke();
+      }
+    }
+
+    // Active cue set (notes currently touching hitLineY)
+    const activeCue = new Set();
+    const pxPerSec = hitLineY / FALL_SECONDS;
+
+    // Draw falling notes
+    for (const n of songNotes) {
+      const timeUntilHit = n.time - songTime;
+      const timeUntilEnd = (n.time + n.duration) - songTime;
+      if (timeUntilEnd < -0.2 || timeUntilHit > FALL_SECONDS) continue;
+
+      const k = keyMap.get(n.midi);
+      if (!k) continue;
+
+      const yBottom = hitLineY - timeUntilHit * pxPerSec;
+      const barH = Math.max(10, n.duration * pxPerSec);
+      const yTop = yBottom - barH;
+
+      if (timeUntilHit <= 0.08 && timeUntilEnd >= 0) activeCue.add(n.midi);
+
+      const pad = k.isBlack ? 1.5 : 3;
+      const baseColor = n.hit ? '#f5b700' : (n.hand === 'R' ? '#00f0ff' : '#b565ff');
+
+      ctx.save();
+      ctx.shadowBlur = n.hit ? 18 : 10;
+      ctx.shadowColor = baseColor;
+      ctx.fillStyle = n.missed ? 'rgba(255, 59, 107, 0.35)' : baseColor;
+
+      const rx = k.x + pad;
+      const rw = Math.max(4, k.w - pad * 2);
+      const ry = Math.max(-20, yTop);
+      const rh = Math.min(hitLineY, yBottom) - ry;
+      if (rh > 0) {
+        ctx.beginPath();
+        ctx.roundRect(rx, ry, rw, rh, 4);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // Glowing hit-line
+    ctx.save();
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#00f0ff';
+    ctx.beginPath();
+    ctx.moveTo(0, hitLineY);
+    ctx.lineTo(W, hitLineY);
+    ctx.stroke();
+    ctx.restore();
+
+    // Update & draw sparks
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const s = sparks[i];
+      s.x += s.vx * dt;
+      s.y += s.vy * dt;
+      s.vy += 320 * dt;
+      s.life -= dt * 2.2;
+      if (s.life <= 0) { sparks.splice(i, 1); continue; }
+      ctx.globalAlpha = s.life;
+      ctx.fillStyle = s.color;
+      ctx.fillRect(s.x - 2, s.y - 2, 4, 4);
+      ctx.globalAlpha = 1;
+    }
+
+    // Draw White Keys
+    for (const k of keys) {
+      if (k.isBlack) continue;
+      const isPressed = pressedKeys.has(k.midi);
+      const isCue = activeCue.has(k.midi);
+      ctx.fillStyle = isPressed ? '#00f0ff' : (isCue ? '#244b66' : '#dce6f5');
+      ctx.fillRect(k.x + 0.5, hitLineY, k.w - 1, k.h);
+      ctx.strokeStyle = '#0a1020';
+      ctx.strokeRect(k.x + 0.5, hitLineY, k.w - 1, k.h);
+
+      if (k.midi % 12 === 0) {
+        ctx.fillStyle = isPressed ? '#050811' : '#4a5c78';
+        ctx.font = '10px sans-serif';
+        ctx.fillText(k.name, k.x + 3, hitLineY + k.h - 8);
+      }
+    }
+
+    // Draw Black Keys
+    for (const k of keys) {
+      if (!k.isBlack) continue;
+      const isPressed = pressedKeys.has(k.midi);
+      const isCue = activeCue.has(k.midi);
+      ctx.fillStyle = isPressed ? '#f5b700' : (isCue ? '#b565ff' : '#0d1426');
+      ctx.fillRect(k.x, hitLineY, k.w, k.h);
+      ctx.strokeStyle = '#000';
+      ctx.strokeRect(k.x, hitLineY, k.w, k.h);
+    }
+  }
+
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
