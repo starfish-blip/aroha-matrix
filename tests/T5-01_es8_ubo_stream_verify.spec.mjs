@@ -11,7 +11,7 @@ test("8 ES components receive live SSE frames and 48-byte std140 UBO buffer", as
     await route.fulfill({
       status: 200,
       contentType: "text/html; charset=utf-8",
-      body: "<!doctype html><html><head><meta charset=\\"utf-8\\"></head><body><pre id=\\"out\\">boot</pre></body></html>",
+      body: "\u003c!doctype html\u003e\u003chtml\u003e\u003chead\u003e\u003cmeta charset=\"utf-8\"\u003e\u003c/head\u003e\u003cbody\u003e\u003cpre id=\"out\"\u003eboot\u003c/pre\u003e\u003c/body\u003e\u003c/html\u003e",
     });
   });
 
