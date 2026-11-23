@@ -91,3 +91,6 @@ test("8 ES components receive live SSE frames, WebGL2 UBO upload, and POST unloc
   expect(result.allBuffer48Bytes).toBe(true);
   expect(result.allUnlockedTrue).toBe(true);
 });
+
+
+

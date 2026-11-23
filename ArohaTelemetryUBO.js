@@ -1,4 +1,4 @@
-// ArohaTelemetryUBO.js - 48-byte (12x float32) std140 UBO backed by SSE stream
+﻿// ArohaTelemetryUBO.js - 48-byte (12x float32) std140 UBO backed by SSE stream
 export const STREAM_URL = "http://100.64.150.117:8000/api/v1/portal/telemetry/stream";
 
 export class ArohaTelemetryUBO {
@@ -80,3 +80,4 @@ export class ArohaTelemetryUBO {
 }
 
 export const telemetryUBO = new ArohaTelemetryUBO();
+
