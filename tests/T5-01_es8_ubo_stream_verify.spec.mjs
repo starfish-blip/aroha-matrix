@@ -1,9 +1,9 @@
-﻿import fs from "node:fs";
+import fs from "node:fs";
 import path from "node:path";
 import { test, expect } from "@playwright/test";
 
 const WORKSPACE_DIR = "C:/Users/terry/aroha-matrix";
-const TELEMETRY_BASE = "http://100.64.150.117:8000";
+const TELEMETRY_BASE = "http://127.0.0.1:8000";
 const HARNESS_ORIGIN = `${TELEMETRY_BASE}/__harness__`;
 const STREAM_ENDPOINT = `${TELEMETRY_BASE}/api/v1/portal/telemetry/stream`;
 const UNLOCK_ENDPOINT = `${TELEMETRY_BASE}/api/v1/portal/unlock`;
@@ -91,6 +91,7 @@ test("8 ES components receive live SSE frames, WebGL2 UBO upload, and POST unloc
   expect(result.allBuffer48Bytes).toBe(true);
   expect(result.allUnlockedTrue).toBe(true);
 });
+
 
 
 
