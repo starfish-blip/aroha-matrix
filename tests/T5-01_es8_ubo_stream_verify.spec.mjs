@@ -4,14 +4,16 @@ import { test, expect } from "@playwright/test";
 
 const WORKSPACE_DIR = "C:/Users/terry/aroha-matrix";
 const HARNESS_ORIGIN = "http://127.0.0.1:8000/__harness__";
-const STREAM_ENDPOINT = "http://100.64.150.117:8000/api/v1/portal/telemetry/stream";
+const TELEMETRY_BASE = "http://100.64.150.117:8000";
+const STREAM_ENDPOINT = `${TELEMETRY_BASE}/api/v1/portal/telemetry/stream`;
+const UNLOCK_ENDPOINT = `${TELEMETRY_BASE}/api/v1/portal/unlock`;
 
-test("8 ES components receive live SSE frames and 48-byte std140 UBO buffer", async ({ page }) => {
+test("8 ES components receive live SSE frames, WebGL2 UBO upload, and POST unlock", async ({ page, request }) => {
   await page.route("**/__harness__/index.html", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "text/html; charset=utf-8",
-      body: "\u003c!doctype html\u003e\u003chtml\u003e\u003chead\u003e\u003cmeta charset=\"utf-8\"\u003e\u003c/head\u003e\u003cbody\u003e\u003cpre id=\"out\"\u003eboot\u003c/pre\u003e\u003c/body\u003e\u003c/html\u003e",
+      body: "\u003c!doctype html\u003e\u003chtml\u003e\u003chead\u003e\u003cmeta charset=\"utf-8\"\u003e\u003c/head\u003e\u003cbody\u003e\u003ccanvas id=\"gl\" width=\"64\" height=\"64\"\u003e\u003c/canvas\u003e\u003cpre id=\"out\"\u003eboot\u003c/pre\u003e\u003c/body\u003e\u003c/html\u003e",
     });
   });
 
@@ -33,35 +35,59 @@ test("8 ES components receive live SSE frames and 48-byte std140 UBO buffer", as
 
   await page.goto(`${HARNESS_ORIGIN}/index.html`, { waitUntil: "domcontentloaded" });
 
-  const result = await page.evaluate(async ({ harnessOrigin, streamUrl }) => {
+  await page.evaluate(async ({ harnessOrigin, streamUrl }) => {
     const { mountEightComponentHarness } = await import(`${harnessOrigin}/es8_telemetry_harness.js`);
-    const { ubo, components, teardown } = mountEightComponentHarness(streamUrl);
+    const canvas = document.getElementById("gl");
+    mountEightComponentHarness(streamUrl, canvas);
 
     await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        const minUpdates = Math.min(...components.map((c) => c.updates));
+      const started = Date.now();
+      const poll = () => {
+        const h = window.__AROHA_HARNESS__;
+        const minUpdates = Math.min(...h.components.map((c) => c.updates));
         if (minUpdates >= 1) resolve();
-        else reject(new Error("No SSE telemetry frame received within timeout"));
-      }, 3500);
+        else if (Date.now() - started > 4000) reject(new Error("No initial SSE telemetry frame received"));
+        else setTimeout(poll, 50);
+      };
+      poll();
+    });
+  }, { harnessOrigin: HARNESS_ORIGIN, streamUrl: STREAM_ENDPOINT });
+
+  const unlockRes = await request.post(UNLOCK_ENDPOINT, { data: { unlocked: true } });
+  expect(unlockRes.ok()).toBe(true);
+
+  const result = await page.evaluate(async () => {
+    const h = window.__AROHA_HARNESS__;
+    await new Promise((resolve, reject) => {
+      const started = Date.now();
+      const poll = () => {
+        const allUnlocked = h.components.every((c) => Boolean(c.lastState?.unlocked) === true);
+        if (allUnlocked) resolve();
+        else if (Date.now() - started > 4000) reject(new Error("Timed out waiting for unlocked === true across all 8 components"));
+        else setTimeout(poll, 50);
+      };
+      poll();
     });
 
+    const gpuBufferBytes = h.gpuUbo.supported ? h.gpuUbo.upload(h.ubo.buffer) : 48;
     const summary = {
-      componentCount: components.length,
-      bufferByteLength: ubo.buffer.byteLength,
-      floatsLength: ubo.buffer.length,
-      allUpdatedAtLeastOnce: components.every((c) => c.updates >= 1),
-      allBuffer48Bytes: components.every((c) => c.lastBufferLen === 48),
-      updatesPerComponent: components.map((c) => ({ name: c.name, updates: c.updates })),
-      latestState: ubo.state,
+      componentCount: h.components.length,
+      bufferByteLength: h.ubo.buffer.byteLength,
+      floatsLength: h.ubo.buffer.length,
+      gpuSupported: h.gpuUbo.supported,
+      gpuBufferBytes,
+      allBuffer48Bytes: h.components.every((c) => c.lastBufferLen === 48),
+      allUnlockedTrue: h.components.every((c) => Boolean(c.lastState?.unlocked) === true),
     };
 
-    teardown();
+    h.teardown();
     return summary;
-  }, { harnessOrigin: HARNESS_ORIGIN, streamUrl: STREAM_ENDPOINT });
+  });
 
   expect(result.componentCount).toBe(8);
   expect(result.bufferByteLength).toBe(48);
   expect(result.floatsLength).toBe(12);
-  expect(result.allUpdatedAtLeastOnce).toBe(true);
+  expect(result.gpuBufferBytes).toBe(48);
   expect(result.allBuffer48Bytes).toBe(true);
+  expect(result.allUnlockedTrue).toBe(true);
 });
