@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AROHA — Daily Check-In</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card: #171a21;
+      --border: #262b36;
+      --text: #e8ecf1;
+      --muted: #9aa3b2;
+      --accent: #d4af37;
+      --accent-soft: rgba(212, 175, 55, 0.14);
+      --ok: #6bbf8a;
+      --danger: #e06c75;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px 16px 48px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      line-height: 1.5;
+    }
+
+    .wrap {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.5rem;
+      letter-spacing: 0.04em;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card.preview {
+      border-color: var(--accent);
+      background: #1b1e27;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .chip.small {
+      padding: 4px 11px;
+      font-size: 0.8rem;
+    }
+
+    .chip:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .chip.active {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      font-size: 0.95rem;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #111;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.08);
+    }
+
+    .btn-confirm {
+      background: var(--ok);
+      color: #0e1410;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 16px;
+      font-weight: 600;
+      font-size: 0.92rem;
+      cursor: pointer;
+    }
+
+    .btn-confirm:hover {
+      filter: brightness(1.08);
+    }
+
+    .btn-toggle {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-toggle.on {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .btn-ghost.danger:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .status {
+      font-size: 0.85rem;
+      color: var(--accent);
+    }
+
+    .preview-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      font-weight: 600;
+      margin: 0 0 8px;
+    }
+
+    .preview-note {
+      font-size: 0.84rem;
+      color: var(--muted);
+      margin: 0 0 14px;
+    }
+
+    .preview-body {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+
+    /* Countdown Timer */
+    .timer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .timer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .timer-display {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text);
+    }
+
+    .timer-status {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 8px;
+      min-height: 1.2em;
+    }
+
+    /* History & Filters */
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .history-title-wrap {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .count-note {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .filter-bar {
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .entry {
+      border-top: 1px solid var(--border);
+      padding: 14px 0;
+    }
+
+    .entry:first-of-type {
+      border-top: none;
+      padding-top: 4px;
+    }
+
+    .entry-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .entry-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 0.78rem;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .date {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .entry-intention {
+      margin: 4px 0;
+      font-weight: 600;
+    }
+
+    .entry-note {
+      margin: 4px 0 0;
+      color: var(--muted);
+      white-space: pre-wrap;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: 8px 0 0;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <div>
+        <h1>AROHA</h1>
+        <p class="subtitle">Simple daily check-in, intention, and reflection.</p>
+      </div>
+      <button type="button" class="btn-toggle" id="chimeToggle" aria-pressed="false">
+        Chime: Off
+      </button>
+    </header>
+
+    <!-- Check-In Form -->
+    <section class="card">
+      <form id="checkinForm">
+        <div class="field">
+          <label>How are you arriving right now?</label>
+          <div class="chips" id="stateChips">
+            <button type="button" class="chip" data-state="Calm">Calm</button>
+            <button type="button" class="chip" data-state="Focused">Focused</button>
+            <button type="button" class="chip" data-state="Energised">Energised</button>
+            <button type="button" class="chip" data-state="Tired">Tired</button>
+            <button type="button" class="chip" data-state="Restless">Restless</button>
+            <button type="button" class="chip" data-state="Low">Low</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="intention">One intention for today</label>
+          <input
+            type="text"
+            id="intention"
+            placeholder="e.g., Finish one small task and keep things steady"
+          />
+        </div>
+
+        <div class="field">
+          <label for="reflection">Quick reflection</label>
+          <textarea
+            id="reflection"
+            placeholder="What's on your mind right now?"
+          ></textarea>
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn-primary">Review Check-In</button>
+          <span class="status" id="statusMsg"></span>
+        </div>
+      </form>
+    </section>
