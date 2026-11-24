@@ -21,18 +21,22 @@ test.describe('AROHA Matrix: 48-Byte std140 Maramataka + Web Audio FFT UBO Suite
   test('T4-01B: WebGL2 TelemetryBlock UBO allocates 48 bytes (12 floats) and streams live Web Audio FFT bands', async ({ page }) => {
     await page.goto('http://127.0.0.1:3013');
 
-    await page.waitForFunction(() => {
-      return window.__AROHA_DEBUG__ &&
-             window.__AROHA_DEBUG__.telemetry.isConnected &&
-             window.__AROHA_DEBUG__.readGPUUBO().floats[2] > 0;
-    }, { timeout: 10000 });
+    // Fail fast if port 3013 serves the wrong page instead of the WebGL2 visualizer
+    await expect(page.locator('#aroha-canvas')).toBeVisible({ timeout: 5000 });
 
-    await page.click('#btn-audio');
+    await page.waitForFunction(() => {
+      return Boolean(
+        window.__AROHA_DEBUG__?.telemetry?.isConnected &&
+        window.__AROHA_DEBUG__.readGPUUBO().floats[2] > 0
+      );
+    }, undefined, { timeout: 10000 });
+
+    await page.locator('#btn-audio').click();
 
     await page.waitForFunction(() => {
       const f = window.__AROHA_DEBUG__.readGPUUBO().floats;
       return f[8] > 0.01 && f[9] > 0.01 && f[11] > 0.01;
-    }, { timeout: 10000 });
+    }, undefined, { timeout: 10000 });
 
     const uboDump = await page.evaluate(() => window.__AROHA_DEBUG__.readGPUUBO());
     expect(uboDump.byteLength).toBe(48);
@@ -70,7 +74,8 @@ test.describe('AROHA Matrix: 48-Byte std140 Maramataka + Web Audio FFT UBO Suite
 
   test('T4-01C: Deterministic FFT band injection & Rakaunui Night 16 sync accurately to GPU UBO offsets 32..44', async ({ page }) => {
     await page.goto('http://127.0.0.1:3013');
-    await page.waitForFunction(() => window.__AROHA_DEBUG__?.telemetry?.isConnected, { timeout: 10000 });
+    await expect(page.locator('#aroha-canvas')).toBeVisible({ timeout: 5000 });
+    await page.waitForFunction(() => Boolean(window.__AROHA_DEBUG__?.telemetry?.isConnected), undefined, { timeout: 10000 });
 
     await page.evaluate(() => {
       window.__AROHA_DEBUG__.setFFTOverride(0.85, 0.65, 0.45);
@@ -84,7 +89,7 @@ test.describe('AROHA Matrix: 48-Byte std140 Maramataka + Web Audio FFT UBO Suite
     await page.waitForFunction(() => {
       const f = window.__AROHA_DEBUG__.readGPUUBO().floats;
       return Math.round(f[7]) === 16 && Math.abs(f[8] - 0.85) < 0.01 && Math.abs(f[6] - 523.26) < 0.5;
-    }, { timeout: 10000 });
+    }, undefined, { timeout: 10000 });
 
     const uboDump = await page.evaluate(() => window.__AROHA_DEBUG__.readGPUUBO());
     const f = uboDump.floats;
